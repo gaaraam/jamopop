@@ -1,7 +1,7 @@
 'use client';
 import {CharacterAvatar} from '@/components/game/character-avatar';
 
-import {useCallback,useEffect,useRef,useState} from 'react';
+import {useCallback,useEffect,useRef,useState,type ReactNode} from 'react';
 import {Plus,RefreshCw,Search,Users,ArrowRight,Archive,RotateCcw,MoreHorizontal,Eye} from 'lucide-react';
 
 import {DropdownMenu,DropdownMenuTrigger,DropdownMenuContent,DropdownMenuItem,DropdownMenuSeparator} from '@/components/ui/dropdown-menu';
@@ -11,11 +11,11 @@ import {pollDelay} from '@/lib/sync-policy.mjs';
 import {RoomChat,type ChatSnapshot} from './chat';
 const noBubbles=()=>{};
 export type LobbyRoom={id:string;name:string;hostName:string|null;width:number;roundNo:number;memberCount:number;onlineCount:number;lastActive:number;variant?:string;playing?:number;won?:number;preview?:{id:string;name:string;avatar:string;skin?:string|null;online:boolean;spectator:boolean;status:string;progress:number}[]};
-export function Lobby({onSelect,onCreate,onRegister,signedIn,playerName,playerAvatar}:{playerName:string;playerAvatar:string;onSelect:(room:Pick<LobbyRoom,'id'|'name'>,spectator?:boolean)=>void;onCreate:()=>void;onRegister:()=>void;signedIn:boolean|null}){
+export function Lobby({onSelect,onCreate,onRegister,signedIn,playerName,playerAvatar,headerTools}:{headerTools?:ReactNode;playerName:string;playerAvatar:string;onSelect:(room:Pick<LobbyRoom,'id'|'name'>,spectator?:boolean)=>void;onCreate:()=>void;onRegister:()=>void;signedIn:boolean|null}){
  const [profile,setProfile]=useState<{avatar:string;skin?:string}|null>(null);
  const [rooms,setRooms]=useState<LobbyRoom[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[search,setSearch]=useState(''),[activeOnly,setActiveOnly]=useState(false),[hasMore,setHasMore]=useState(false);
  const [isAdmin,setIsAdmin]=useState(false),[archived,setArchived]=useState(false),[busy,setBusy]=useState<string|null>(null);
- const [people,setPeople]=useState<PeopleSnapshot>();const [chat,setChat]=useState<ChatSnapshot>();const [chatRequest,setChatRequest]=useState(0);const [self,setSelf]=useState<{level:number;current:number;required:number}|null>(null);const activity=useRef(Date.now()),chatOpen=useRef(false);const onChatOpen=useCallback((open:boolean)=>{chatOpen.current=open},[]);
+ const [people,setPeople]=useState<PeopleSnapshot>();const [chat,setChat]=useState<ChatSnapshot>();const [self,setSelf]=useState<{level:number;current:number;required:number}|null>(null);const activity=useRef(Date.now()),chatOpen=useRef(false);const onChatOpen=useCallback((open:boolean)=>{chatOpen.current=open},[]);
  const mutating=useRef(false);
  const controller=useRef<AbortController|null>(null);
  const refresh=useCallback(async()=>{
@@ -46,13 +46,8 @@ export function Lobby({onSelect,onCreate,onRegister,signedIn,playerName,playerAv
  };
  const visible=rooms.filter(r=>(!activeOnly||r.onlineCount>0)&&`${r.name} ${r.hostName||''}`.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()));
  return <section className="room-lobby game-lounge" aria-label="방 대기실">
-  <div className="lounge-head">
-   <a className="secondary-btn" href="/shop">🪙 콩알 옷장</a><button className="lounge-player" onClick={onRegister} aria-label="내 캐릭터와 프로필"><span className="lounge-my-avatar"><CharacterAvatar avatar={profile?.avatar||playerAvatar||'🐱'} skin={profile?.skin}/></span><span className="lounge-player-info"><small>{signedIn?'내 캐릭터':'게스트 플레이'}</small><strong>{playerName||'게스트'} <em>{self?`Lv.${self.level}`:''}</em></strong>{self&&<progress aria-label="레벨 경험치" value={self.current} max={self.required}/>}</span><span className="lounge-profile-arrow">↗</span></button>
-   <div className="lounge-entry-actions"><a href="/solo" className="lounge-solo"><span>🏢</span><strong>개인 도전</strong><ArrowRight size={18}/></a><button className="primary lounge-create" onClick={onCreate}><Plus size={24}/>방 만들기</button></div>
-  </div>
-  <Companions snapshot={people} onRoom={onSelect} onRegister={onRegister}/>
-  <div className="lounge-heading"><h1>{archived?'보관된 방':'대기실'}<span>{rooms.reduce((n,r)=>n+r.onlineCount,0)}명 접속</span></h1><div>{isAdmin&&<a href="/admin">운영 ↗</a>}{signedIn===false&&<button onClick={onRegister}>가입 · 계정 연동 ↗</button>}</div></div>
-  {chat?.messages.some(m=>!m.deleted)&&<button className="lounge-conversation" onClick={()=>setChatRequest(n=>n+1)} aria-label="대기실 최근 대화 열기"><span>대화</span>{chat.messages.filter(m=>!m.deleted).slice(-1).map(m=><span key={m.id}><b><CharacterAvatar avatar={m.avatar} skin={m.skin}/> {m.name}</b><span>{m.body}</span></span>)}<ArrowRight size={16}/></button>}
+  <header className="lounge-heading"><div className="lounge-title"><h1>{archived?'보관된 방':'대기실'}</h1><span className="lounge-room-total">{rooms.length}개 방</span></div><div className="lounge-entry-actions"><a href="/solo" className="lounge-solo"><span aria-hidden="true">🏢</span><strong>개인 도전</strong></a><button className="primary lounge-create" onClick={onCreate}><Plus size={20}/>방 만들기</button><div className="lounge-header-tools">{headerTools}</div></div></header>
+  <div className="lounge-layout"><div className="lounge-play-area">
   {isAdmin&&<div className="lobby-archive-tabs"><button className={!archived?'lobby-filter selected':'lobby-filter'} aria-pressed={!archived} disabled={loading||!!busy} onClick={()=>{if(archived){setRooms([]);setArchived(false);}}}>열린 방</button><button className={archived?'lobby-filter selected':'lobby-filter'} aria-pressed={archived} disabled={loading||!!busy} onClick={()=>{if(!archived){setRooms([]);setArchived(true);}}}><Archive size={15}/>보관된 방</button><span>보관해도 게임과 기록은 유지됩니다.</span></div>}
   <div className="lobby-toolbar"><label className="lobby-search"><Search size={18}/><input aria-label="방 이름 또는 방장 검색" placeholder="방 이름 또는 방장 검색" value={search} onChange={e=>setSearch(e.target.value)}/></label><button className={activeOnly?'lobby-filter selected':'lobby-filter'} aria-pressed={activeOnly} onClick={()=>setActiveOnly(v=>!v)}>접속 중인 방</button><button className="icon-btn" aria-label="방 목록 새로고침" disabled={loading} onClick={()=>void refresh()}><RefreshCw size={18}/></button></div>
   {error&&<div className="lobby-error" role="alert">{error}<button className="text-btn" onClick={()=>void refresh()} disabled={loading}>다시 시도</button></div>}
@@ -65,7 +60,14 @@ export function Lobby({onSelect,onCreate,onRegister,signedIn,playerName,playerAv
    </article>)}
   </div>
   {!visible.length&&!error&&<div className="lobby-empty" role="status">{loading?'방 목록을 불러오는 중…':search||activeOnly?'조건에 맞는 방이 없어요.':archived?'보관된 방이 없어요.':'아직 방이 없어요. 첫 방을 만들어 보세요.'}</div>}
-  <p className="lobby-note">{hasMore?'최근 활동 순 최대 100개 방 표시 · ':''}접속 인원은 최근 45초 활동 기준{error?' · 현재 목록은 마지막 조회 결과':''}</p>
- <RoomChat openRequest={chatRequest} bundled snapshot={chat} onOpenChange={onChatOpen} lobby roomId="lobby" meId="me" isHost={false} onMessages={noBubbles}/>
+  {hasMore&&<p className="lobby-note">최근 활동 순으로 100개 방까지 표시합니다.</p>}
+  </div><aside className="lounge-sidebar" aria-label="내 정보와 친구">
+   <section className="lounge-account">
+    <button className="lounge-player" onClick={onRegister} aria-label="내 캐릭터와 프로필"><span className="lounge-my-avatar"><CharacterAvatar avatar={profile?.avatar||playerAvatar||'🐱'} skin={profile?.skin}/></span><span className="lounge-player-info"><small>{signedIn?'내 캐릭터':'게스트 프로필'}</small><strong>{playerName||'게스트'}</strong>{self&&<><em>Lv.{self.level}</em><progress aria-label="레벨 경험치" value={self.current} max={self.required}/></>}</span><ArrowRight size={16}/></button>
+    <div className="lounge-account-actions"><a href="/shop">콩알 옷장<ArrowRight size={15}/></a>{signedIn===false&&<button onClick={onRegister}>계정 연동<ArrowRight size={15}/></button>}{isAdmin&&<a href="/admin">운영<ArrowRight size={15}/></a>}</div>
+   </section>
+   <Companions snapshot={people} onRoom={onSelect} onRegister={onRegister}/>
+  </aside></div>
+ <RoomChat bundled snapshot={chat} onOpenChange={onChatOpen} lobby roomId="lobby" meId="me" isHost={false} onMessages={noBubbles}/>
  </section>;
 }

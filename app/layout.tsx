@@ -11,6 +11,7 @@ import "./characters.css";
 import {Announcement} from '@/components/announcement';
 import './announcement.css';
 import './typography.css';
+import './design-system.css';
 import {AppearanceProvider} from "@/components/theme";
 import {LegalLinks} from "@/components/legal/document";
 
