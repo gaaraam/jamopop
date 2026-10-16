@@ -16,8 +16,9 @@ test('gold accrual, daily bonus, guest linkage, safe purchases and skin propagat
  const store=save('store','export const {one,all,database}=globalThis.__shopStore;');
  const account=save('account',"export const accountId=r=>r.headers.get('test-user'); export const avatarAccess=async()=>['🐱','🐰','🐻','🦊','🐸'];");
  const compile=(file,name,maps)=>{let s=ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;for(const [key,url]of Object.entries(maps))s=s.replaceAll("'"+key+"'",JSON.stringify(url));return save(name,s)};
+ const cardSkins=compile('lib/card-skins.ts','card-skins',{});
  const skins=compile('lib/skins.ts','skins',{}),shop=compile('lib/shop.ts','shop',{'./store':store,'./skins':skins}),{shopState}=await import(shop);
- const {GET,POST}=await import(compile('app/api/shop/route.ts','route',{'@/lib/store':store,'@/lib/account':account,'@/lib/skins':skins,'@/lib/shop':shop}));
+ const {GET,POST}=await import(compile('app/api/shop/route.ts','route',{'@/lib/card-skins':cardSkins,'@/lib/store':store,'@/lib/account':account,'@/lib/skins':skins,'@/lib/shop':shop}));
  const request=(id,body,origin='https://test.local')=>new Request('https://test.local/api/shop',{method:body?'POST':'GET',headers:{...(id?{'test-user':id}:{}),origin,'content-type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
  db.exec("INSERT INTO rooms(id,name,host_id,created_at) VALUES('room','QA','m',1),('guestroom','guest','guest',1),('newroom','new','new',1); INSERT INTO profiles(id,name,avatar,created_at) VALUES('A','A','🐱',1),('B','B','🐱',1); INSERT INTO members(id,room_id,token_hash,name,avatar,last_seen,account_id) VALUES('m','room','token','A','🐱',1,'A'),('b','room','btoken','B','🐱',1,'B'),('guest','guestroom','gtoken','guest','🐱',1,NULL);");
  let n=0;
@@ -63,5 +64,23 @@ test('gold accrual, daily bonus, guest linkage, safe purchases and skin propagat
  assert((await shopState('A')).owned.includes('solo-golden-penguin'));
  assert.equal((await POST(request('A',{action:'equip',skin:'solo-golden-penguin'}))).status,200);
  assert.equal((await shopState('A')).balance,balanceBefore);
+
+ // A separate card slot shares the gold ledger but preserves avatar skins.
+ const characterBefore=db.prepare("SELECT avatar,skin_id FROM profiles WHERE id='A'").get();
+ assert.equal((await POST(request('B',{action:'equip',slot:'card',skin:'card-starlight'}))).status,403);
+ assert.equal((await POST(request('A',{action:'buy',slot:'card',skin:'card-starlight',price:0}))).status,409);
+ for(let i=0;i<20;i++)play();
+ const cardBalance=(await shopState('A')).balance;
+ const cardBuys=await Promise.all(Array.from({length:4},()=>POST(request('A',{action:'buy',slot:'card',skin:'card-starlight'}))));
+ assert(cardBuys.every(r=>r.status===200));assert.equal((await shopState('A')).balance,cardBalance-500);
+ assert.equal((await POST(request('A',{action:'equip',slot:'card',skin:'card-starlight'}))).status,200);
+ assert.equal((await shopState('A')).cardEquipped,'card-starlight');
+ assert.deepEqual(db.prepare("SELECT avatar,skin_id FROM profiles WHERE id='A'").get(),characterBefore);
+ assert.equal((await POST(request('A',{action:'equip',slot:'character',skin:'card-starlight'}))).status,400);
+ assert.equal((await POST(request('A',{action:'equip',slot:'card',skin:'strawberry-cat'}))).status,400);
+ assert.equal((await POST(request('A',{action:'unequip',slot:'card'}))).status,200);
+ assert.equal((await shopState('A')).cardEquipped,null);
+ assert((await shopState('A')).owned.includes('card-starlight'));
+ assert.deepEqual(db.prepare("SELECT avatar,skin_id FROM profiles WHERE id='A'").get(),characterBefore);
   }finally{db.close();delete globalThis.__shopStore;rmSync(dir,{recursive:true,force:true})}
 });
