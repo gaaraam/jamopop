@@ -32,3 +32,88 @@ html:root[data-theme=dark] .solo-summary>span{box-shadow:inset 0 1px 0 #ffffff0b
 @media(max-width:700px){.chapter-zone{padding:6px;border-radius:24px}.chapter-art{border-radius:19px}.chapter-content{padding:17px 13px}.solo-summary>span{padding:9px 11px;font-size:18px}.solo-summary{gap:6px}.solo-nav{border-radius:20px}.solo-nav a{padding:7px 9px}}
 @media(prefers-reduced-motion:reduce){.solo-page .route-stop{transition:none;transform:none!important}}
 @media(prefers-reduced-transparency:reduce){.solo-page{--solo-glass:#f4f6fb;--solo-inner:#edf1f7}html:root[data-theme=dark] .solo-page{--solo-glass:#1c2737;--solo-inner:#263243}.solo-page :is(.solo-nav,.chapter-zone,.solo-play,.solo-how,.solo-resume){backdrop-filter:none;-webkit-backdrop-filter:none}}
+
+/* Shared UI system; scene illustrations and clue colors retain game meaning. */
+html:root .solo-page{max-width:1120px;padding:24px;color:var(--ui-ink);--solo-glass:var(--ui-surface);--solo-line:var(--ui-line);--solo-shadow:var(--ui-shadow);--solo-inner:var(--ui-surface-muted);--solo-muted:var(--ui-muted)}
+html:root .solo-page:before{display:none}
+html:root .solo-page .solo-nav{padding:0 0 16px;min-height:64px;margin-bottom:24px;border:0;border-bottom:1px solid var(--ui-line);border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none}
+html:root .solo-nav strong{font:700 28px var(--font-game);letter-spacing:-.6px}
+html:root .solo-nav a{display:flex;align-items:center;min-height:44px;padding:0 12px;background:transparent;border:0;color:var(--ui-muted)}
+html:root .solo-summary{gap:24px;padding-bottom:16px;border-bottom:1px solid var(--ui-line)}
+html:root .solo-summary>span{padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;font-size:22px;gap:8px;font-variant-numeric:tabular-nums}
+html:root .solo-save-note{margin:12px 0 24px;font-size:12px;line-height:1.6}
+html:root .expedition-heading{margin:24px 0;gap:16px}
+html:root .expedition-heading h1{font-size:28px;letter-spacing:-.6px;line-height:1.4}
+html:root .expedition-kicker{letter-spacing:.5px;color:var(--ui-muted)}
+html:root .expedition-heading p{color:var(--ui-muted);line-height:1.6}
+html:root .expedition-progress>strong{font-size:36px;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+html:root .expedition-map{gap:16px}
+html:root .solo-page .chapter-zone{padding:0;gap:0;border-radius:var(--ui-radius-card);grid-template-columns:200px minmax(0,1fr);min-height:260px}
+html:root .chapter-art{border-radius:0;box-shadow:none}
+html:root .chapter-content{padding:24px}
+html:root .chapter-content h2{font-size:22px;line-height:1.4;color:var(--ui-ink)}
+html:root .chapter-meta{font-size:11px;letter-spacing:0;color:var(--ui-muted)}
+html:root .chapter-meta b{border:0;border-radius:6px;font-size:11px;color:var(--ui-muted)}
+html:root .chapter-story{font-size:13px;min-height:44px}
+html:root .stage-route{gap:16px;margin-top:24px}
+html:root .route-stop b{font-size:13px}
+html:root .route-stop small{font-size:11px;line-height:1.6}
+html:root .solo-page .route-stop{border-color:var(--ui-line)}
+html:root .solo-page .solo-resume{padding:16px;border-radius:12px;background:var(--ui-surface);border-color:var(--ui-line);border-left:3px solid var(--ui-accent);color:var(--ui-ink);box-shadow:none}
+html:root .solo-resume span{color:var(--ui-muted)}
+html:root .solo-page .solo-how{padding:16px 20px;border-radius:20px;box-shadow:none}
+html:root .solo-how summary{min-height:32px;align-content:center;font-size:13px}
+html:root .solo-page .solo-play{border-radius:20px;padding:24px;margin:24px auto}
+html:root .solo-play-heading button{min-height:44px;padding:8px 12px;font-size:12px;border-radius:12px}
+html:root .solo-play-heading>b{min-height:44px;display:flex;align-items:center;border-radius:12px}
+html:root .solo-page .solo-primary{min-height:44px;background:var(--ui-accent);color:var(--ui-accent-ink);border-color:transparent;border-radius:12px;box-shadow:none}
+html:root .solo-page button:not(.route-stop):not(.solo-resume):not(.solo-abandon):not(.solo-primary):not(.green):not(.yellow):not(.gray){box-shadow:none}
+html:root .solo-page .story-transmission,html:root .solo-page .solo-result{border-radius:12px;box-shadow:none}
+html:root .story-transmission p{font-size:12px;line-height:1.7}
+html:root .solo-page :is(button,a,summary,input):focus-visible{outline:3px solid var(--ui-focus);outline-offset:3px}
+@media(max-width:700px){html:root .solo-page{padding:16px 12px 40px}html:root .solo-nav strong{font-size:22px}html:root .solo-summary{gap:16px}html:root .solo-summary>span{font-size:18px}html:root .expedition-heading h1{font-size:24px}html:root .solo-page .chapter-zone{grid-template-columns:1fr}html:root .chapter-art{height:120px}html:root .chapter-content{padding:20px 16px}html:root .stage-route{gap:12px}html:root .route-stop small{font-size:10px}html:root .solo-page .solo-play{padding:16px}html:root .solo-resume{flex-wrap:wrap}}
+
+/* Play uses the room's tile / key vocabulary and input → keys → submit order. */
+html:root .solo-page[data-playing=true]>.solo-summary,html:root .solo-page[data-playing=true]>.solo-save-note{display:none}
+html:root .solo-page .solo-play{max-width:570px;padding:24px 32px}
+html:root .solo-play .mission-banner{margin:16px 0 8px}
+html:root .solo-mission-story{font-size:12px;color:var(--ui-muted);margin-bottom:16px}
+html:root .solo-mission-story summary{cursor:pointer;padding:8px 0}
+html:root .solo-mission-story p{padding:12px;background:var(--ui-surface-muted);border-radius:12px;line-height:1.7}
+html:root .solo-play-meta{display:flex;justify-content:space-between;font-size:12px;margin-bottom:16px}
+html:root .solo-board{width:100%;max-width:350px;margin:0 auto 20px;gap:8px}
+html:root .solo-tile{height:auto;aspect-ratio:1;border-radius:12px;font:700 clamp(20px,3vw,28px) var(--font-game)}
+html:root .solo-play form{display:block;margin:0}
+html:root .solo-play .game-input-control{width:100%}
+html:root .solo-play input{height:48px;text-align:center;font-size:16px;padding:12px}
+html:root .solo-keyboard{margin-top:16px;gap:6px}
+html:root .solo-keyboard>div{gap:6px}
+html:root .solo-keyboard .key{height:46px;border-radius:10px;font:700 20px var(--font-game);padding:0}
+html:root .solo-keyboard>div:last-child{padding:0 26px}
+html:root .solo-tile.green,html:root .solo-keyboard .key.green{background:#64af94!important;border-color:#64af94!important;color:#fff!important}
+html:root .solo-tile.yellow,html:root .solo-keyboard .key.yellow{background:#ebc65f!important;border-color:#ebc65f!important;color:#393724!important}
+html:root .solo-tile.gray,html:root .solo-keyboard .key.gray{background:#cbd3df!important;border-color:#cbd3df!important;color:#5f6d85!important}
+html:root .solo-submit{display:block;width:100%;margin-top:16px;font-family:var(--font-game);font-size:16px}
+html:root .solo-play .legend{margin-top:16px;padding-top:16px;border-top:1px solid var(--ui-line);font-size:12px;color:var(--ui-muted)}
+@media(max-width:700px){html:root .solo-page .solo-play{padding:16px}html:root .solo-board{max-width:300px;gap:6px}html:root .solo-keyboard .key{font-size:18px;height:42px}html:root .solo-keyboard>div{gap:4px}html:root .solo-keyboard>div:last-child{padding:0 20px}}
+
+/* Kongal apartment: a spatial stage picker, rather than a chapter feed. */
+.kongal-quest-heading{display:flex;align-items:center;justify-content:space-between;margin:24px 0}.kongal-quest-heading h1{font-size:32px;margin-top:6px;letter-spacing:-1px}.kongal-quest-heading>div>span{font-size:12px;color:var(--ui-muted)}.quest-total{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums}.quest-total small{font-size:12px;color:var(--ui-muted)}
+.kongal-quest{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:start;padding:8px 0 24px}.quest-building{max-width:460px;width:100%;margin:auto;padding:0 12px}.quest-roof{height:64px;position:relative;display:flex;justify-content:center;align-items:center;background:#6f829a;border:5px solid #536982;border-bottom:0;border-radius:32px 32px 0 0;margin:0 16px;color:#fff;font:700 17px var(--font-game);letter-spacing:3px}.quest-roof:before{content:'';position:absolute;top:-18px;right:46px;width:8px;height:18px;background:#536982;border-radius:4px 4px 0 0}.quest-floors{border:7px solid #536982;border-radius:12px;background:#536982;display:grid;gap:5px;box-shadow:10px 12px 0 #53698218}
+html:root .solo-page .quest-floor{display:flex;align-items:center;gap:12px;min-height:98px;padding:8px 16px;border:2px solid transparent;border-radius:6px;background:color-mix(in srgb,var(--floor-color) 13%,var(--ui-surface));color:var(--ui-ink);box-shadow:none;position:relative;transition:background .18s,transform .18s}
+html:root .solo-page .quest-floor.selected{border-color:var(--floor-color);background:color-mix(in srgb,var(--floor-color) 24%,var(--ui-surface));transform:translateX(8px);box-shadow:3px 4px 0 #26345112}
+.quest-floor-number{font:700 26px var(--font-game);width:28px;display:flex;flex-direction:column;align-items:center}.quest-floor-number small{font:500 10px var(--font-body);margin-top:2px}.quest-friend .kongal-avatar{width:72px;height:76px;display:block}.quest-floor.sealed .quest-friend{filter:saturate(.25);opacity:.6}.quest-windows{display:flex;gap:8px;flex:1;justify-content:center}.quest-windows i{display:grid;place-items:center;width:32px;height:40px;border:3px solid #53698244;border-radius:9px 9px 4px 4px;background:#53698222;color:var(--ui-muted);font-style:normal}.quest-windows .lit{background:#ffdf85;color:#917224;box-shadow:0 0 15px #ffdf8550;border-color:#d1af65}.quest-windows .next{border-color:var(--floor-color);color:var(--ui-ink)}.quest-floor-state{font-size:10px;color:var(--ui-muted);writing-mode:vertical-rl;letter-spacing:2px}.quest-building-base{height:48px;display:flex;align-items:center;justify-content:center;gap:16px;color:var(--ui-muted);font-size:11px}.quest-building-base i{width:24px;height:26px;background:#91b59c;border-radius:50% 50% 5px 5px}
+.quest-destination{padding:24px;border:1px solid var(--ui-line);border-radius:20px;background:var(--ui-surface);box-shadow:var(--ui-shadow)}.quest-destination-top{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ui-muted)}.quest-destination-top>span{font-family:var(--font-game);font-size:18px;color:var(--ui-ink)}.quest-destination-top b{font-weight:500}.quest-character-scene{height:220px;position:relative;display:flex;align-items:flex-end;justify-content:center;margin:8px 0 12px;background:radial-gradient(ellipse at 50% 75%,color-mix(in srgb,var(--floor-color) 18%,transparent),transparent 65%)}.quest-character-scene>.kongal-avatar{width:180px;height:180px;position:relative;z-index:1;animation:questFloat 3s ease-in-out infinite}.quest-speech{position:absolute;top:4px;font-size:12px;padding:9px 14px;background:var(--ui-surface);border:1px solid var(--ui-line);border-radius:14px;color:var(--ui-ink)}.quest-scene-shadow{position:absolute;bottom:0;width:100px;height:12px;border-radius:50%;background:#53698216}.quest-destination h2{text-align:center;font-size:24px;margin:16px 0 4px}.quest-mission{text-align:center;font-size:12px;color:var(--ui-muted);margin-bottom:24px}.quest-stage-list{display:grid;gap:8px}
+html:root .solo-page .quest-stage{display:flex;align-items:center;gap:12px;width:100%;min-height:72px;text-align:left;padding:12px;border:1px solid var(--ui-line);border-radius:12px;background:var(--ui-surface-muted);color:var(--ui-ink);box-shadow:none}
+html:root .solo-page .quest-stage.current:not(:disabled){border-color:var(--ui-accent);background:color-mix(in srgb,var(--ui-accent) 16%,var(--ui-surface))}.quest-stage-number{font:700 20px var(--font-game);color:var(--ui-muted)}.quest-stage strong{display:block;font-size:13px}.quest-stage small{display:block;font-size:10px;color:var(--ui-muted);margin-top:4px}.quest-stage-action{margin-left:auto;text-align:right;font-size:12px;white-space:nowrap}.quest-stage-action small{color:#b3984d;letter-spacing:2px}.quest-story{margin-top:16px;font-size:12px;color:var(--ui-muted);line-height:1.7}.quest-story summary{cursor:pointer;padding:8px 0}.quest-story p{margin-top:8px}
+@keyframes questFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-5px) rotate(2deg)}}
+@media(max-width:760px){.kongal-quest{grid-template-columns:1fr;gap:24px}.quest-building{max-width:400px}.quest-friend .kongal-avatar{width:54px;height:58px}html:root .solo-page .quest-floor{min-height:74px;padding:6px 12px}.quest-windows i{height:32px;width:28px}.quest-destination{padding:20px}.quest-character-scene{height:180px}.quest-character-scene>.kongal-avatar{height:145px;width:145px}}
+@media(prefers-reduced-motion:reduce){.quest-character-scene>.kongal-avatar{animation:none}html:root .solo-page .quest-floor{transition:none}}
+html:root .solo-page .quest-floor{background:color-mix(in srgb,var(--floor-color) 12%,#f3f5f8)}
+html:root .solo-page .quest-floor.selected{background:color-mix(in srgb,var(--floor-color) 25%,#fff)}
+html:root[data-theme=dark] .solo-page .quest-floor{background:color-mix(in srgb,var(--floor-color) 12%,#273142)}
+html:root[data-theme=dark] .solo-page .quest-floor.selected{background:color-mix(in srgb,var(--floor-color) 25%,#273142)}
+.solo-rewards{margin:24px 0;padding:20px;border:1px solid var(--ui-line);border-radius:20px;background:var(--ui-surface)}.solo-rewards header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.solo-rewards h2{font-size:18px}.solo-rewards header>span{font-size:12px;color:var(--ui-muted)}.solo-reward-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.solo-reward-grid article{text-align:center;padding:12px 8px;border-radius:12px;background:var(--ui-surface-muted)}.solo-reward-grid .kongal-avatar{width:100%;height:140px}.solo-reward-grid strong{display:block;font-size:13px;line-height:1.6}.solo-reward-grid small{display:block;margin:8px 0;color:var(--ui-muted);font-size:11px}.solo-reward-state{font-size:11px;color:var(--ui-muted)}.solo-rewards>p{font-size:12px;color:var(--ui-muted);line-height:1.7;margin-top:12px}.solo-reward-grid article[data-earned=true]{box-shadow:inset 0 0 0 1px #d9bc6b}.solo-friend-thanks{display:flex;align-items:center;gap:16px}.solo-friend-thanks .kongal-avatar{width:120px;height:130px}.solo-friend-thanks p{font-size:13px}.solo-play .solo-reward-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.solo-play .solo-reward-grid .kongal-avatar{height:100px}.solo-rewards.celebrate{animation:successArrive .5s ease-out}
+@media(max-width:700px){.solo-reward-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.solo-reward-grid .kongal-avatar{height:120px}}
+
+.quest-ending{display:flex;align-items:center;gap:24px;padding:20px;border:1px solid #d8bb6b;border-radius:20px;background:var(--ui-surface);animation:successArrive .6s ease-out}.quest-ending .kongal-avatar{width:120px;height:140px}.quest-ending h2{font-size:20px}.quest-ending p{font-size:13px;line-height:1.7;color:var(--ui-muted);margin:8px 0}.quest-ending strong{font-size:13px;color:#a88a32}
