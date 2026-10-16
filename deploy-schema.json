@@ -22,5 +22,6 @@
   "0020_speed_competition.sql": "08fa3b35782764c1a4c9b613daf690333429d6260c079a97dc0d10de411fa8a2",
   "0021_companions.sql": "db43ba7373908d760f6f4fb96c4f9fac544427935ffed39169b6ab6721adc79b",
   "0022_room_invitations.sql": "391af349cfa4edb7e28076896cd9c439a85a451f6d1e5d29c50cd1a538fd8eb0",
-  "0023_skin_shop.sql": "af619ebcac2c1307ac0f26f7126c33a48ffebf9ac4b867a86c0e8f0914b9ca9f"
+  "0023_skin_shop.sql": "af619ebcac2c1307ac0f26f7126c33a48ffebf9ac4b867a86c0e8f0914b9ca9f",
+  "0024_card_skins.sql": "76f1c480fa32e689bc3d4c68e2e1c681e4dd50660c326cf75e1479df709eda88"
 }
