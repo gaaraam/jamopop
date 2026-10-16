@@ -16,7 +16,7 @@ test('gold accrual, daily bonus, guest linkage, safe purchases and skin propagat
  const store=save('store','export const {one,all,database}=globalThis.__shopStore;');
  const account=save('account',"export const accountId=r=>r.headers.get('test-user'); export const avatarAccess=async()=>['🐱','🐰','🐻','🦊','🐸'];");
  const compile=(file,name,maps)=>{let s=ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;for(const [key,url]of Object.entries(maps))s=s.replaceAll("'"+key+"'",JSON.stringify(url));return save(name,s)};
- const skins=compile('lib/skins.ts','skins',{}),shop=compile('lib/shop.ts','shop',{'./store':store}),{shopState}=await import(shop);
+ const skins=compile('lib/skins.ts','skins',{}),shop=compile('lib/shop.ts','shop',{'./store':store,'./skins':skins}),{shopState}=await import(shop);
  const {GET,POST}=await import(compile('app/api/shop/route.ts','route',{'@/lib/store':store,'@/lib/account':account,'@/lib/skins':skins,'@/lib/shop':shop}));
  const request=(id,body,origin='https://test.local')=>new Request('https://test.local/api/shop',{method:body?'POST':'GET',headers:{...(id?{'test-user':id}:{}),origin,'content-type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
  db.exec("INSERT INTO rooms(id,name,host_id,created_at) VALUES('room','QA','m',1),('guestroom','guest','guest',1),('newroom','new','new',1); INSERT INTO profiles(id,name,avatar,created_at) VALUES('A','A','🐱',1),('B','B','🐱',1); INSERT INTO members(id,room_id,token_hash,name,avatar,last_seen,account_id) VALUES('m','room','token','A','🐱',1,'A'),('b','room','btoken','B','🐱',1,'B'),('guest','guestroom','gtoken','guest','🐱',1,NULL);");
@@ -44,5 +44,24 @@ test('gold accrual, daily bonus, guest linkage, safe purchases and skin propagat
  db.exec("INSERT INTO speed_rounds(id,room_id,theme,answers,starts_at,ends_at) VALUES('speed','room','qa','[]',1,9999999999999)");db.prepare('INSERT INTO speed_plays(round_id,member_id,state,updated_at) VALUES(?,?,?,?)').run('speed','m',JSON.stringify(speedState),1760000000000);
  assert.equal((await shopState('A')).balance,40,'speed bundle rewards once');db.exec("UPDATE speed_plays SET state=state WHERE round_id='speed'");assert.equal((await shopState('A')).balance,40);
  play('won','daily','m',1);assert.equal((await shopState('A')).balance,100,'next Korean day bonus');
- }finally{db.close();delete globalThis.__shopStore;rmSync(dir,{recursive:true,force:true})}
+
+ // Legacy progress grants cosmetics without purchases or gold mutations.
+ const balanceBefore=(await shopState('A')).balance;
+ assert.equal((await POST(request('A',{action:'equip',skin:'solo-detective-cat'}))).status,403);
+ const best=Object.fromEntries(Array.from({length:15},(_,i)=>[i+1,1]));
+ db.prepare('INSERT INTO solo_progress(owner,state,revision) VALUES(?,?,0)').run('account:A',JSON.stringify({best}));
+ assert.deepEqual((await shopState('A')).owned.filter(x=>x.startsWith('solo-')),['solo-detective-cat','solo-archive-bear','solo-rescue-penguin']);
+ assert.equal((await POST(request('A',{action:'buy',skin:'solo-rescue-penguin'}))).status,400);
+ assert.equal((await POST(request('A',{action:'equip',skin:'solo-rescue-penguin'}))).status,200,'earned reward bypasses base level gate');
+ assert.equal(db.prepare("SELECT skin_id FROM members WHERE id='m'").get().skin_id,'solo-rescue-penguin');
+ assert.equal((await POST(request('B',{action:'equip',skin:'solo-rescue-penguin'}))).status,403,'another account cannot claim reward');
+ assert.equal((await shopState('A')).balance,balanceBefore);
+ assert.equal(db.prepare("SELECT COUNT(*) n FROM skin_purchases WHERE skin_id LIKE 'solo-%'").get().n,0);
+ best[1]=3;db.prepare('UPDATE solo_progress SET state=? WHERE owner=?').run(JSON.stringify({best}),'account:A');assert(!(await shopState('A')).owned.includes('solo-golden-penguin'));
+ for(let i=1;i<=15;i++)best[i]=3;
+ db.prepare('UPDATE solo_progress SET state=? WHERE owner=?').run(JSON.stringify({best}),'account:A');
+ assert((await shopState('A')).owned.includes('solo-golden-penguin'));
+ assert.equal((await POST(request('A',{action:'equip',skin:'solo-golden-penguin'}))).status,200);
+ assert.equal((await shopState('A')).balance,balanceBefore);
+  }finally{db.close();delete globalThis.__shopStore;rmSync(dir,{recursive:true,force:true})}
 });
