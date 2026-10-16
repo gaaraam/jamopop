@@ -12,11 +12,12 @@ import {Announcement} from '@/components/announcement';
 import './announcement.css';
 import './typography.css';
 import './design-system.css';
+import './room-system.css';
 import {AppearanceProvider} from "@/components/theme";
 import {LegalLinks} from "@/components/legal/document";
 
 export const metadata: Metadata = {
-  title: "자음모음팝 | 동료들과 한 판",
+  title: "자음모음팝",
   description: "자음모음팝 — 동료들과 함께 푸는 한글 단어 게임.",
   icons: {
     icon: "/favicon.svg",
