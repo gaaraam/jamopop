@@ -19,7 +19,7 @@ html[data-theme=dark] .chapter-zone{background:#222c3d;border-color:#354156}html
 .chapter-meta b{padding:4px 9px;border-radius:20px;border:1px solid var(--solo-line);background:var(--solo-inner);font-size:10px}.chapter-meta{align-items:center}.chapter-story{color:var(--solo-muted)}
 .solo-page .route-stop:disabled{opacity:.72}.solo-page .route-stop.cleared:disabled{opacity:1}.solo-page .route-stop{transition:transform .16s,color .16s}.solo-page .route-stop:hover:not(:disabled){transform:translateY(-2px)}
 .solo-page .solo-resume{background:linear-gradient(125deg,#fff1bd99,#fff7df55);border-color:#fff4cddd;box-shadow:inset 0 1px 0 #fff9,0 8px 24px #b6984010;border-radius:19px;backdrop-filter:blur(18px)}
-.solo-page button:not(.route-stop):not(.solo-resume):not(.solo-abandon):not(.solo-primary):not(.green):not(.yellow):not(.gray){background:var(--solo-inner);border-color:var(--solo-line);box-shadow:inset 0 1px 0 #ffffff55,0 3px 8px #30456709}
+.solo-page button:not(.quest-floor):not(.quest-stage):not(.route-stop):not(.solo-resume):not(.solo-abandon):not(.solo-primary):not(.green):not(.yellow):not(.gray){background:var(--solo-inner);border-color:var(--solo-line);box-shadow:inset 0 1px 0 #ffffff55,0 3px 8px #30456709}
 .solo-page .solo-primary{background:linear-gradient(135deg,#fce69b,#efd074);border-color:#fff2b2;box-shadow:inset 0 1px 0 #fff8,0 5px 13px #bb96351c}
 .solo-play{border-radius:28px}.solo-page .solo-play input{background:var(--solo-inner);border-color:var(--solo-line);box-shadow:inset 0 1px 3px #5267890a;color:inherit}.solo-tile:not(.green):not(.yellow):not(.gray){background:var(--solo-inner);border-color:var(--solo-line);box-shadow:inset 0 1px 0 #ffffff66,0 2px 5px #52678908}.solo-tile.current-row{outline:1px solid #9facc26b;outline-offset:-1px}
 .story-transmission,.solo-result{background:var(--solo-inner);border:1px solid var(--solo-line);border-radius:16px;box-shadow:inset 0 1px 0 #ffffff44}.story-transmission p,.solo-result .story-clear{color:var(--solo-muted)}.solo-play-heading>b{padding:5px 11px;border:1px solid var(--solo-line);border-radius:12px;background:var(--solo-inner);font-size:19px}.solo-keyboard button{box-shadow:inset 0 1px 0 #ffffff50,0 2px 4px #33415c10}.solo-how{border-radius:20px}
@@ -67,7 +67,7 @@ html:root .solo-page .solo-play{border-radius:20px;padding:24px;margin:24px auto
 html:root .solo-play-heading button{min-height:44px;padding:8px 12px;font-size:12px;border-radius:12px}
 html:root .solo-play-heading>b{min-height:44px;display:flex;align-items:center;border-radius:12px}
 html:root .solo-page .solo-primary{min-height:44px;background:var(--ui-accent);color:var(--ui-accent-ink);border-color:transparent;border-radius:12px;box-shadow:none}
-html:root .solo-page button:not(.route-stop):not(.solo-resume):not(.solo-abandon):not(.solo-primary):not(.green):not(.yellow):not(.gray){box-shadow:none}
+html:root .solo-page button:not(.quest-floor):not(.quest-stage):not(.route-stop):not(.solo-resume):not(.solo-abandon):not(.solo-primary):not(.green):not(.yellow):not(.gray){box-shadow:none}
 html:root .solo-page .story-transmission,html:root .solo-page .solo-result{border-radius:12px;box-shadow:none}
 html:root .story-transmission p{font-size:12px;line-height:1.7}
 html:root .solo-page :is(button,a,summary,input):focus-visible{outline:3px solid var(--ui-focus);outline-offset:3px}
@@ -122,3 +122,27 @@ html:root[data-theme=dark] .solo-page .quest-floor.selected{background:color-mix
 html:root .solo-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;padding:0;margin:0 0 12px;border:1px solid var(--ui-line);border-radius:16px;background:var(--ui-surface);max-width:620px}
 .solo-stat{display:flex;align-items:center;gap:12px;padding:16px 20px;min-width:0}.solo-stat+.solo-stat{border-left:1px solid var(--ui-line)}.solo-stat>svg{width:22px;height:22px;color:var(--ui-muted);flex-shrink:0}.solo-stat:first-child>svg{color:#c29b37;fill:#eacb6930}.solo-stat>div{display:flex;flex-direction:column;gap:5px}.solo-stat>div>span{font-size:11px;font-weight:500;color:var(--ui-muted);white-space:nowrap}.solo-stat strong{display:flex;align-items:baseline;gap:8px;font:700 22px var(--font-game);font-variant-numeric:tabular-nums;line-height:1.2}.solo-stat strong small{font:500 11px var(--font-body);color:var(--ui-muted);white-space:nowrap}.quest-stage-action small{display:flex;justify-content:flex-end;gap:3px}.solo-clear-stars{display:flex;justify-content:center;gap:8px;color:#c6a044;padding:12px 0}
 @media(max-width:600px){.solo-stat{padding:12px 10px;gap:8px}.solo-stat>svg{width:17px;height:17px}.solo-stat strong{font-size:18px;gap:5px}.solo-stat strong small{font-size:10px}}
+
+/* A warm toy-house scene, with curtains rather than grayscale lock states. */
+.quest-building{position:relative;isolation:isolate;padding:36px 18px 0;border-radius:100px 100px 36px 36px;background:linear-gradient(#dff3fa99,#f5edff55 70%,#d9edcf88);overflow:visible}
+.quest-building:before,.quest-building:after{content:'';position:absolute;z-index:-1;pointer-events:none;background:#fff;border-radius:40px;box-shadow:18px -10px 0 -3px #fff,-14px -5px 0 -3px #fff}
+.quest-building:before{width:65px;height:22px;left:-12px;top:65px}.quest-building:after{width:48px;height:19px;right:-8px;top:22px}
+.quest-roof{height:70px;margin:0 12px;background:repeating-linear-gradient(90deg,#e99d96 0 34px,#f4b4a8 34px 38px);border:4px solid #cb827c;border-bottom:0;border-radius:50px 50px 8px 8px;color:#68453e;box-shadow:inset 0 5px 0 #ffd8c7}
+.quest-roof span{background:#fff7dc;padding:8px 20px;border:2px solid #e9c799;border-radius:12px;font-size:15px;letter-spacing:1px;transform:rotate(-3deg)}
+.quest-roof:before{width:24px;height:35px;right:38px;top:-26px;background:#eab799;border:3px solid #cd967f;border-radius:6px;z-index:-1}
+.quest-floors{border:6px solid #e6cba7;background:#f4dfbc;gap:5px;border-radius:14px;box-shadow:7px 9px 0 #bf9f7530,inset 0 0 0 2px #fff2d9}
+html:root .solo-page .quest-floor{background:color-mix(in srgb,var(--floor-color) 16%,#fff9ec);border-color:#fff9ec;border-radius:10px;color:#655447}
+html:root .solo-page .quest-floor.selected{background:#fff0c9;border-color:#e7b85a;box-shadow:3px 4px 0 #d5ad6938;transform:translateX(6px)}
+.quest-floor-number{color:#a7866b}.quest-floor-state{color:#897563}.quest-floor.sealed .quest-friend{filter:none;opacity:.85}
+.quest-windows i{position:relative;width:34px;height:42px;border:3px solid #d6af85;border-bottom-width:5px;border-radius:13px 13px 5px 5px;background:#cde6ea;color:#6b9aab;box-shadow:0 3px 0 #c9a47c20}
+.quest-floor.sealed .quest-windows i{background:repeating-linear-gradient(90deg,#dccce6 0 6px,#e7dbef 6px 12px);color:#aa93b5;border-color:#d3bca7}
+.quest-windows .next{background:#fff2be;border-color:#dbb874;color:#ab853e}.quest-windows .lit{background:#ffdf85;border-color:#d5a854;color:#a77c26;box-shadow:0 0 14px #ffdd8c88}
+.quest-building-base{height:62px;color:#71876b;font-size:11px}.quest-building-base i{width:35px;height:29px;background:#a2c993;border:3px solid #8eb781;border-radius:22px 22px 8px 8px;box-shadow:9px 0 0 -3px #bed6a6,-7px 2px 0 -3px #bed6a6;position:relative}.quest-building-base i:after{content:'';position:absolute;top:3px;left:11px;width:7px;height:7px;background:#f5baae;border-radius:50%;box-shadow:0 0 0 3px #ffe4ac}
+html:root[data-theme=dark] .quest-building{background:linear-gradient(#273d59aa,#44385266 75%,#344b3b88)}
+html:root[data-theme=dark] .quest-building:before,html:root[data-theme=dark] .quest-building:after{opacity:.25}
+html:root[data-theme=dark] .quest-roof{filter:brightness(.8)}
+html:root[data-theme=dark] .quest-floors{background:#796554;border-color:#947d65}
+html:root[data-theme=dark] .solo-page .quest-floor{background:color-mix(in srgb,var(--floor-color) 25%,#3e3a42);border-color:#8b7869;color:#f4e9dc}
+html:root[data-theme=dark] .solo-page .quest-floor.selected{background:#685c46;border-color:#ddbc77}
+html:root[data-theme=dark] .quest-floor-number,html:root[data-theme=dark] .quest-floor-state{color:#e2cbb2}
+@media(max-width:760px){.quest-building{padding:30px 14px 0;max-width:390px}.quest-roof{height:58px}.quest-windows i{width:28px;height:34px}}
