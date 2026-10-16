@@ -11,14 +11,14 @@ test('gold accrual, daily bonus, guest linkage, safe purchases and skin propagat
  try{
  for(const f of readdirSync('drizzle').filter(x=>x.endsWith('.sql')).sort())db.exec(readFileSync('drizzle/'+f,'utf8'));
  const prepare=sql=>({bind(...args){return {run:()=>({meta:{changes:db.prepare(sql).run(...args).changes}})}}});
- globalThis.__shopStore={one:async(sql,...args)=>db.prepare(sql).get(...args)||null,all:async(sql,...args)=>db.prepare(sql).all(...args),database:()=>({prepare,batch:async qs=>{db.exec('BEGIN');try{const r=qs.map(q=>q.run());db.exec('COMMIT');return r}catch(e){db.exec('ROLLBACK');throw e}}})};
+ globalThis.__shopStore={run:async(sql,...args)=>({meta:{changes:db.prepare(sql).run(...args).changes}}),one:async(sql,...args)=>db.prepare(sql).get(...args)||null,all:async(sql,...args)=>db.prepare(sql).all(...args),database:()=>({prepare,batch:async qs=>{db.exec('BEGIN');try{const r=qs.map(q=>q.run());db.exec('COMMIT');return r}catch(e){db.exec('ROLLBACK');throw e}}})};
  const save=(name,code)=>{const p=join(dir,name+'.mjs');writeFileSync(p,code);return pathToFileURL(p).href};
- const store=save('store','export const {one,all,database}=globalThis.__shopStore;');
+ const store=save('store','export const {one,all,run,database}=globalThis.__shopStore;');
  const account=save('account',"export const accountId=r=>r.headers.get('test-user'); export const avatarAccess=async()=>['🐱','🐰','🐻','🦊','🐸'];");
  const compile=(file,name,maps)=>{let s=ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;for(const [key,url]of Object.entries(maps))s=s.replaceAll("'"+key+"'",JSON.stringify(url));return save(name,s)};
  const cardSkins=compile('lib/card-skins.ts','card-skins',{});
  const skins=compile('lib/skins.ts','skins',{}),shop=compile('lib/shop.ts','shop',{'./store':store,'./skins':skins}),{shopState}=await import(shop);
- const {GET,POST}=await import(compile('app/api/shop/route.ts','route',{'@/lib/card-skins':cardSkins,'@/lib/store':store,'@/lib/account':account,'@/lib/skins':skins,'@/lib/shop':shop}));
+ const {GET,POST}=await import(compile('app/api/shop/route.ts','route',{'@/lib/furniture':compile('lib/furniture.ts','furniture',{}),'@/lib/card-skins':cardSkins,'@/lib/store':store,'@/lib/account':account,'@/lib/skins':skins,'@/lib/shop':shop}));
  const request=(id,body,origin='https://test.local')=>new Request('https://test.local/api/shop',{method:body?'POST':'GET',headers:{...(id?{'test-user':id}:{}),origin,'content-type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
  db.exec("INSERT INTO rooms(id,name,host_id,created_at) VALUES('room','QA','m',1),('guestroom','guest','guest',1),('newroom','new','new',1); INSERT INTO profiles(id,name,avatar,created_at) VALUES('A','A','🐱',1),('B','B','🐱',1); INSERT INTO members(id,room_id,token_hash,name,avatar,last_seen,account_id) VALUES('m','room','token','A','🐱',1,'A'),('b','room','btoken','B','🐱',1,'B'),('guest','guestroom','gtoken','guest','🐱',1,NULL);");
  let n=0;
@@ -82,5 +82,34 @@ test('gold accrual, daily bonus, guest linkage, safe purchases and skin propagat
  assert.equal((await shopState('A')).cardEquipped,null);
  assert((await shopState('A')).owned.includes('card-starlight'));
  assert.deepEqual(db.prepare("SELECT avatar,skin_id FROM profiles WHERE id='A'").get(),characterBefore);
+
+ // Premium skins charge server prices, then furniture uses the same wallet exactly once.
+ assert.equal((await POST(request('A',{action:'buy',skin:'rare-royal-cat',price:1}))).status,409);
+ for(let i=0;i<100;i++)play();
+ let wallet=(await shopState('A')).balance;
+ assert.equal((await POST(request('A',{action:'buy',skin:'rare-royal-cat',price:1}))).status,200);
+ assert.equal((await shopState('A')).balance,wallet-1600);
+ assert.equal((await POST(request('A',{action:'equip',skin:'rare-royal-cat'}))).status,200);
+ wallet=(await shopState('A')).balance;
+ const furnitureBuys=await Promise.all(Array.from({length:5},()=>POST(request('A',{action:'buy',slot:'home',skin:'home-sofa',price:0}))));
+ assert(furnitureBuys.every(r=>r.status===200));assert.equal((await shopState('A')).balance,wallet-450);
+ assert.equal((await POST(request('B',{action:'buy',slot:'home',skin:'home-aquarium'}))).status,409);
+ assert.equal((await POST(request('A',{action:'equip',slot:'home',skin:'home-sofa'}))).status,400);
+ const furniture=compile('lib/furniture.ts','home-furniture',{});
+ const home=await import(compile('app/api/home/route.ts','home-route',{'@/lib/account':account,'@/lib/store':store,'@/lib/furniture':furniture}));
+ assert.equal((await home.GET(request(null))).status,401);
+ const initial=await (await home.GET(request('A'))).json();assert.equal(initial.revision,0);assert(initial.owned.includes('home-sofa'));
+ const layout=[{id:'home-sofa',x:25,y:70,flipped:true}];
+ assert.equal((await home.POST(request('A',{revision:0,layout},'https://evil.test'))).status,403);
+ assert.equal((await home.POST(request('B',{revision:0,layout}))).status,400,'cannot place unowned furniture');
+ for(const bad of [[...layout,...layout],[{...layout[0],x:100}],[{...layout[0],id:'not-real'}],[{...layout[0],flipped:'false'}]])assert.equal((await home.POST(request('A',{revision:0,layout:bad}))).status,400);
+ const saves=await Promise.all([home.POST(request('A',{revision:0,layout})),home.POST(request('A',{revision:0,layout:[]}))]);
+ assert.deepEqual(saves.map(r=>r.status).sort(),[200,409]);
+ const saved=await (await home.GET(request('A'))).json();assert.deepEqual(saved.layout,layout);assert.equal(saved.revision,1);
+ assert.equal((await home.POST(request('A',{revision:0,layout:[]}))).status,409,'stale tab cannot overwrite');
+ assert.equal((await home.POST(request('A',{revision:1,layout:[]}))).status,200);
+ assert.deepEqual((await (await home.GET(request('A'))).json()).layout,[]);
+ assert.equal((await (await home.GET(request('B'))).json()).revision,0,'other account isolated');
+ assert.equal(db.prepare("SELECT skin_id FROM profiles WHERE id='A'").get().skin_id,'rare-royal-cat','home edits preserve character');
   }finally{db.close();delete globalThis.__shopStore;rmSync(dir,{recursive:true,force:true})}
 });

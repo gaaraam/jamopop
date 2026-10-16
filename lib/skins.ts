@@ -1,5 +1,12 @@
 export type Skin={id:string;name:string;avatar:string;price:number;box:string;source?:string;sheetSize?:number;reward?:string};
 export const SKINS:Skin[]=[
+ {id:'rare-moon-rabbit',name:'달의 정원사',avatar:'🐰',price:1500,box:'0 0 768 768',source:'/characters/rare-moon-rabbit.webp',sheetSize:768},
+ {id:'rare-aurora-fox',name:'오로라 구미호',avatar:'🦊',price:1800,box:'0 0 768 768',source:'/characters/rare-aurora-fox.webp',sheetSize:768},
+ {id:'rare-royal-cat',name:'별사탕 왕자',avatar:'🐱',price:1600,box:'0 0 768 768',source:'/characters/rare-royal-cat.webp',sheetSize:768},
+ {id:'rare-cloud-bear',name:'구름 위 낮잠',avatar:'🐻',price:1200,box:'0 0 768 768',source:'/characters/rare-cloud-bear.webp',sheetSize:768},
+ {id:'rare-coral-penguin',name:'진주빛 인어',avatar:'🐧',price:1500,box:'0 0 768 768',source:'/characters/rare-coral-penguin.webp',sheetSize:768},
+ {id:'rare-dragon-frog',name:'꼬마 용기사',avatar:'🐸',price:1800,box:'0 0 768 768',source:'/characters/rare-dragon-frog.webp',sheetSize:768},
+
  {id:'strawberry-cat',name:'딸기우유',avatar:'🐱',price:300,box:'40 0 430 510'},
  {id:'sleepy-rabbit',name:'잘자요',avatar:'🐰',price:400,box:'550 0 420 510'},
  {id:'honey-bear',name:'꿀단지',avatar:'🐻',price:400,box:'1040 0 420 510'},

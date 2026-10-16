@@ -37,6 +37,7 @@ test('real route: shared five-minute deadline, server expiry, reset, legacy and 
  urls['@/lib/round-timer']=pathToFileURL(resolve('lib/round-timer.ts')).href;
  function compile(file,name){let code=ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;for(const [from,to]of Object.entries(urls))code=code.replaceAll("'"+from+"'",JSON.stringify(to));return stub(name,code)}
  urls['./store']=urls['@/lib/store'];
+ urls['@/lib/room-password']=compile('lib/room-password.ts','room-password');
  urls['@/lib/competition']=compile('lib/competition.ts','competition');
  urls['./sync-policy.mjs']=urls['@/lib/sync-policy.mjs']=pathToFileURL(resolve('lib/sync-policy.mjs')).href;
  urls['@/lib/derived-cache']=compile('lib/derived-cache.ts','derived-cache');
