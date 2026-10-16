@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import ts from 'typescript';
+const code=ts.transpileModule(fs.readFileSync('lib/game.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
+const {splitWord}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+const input=fs.readFileSync(process.argv[2]);
+const words=[...new Set(input.toString().split(/\r?\n/).slice(1).map(line=>line.split('/')[0].normalize('NFC')).filter(word=>/^[가-힣]+$/.test(word)&&[5,6,7].includes(splitWord(word).length)))].sort();
+fs.writeFileSync('public/dictionaries/allowed-words.json',JSON.stringify(words));
+fs.writeFileSync('public/dictionaries/SOURCE.txt',`Input dictionary derived from hunspell-dict-ko 0.7.1, distributed by titoBouzout/Dictionaries.\nSource: https://raw.githubusercontent.com/titoBouzout/Dictionaries/master/Korean.dic\nSHA256: ${crypto.createHash('sha256').update(input).digest('hex')}\nCopyright: hunspell-dict-ko developers and contributors, dictionary contributors, National Institute of Korean Language and Urimalsaem contributors.\nChanges: NFC normalization; flags removed; only Hangul headwords whose expanded jamo length is 5, 6 or 7 retained; duplicates removed. No definitions or affix expansion included.\nDerived word data retains original licenses: MPL 1.1/GPL 2.0+/LGPL 2.1+ for applicable data, CC BY-SA 4.0 for other data. See NOTICE.txt.\nhttps://www.mozilla.org/MPL/1.1/\nhttps://creativecommons.org/licenses/by-sa/4.0/\nThe complete modified headword list is available as allowed-words.json alongside this notice.\n`);
+console.log({total:words.length,counts:Object.fromEntries([5,6,7].map(n=>[n,words.filter(w=>splitWord(w).length===n).length]))});

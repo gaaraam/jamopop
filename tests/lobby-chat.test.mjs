@@ -1,0 +1,18 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {DatabaseSync} from 'node:sqlite';import {readFileSync,readdirSync,mkdtempSync,writeFileSync,rmSync} from 'node:fs';import {tmpdir} from 'node:os';import {join} from 'node:path';import ts from 'typescript';import {pathToFileURL} from 'node:url';
+test('lobby chat: shared feed, private inquiries, idempotency, rate limit and deletion ownership',async()=>{
+ const db=new DatabaseSync(':memory:'),dir=mkdtempSync(join(tmpdir(),'bw-lobby-'));try{
+ for(const f of readdirSync('drizzle').filter(x=>x.endsWith('.sql')).sort())db.exec(readFileSync('drizzle/'+f,'utf8'));globalThis.__lobbyDB=db;
+ writeFileSync(join(dir,'store.mjs'),`export const one=async(s,...v)=>globalThis.__lobbyDB.prepare(s).get(...v);export const all=async(s,...v)=>globalThis.__lobbyDB.prepare(s).all(...v);export const run=async(s,...v)=>({meta:globalThis.__lobbyDB.prepare(s).run(...v)});`);
+ writeFileSync(join(dir,'account.mjs'),`export const accountId=r=>r.headers.get('test-user');export const isSiteAdmin=r=>accountId(r)==='admin';export const guestToken=r=>r.headers.get('test-guest')||'';export const tokenHash=async v=>v;`);
+ for(const [file,name]of [['lib/inquiries.ts','inquiries'],['app/api/lobby-chat/route.ts','route']]){const src=ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText.replaceAll('@/lib/account','./account.mjs').replaceAll('@/lib/store','./store.mjs').replaceAll('@/lib/inquiries','./inquiries.mjs');writeFileSync(join(dir,name+'.mjs'),src)}
+ const {GET,POST}=await import(pathToFileURL(join(dir,'route.mjs')));
+ const req=(user,body)=>new Request('https://test/api/lobby-chat',{method:body?'POST':'GET',headers:user?{'test-user':user}:{},...(body?{body:JSON.stringify(body)}:{})});const post=(u,b)=>POST(req(u,b));
+ const b={action:'chat_send',body:'안녕하세요 👋',name:'테스트',requestId:crypto.randomUUID()};let r=await post('one',b);assert.equal(r.status,200);const own=await r.json();assert.equal(own.messages[0].memberId,'me');assert.equal(own.messages[0].canDelete,true);assert.equal(own.messages[0].owner,undefined);
+ assert.equal((await post('one',b)).status,200);assert.equal(db.prepare('SELECT COUNT(*) n FROM lobby_messages').get().n,1);assert.equal((await post('one',{...b,body:'다른 내용'})).status,409);assert.equal((await post('one',{...b,requestId:crypto.randomUUID()})).status,429);
+ const other=await (await GET(req('two'))).json();assert.equal(other.messages[0].body,b.body);assert.equal(other.messages[0].canDelete,false);
+ assert.equal((await post('two',{action:'chat_delete',messageId:own.messages[0].id})).status,403);assert.equal((await post('admin',{action:'chat_delete',messageId:own.messages[0].id})).status,200);assert.equal((await (await GET(req('two'))).json()).messages[0].body,'');
+ const inquiry={...b,body:'@문의 비공개 테스트',requestId:crypto.randomUUID()};assert.ok((await (await post('one',inquiry)).json()).inquiryId);assert.equal(db.prepare('SELECT COUNT(*) n FROM lobby_messages').get().n,1);assert.equal(db.prepare('SELECT COUNT(*) n FROM inquiries').get().n,1);assert.equal(db.prepare('SELECT COUNT(*) n FROM chat_messages').get().n,0);
+ assert.equal((await post(null,b)).status,401);assert.ok((await GET(req(null))).headers.get('set-cookie').includes('HttpOnly'));assert.equal((await post('two',{...b,name:''})).status,400);
+ const cross=new Request('https://test/api/lobby-chat',{method:'POST',headers:{origin:'https://evil.test','test-user':'two'},body:JSON.stringify(b)});assert.equal((await POST(cross)).status,403);
+ }finally{db.close();delete globalThis.__lobbyDB;rmSync(dir,{recursive:true,force:true})}
+});

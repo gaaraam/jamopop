@@ -1,0 +1,30 @@
+.game-input-control{position:relative;min-width:0;width:100%}.round-options-toggle{display:none}
+@media(max-width:760px) and (pointer:coarse){
+ html,body{overflow-x:clip}input,textarea,select{font-size:16px!important}
+ .app.glass .app-header.polished-nav{min-height:48px;width:calc(100% - 16px);margin:6px 8px 0;padding:5px 8px;border-radius:16px;gap:4px}
+ .polished-nav .nav-room{padding:4px 7px;min-width:60px;max-width:100px}.polished-nav .nav-room small{display:none}.polished-nav .nav-room strong{font-size:13px}.polished-nav .nav-actions{gap:2px}.polished-nav .icon-btn{width:32px;height:34px}.polished-nav .nav-tools{padding:0;gap:0}.polished-nav .theme-switch{padding:4px}.polished-nav .theme-switch-track{width:25px}.polished-nav .nav-account{min-width:32px;padding:5px}
+ .app.glass .game-layout{display:flex;flex-direction:column;margin:8px auto;padding:0 8px;gap:12px}.game-layout>*,.social-panel{width:100%;min-width:0}
+ .app.glass .game-panel{position:relative;padding:10px 12px 12px;border-radius:20px}
+ .game-panel .game-heading{margin:0 0 6px;gap:5px}.game-panel .game-heading h1{font-size:18px}.game-panel .day-stamp{font-size:11px;padding:4px 6px}
+ .game-panel .round-timer{margin:0 0 6px;padding:5px 9px;min-height:30px;border-radius:10px}.game-panel .round-timer strong{font-size:18px}.game-panel .round-timer span{font-size:10px}
+ .game-panel .game-tabs{height:32px!important;padding:2px!important;margin:0!important}.game-panel .game-tabs button{font-size:12px;min-height:26px}
+ .round-options-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;padding:6px 2px;font-size:11px;color:var(--muted-foreground);min-height:28px}.round-options-body{display:none}.round-options[data-expanded=true]>.round-options-body{display:block}.round-options[data-expanded=true] .round-options-toggle svg{transform:rotate(180deg)}
+ .game-panel .round-controls{margin:0 0 6px;padding:8px;gap:6px}.game-panel .round-controls>span{font-size:11px;flex-basis:100%}.round-controls button,.round-controls select{padding:7px;min-height:36px;white-space:nowrap}.game-panel .forfeit-btn{padding:3px 0;font-size:11px}
+ .game-panel .board-wrap{max-width:100%;margin:6px auto}.main-board,.solo-board{--mobile-cell:clamp(32px,6svh,43px);gap:4px!important;width:min(100%,calc(var(--board-columns,5)*(var(--mobile-cell) + 4px) - 4px));margin-inline:auto}
+ .game-panel .tile,.solo-play .solo-tile{aspect-ratio:1;min-height:0;border-radius:8px;font-size:23px;border-width:1px}
+ .game-panel .input-area{margin:5px 0 3px;max-width:none}.game-input-control[data-touch=true]{display:flex;align-items:center;gap:4px}.game-panel .input-area input,.solo-play form input{height:36px;font-size:16px!important;padding:5px 8px;min-width:0;border-radius:10px}.game-input-control[data-touch=true] input{flex:1;width:0}
+ .game-panel .input-status{font-size:10px;line-height:14px;min-height:14px;margin-top:2px}
+ .game-panel .keyboard{margin-top:4px;gap:4px}.game-panel .key-row{gap:3px}.game-panel .key{height:40px;min-width:0;border-radius:7px;font-size:19px;touch-action:manipulation}.game-panel .submit{margin-top:6px;min-height:40px;padding:8px;font-size:15px;border-radius:11px}.game-panel .legend{margin-top:6px;padding-top:0;gap:12px;font-size:9px;border:0}
+ .speed-problems{margin:6px 0;gap:4px}.speed-problems button{padding:4px;min-height:34px}.speed-problems button b{font-size:14px}.speed-problems button small{font-size:10px}.speed-puzzle-actions .text-btn{padding:7px 0;font-size:11px}
+ .app:has(.game-chat){padding-bottom:64px}.game-chat.room-chat[data-open=false]{left:auto;right:10px;bottom:calc(8px + env(safe-area-inset-bottom));width:auto;padding:0;background:none!important;box-shadow:none}.game-chat[data-open=false] .chat-peek{display:none}.game-chat[data-open=false] .chat-toggle{min-height:40px;padding:9px 12px;background:#283248ed;border-radius:24px;box-shadow:0 3px 12px #17223a30;font-size:12px}.game-chat[data-open=false] .chat-toggle-hint{display:none}
+ .game-chat.room-chat[data-open=true]{padding-top:14px;background:linear-gradient(0deg,#111725fa,#111725f5 92%,#11172500)}.game-chat[data-open=true] .chat-panel{height:min(360px,60dvh)}
+ .friend-notifications{top:auto;bottom:calc(8px + env(safe-area-inset-bottom));left:10px;right:auto;gap:5px}.friend-notification-panel{top:auto;bottom:48px;left:0;right:auto}.friend-notification-trigger{min-height:40px}.friend-notification-trigger>span{display:none}
+ body:has(.game-chat[data-open=true]) .friend-notifications{display:none}
+ .solo-page{padding:8px}.solo-nav{padding:6px 10px;margin-bottom:8px}.solo-play{padding:12px!important}.solo-play .mission-banner{padding:6px;margin:4px 0}.solo-play .mission-banner h1{font-size:18px}.solo-play .story-transmission{display:none}.solo-play>p{font-size:11px}.solo-board{margin-block:8px!important}.solo-play form{margin-block:6px;gap:5px}.solo-keyboard{margin-top:6px}.solo-keyboard>div{gap:3px}.solo-keyboard button{min-height:40px;height:40px;font-size:19px}.solo-abandon{padding:7px;font-size:11px}
+}
+@media(max-width:760px) and (pointer:coarse){
+ .game-panel .game-heading{min-height:24px;padding-right:75px}.game-panel .day-stamp{display:none}.game-panel>.round-timer{position:absolute;right:12px;top:9px;margin:0;padding:3px 7px;min-height:25px}.game-panel>.round-timer span{display:none}.game-panel>.round-timer strong{font-size:16px}.game-panel>.round-timer svg{width:13px}
+ .main-board,.solo-board{--mobile-cell:clamp(28px,4.8svh,38px)}.game-panel .game-tabs{height:29px!important}.round-options-toggle{min-height:24px;padding:4px 2px}.game-panel .key{height:36px}.game-panel .input-area input{height:30px}.game-panel .legend{display:none}
+}
+
+@media(max-width:760px) and (pointer:coarse){.game-panel .key{height:clamp(36px,6svh,44px)}}

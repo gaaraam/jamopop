@@ -1,0 +1,30 @@
+/* A shared visual identity, sized by the existing avatar slot. */
+.kongal-avatar{display:inline-block;width:1.5em;height:1.5em;flex-shrink:0;vertical-align:middle;overflow:hidden;pointer-events:none}
+.avatar-picker .kongal-avatar{width:48px;height:48px}
+.room-member-avatar .kongal-avatar{width:100%;height:100%}
+.lobby-cast .kongal-avatar{width:1.15em;height:1.15em;min-width:28px;min-height:28px}
+.lounge-my-avatar .kongal-avatar{width:100%;height:100%}
+.public-profile-avatar .kongal-avatar{width:76px;height:76px}
+.chat-avatar .kongal-avatar{width:100%;height:100%}
+.entry-character .kongal-avatar{width:1.4em;height:1.4em}
+.cosmetics-preview .avatar-frame .kongal-avatar{width:100%;height:100%}
+@media(max-width:760px){.avatar-picker .kongal-avatar{width:40px;height:40px}}
+.avatar-picker button>span:has(.kongal-avatar){display:flex;align-items:center;justify-content:center;min-width:0;width:100%}
+.avatar-picker .kongal-avatar{max-width:100%}
+
+.avatar-picker .avatar-picker-name{font-size:11px;line-height:1.2;font-weight:650;white-space:nowrap}.avatar-picker.unlock-avatars button{height:auto;min-height:84px;gap:3px}
+
+/* Spend the existing participant-card whitespace on the character, not a taller card. */
+.glass .room-member-heading,.glass .room-member-heading:has(.member-chat-bubble){grid-template-columns:clamp(32px,36%,68px) minmax(0,1fr);grid-template-rows:1fr 1fr;column-gap:8px;row-gap:4px;align-content:center}
+.glass .room-member-heading>.room-member-avatar{grid-column:1;grid-row:1/3;align-self:center;justify-self:center;width:100%;height:auto;aspect-ratio:1;border-radius:18px}
+.glass .room-member-heading>.room-member-name{grid-column:2;grid-row:1;align-self:end;line-height:1.5}
+.glass .room-member-heading>.presence{grid-column:2;grid-row:2;align-self:start;flex-wrap:wrap;white-space:normal;gap:3px 4px;line-height:1.3}
+@media(max-width:420px){.glass .room-member-heading,.glass .room-member-heading:has(.member-chat-bubble){column-gap:5px}.glass .room-member-heading>.room-member-avatar{border-radius:12px}}
+
+/* Quiet, staggered breathing. Event reactions temporarily override this transform. */
+.room-member-avatar>.kongal-avatar{transform-origin:50% 82%}
+.room-member:has(.presence.online) .room-member-avatar>.kongal-avatar{animation:kongal-breathe 3.6s ease-in-out infinite;animation-delay:var(--kongal-delay,-.7s)}
+.room-member:nth-child(3n+2){--kongal-delay:-1.8s}
+.room-member:nth-child(3n){--kongal-delay:-2.7s}
+@keyframes kongal-breathe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-2px) scale(1.025,.98)}}
+@media(prefers-reduced-motion:reduce){.room-member-avatar>.kongal-avatar{animation:none!important;transform:none!important}}

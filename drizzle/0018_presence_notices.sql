@@ -1,0 +1,3 @@
+ALTER TABLE members ADD COLUMN chat_seen INTEGER NOT NULL DEFAULT 0;
+UPDATE members SET chat_seen=last_seen;
+ALTER TABLE chat_messages ADD COLUMN system INTEGER NOT NULL DEFAULT 0;

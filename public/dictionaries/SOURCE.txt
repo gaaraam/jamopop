@@ -1,0 +1,9 @@
+Input dictionary derived from hunspell-dict-ko 0.7.1, distributed by titoBouzout/Dictionaries.
+Source: https://raw.githubusercontent.com/titoBouzout/Dictionaries/master/Korean.dic
+SHA256: 8b8a3068d0fc34ea724259cc58370f07a75305cf2fe966b8330944a617c62d4a
+Copyright: hunspell-dict-ko developers and contributors, dictionary contributors, National Institute of Korean Language and Urimalsaem contributors.
+Changes: NFC normalization; flags removed; only Hangul headwords whose expanded jamo length is 5, 6 or 7 retained; duplicates removed. No definitions or affix expansion included.
+Derived word data retains original licenses: MPL 1.1/GPL 2.0+/LGPL 2.1+ for applicable data, CC BY-SA 4.0 for other data. See NOTICE.txt.
+https://www.mozilla.org/MPL/1.1/
+https://creativecommons.org/licenses/by-sa/4.0/
+The complete modified headword list is available as allowed-words.json alongside this notice.

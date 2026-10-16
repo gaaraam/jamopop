@@ -1,0 +1,1 @@
+ALTER TABLE `rounds` ADD `dictionary_version` integer DEFAULT 0 NOT NULL;

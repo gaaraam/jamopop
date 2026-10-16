@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS google_oauth_attempts(state_hash TEXT PRIMARY KEY,browser_hash TEXT NOT NULL,nonce TEXT NOT NULL,expires_at INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS google_oauth_expiry ON google_oauth_attempts(expires_at);
+CREATE TABLE IF NOT EXISTS google_accounts(subject TEXT PRIMARY KEY,game_account_id TEXT NOT NULL UNIQUE,email TEXT NOT NULL,name TEXT NOT NULL,created_at INTEGER NOT NULL,last_login_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS google_sessions(token_hash TEXT PRIMARY KEY,subject TEXT NOT NULL REFERENCES google_accounts(subject),expires_at INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS google_session_expiry ON google_sessions(expires_at);
+CREATE TABLE IF NOT EXISTS linked_game_accounts(account_id TEXT PRIMARY KEY,subject TEXT NOT NULL,label TEXT NOT NULL DEFAULT '',is_admin INTEGER NOT NULL DEFAULT 0,linked_at INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS linked_game_accounts_subject ON linked_game_accounts(subject);
+CREATE TABLE IF NOT EXISTS legacy_link_attempts(challenge TEXT PRIMARY KEY,subject TEXT NOT NULL,browser_hash TEXT NOT NULL,expires_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS legacy_link_receipts(ticket_id TEXT PRIMARY KEY,account_id TEXT NOT NULL,subject TEXT NOT NULL,linked_at INTEGER NOT NULL);
+INSERT OR IGNORE INTO linked_game_accounts(account_id,subject,label,linked_at) SELECT game_account_id,subject,'Google 프로필',created_at FROM google_accounts;
+ALTER TABLE google_oauth_attempts ADD COLUMN return_path TEXT NOT NULL DEFAULT '/?lobby=1';

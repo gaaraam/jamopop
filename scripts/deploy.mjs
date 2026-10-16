@@ -1,0 +1,10 @@
+import {spawnSync} from 'node:child_process';
+import {readFileSync,readdirSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+const baseline=JSON.parse(readFileSync('deploy-schema.json','utf8'));
+const actual=Object.fromEntries(readdirSync('drizzle').filter(n=>n.endsWith('.sql')).sort().map(n=>[n,createHash('sha256').update(readFileSync('drizzle/'+n)).digest('hex')]));
+if(JSON.stringify(actual)!==JSON.stringify(baseline))throw Error('Schema changed: review and apply DB migration before updating deployment baseline');
+for(const key of ['CLOUDFLARE_API_TOKEN','CLOUDFLARE_ACCOUNT_ID','D1_DATABASE_ID','WORKER_NAME'])if(!process.env[key])throw Error(`Missing ${key}; deployment stopped`);
+const cfg=JSON.parse(readFileSync('dist/server/wrangler.json','utf8'));
+if(cfg.name!==process.env.WORKER_NAME||cfg.d1_databases?.[0]?.database_id!==process.env.D1_DATABASE_ID)throw Error('Build target does not match deployment target; rebuild first');
+const r=spawnSync(process.execPath,['node_modules/wrangler/bin/wrangler.js','deploy','--config','dist/server/wrangler.json'],{stdio:'inherit',env:process.env});process.exit(r.status??1);
