@@ -2,7 +2,6 @@ import {FriendInvitations} from '@/components/game/friend-invitations';
 import type { Metadata } from "next";
 import "./globals.css";
 import "./theme.css";
-import "./mini.css";
 import "./speech.css";
 import "./chat-ui.css";
 import "./polish.css";
@@ -14,6 +13,7 @@ import './typography.css';
 import './design-system.css';
 import './room-system.css';
 import './card-skins.css';
+import './mini.css';
 import {AppearanceProvider} from "@/components/theme";
 import {LegalLinks} from "@/components/legal/document";
 
