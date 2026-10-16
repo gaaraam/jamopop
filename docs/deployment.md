@@ -1,31 +1,40 @@
-# 배포 설정
+# Cloudflare 자동 배포
 
-운영 서비스와 DB는 그대로 사용합니다. 저장소 공개가 DB 이전·초기화를 의미하지 않습니다.
+GitHub는 코드·PR 검토를, Cloudflare Workers Builds는 검증·배포를 담당합니다.
 
-## GitHub 설정
+## 협업 순서
 
-`production` Environment를 만들고 가능하면 gaaraam의 승인과 main 브랜치 제한을 설정합니다. main 직접 변경을 제한하고 CI의 `checks` 성공과 PR 검토를 요구하세요.
+1. 동료가 브랜치 또는 포크에서 PR을 올립니다.
+2. 코드 소유자인 gaaraam이 검토하고 승인한 뒤 직접 Merge합니다. 자동 병합하지 않습니다.
+3. main 변경을 Cloudflare가 받아 검증하고 성공했을 때 기존 play Worker에 배포합니다.
+4. 검사 또는 빌드 실패 시 기존 배포가 계속 서비스됩니다.
 
-Repository Variables:
-- `WORKER_NAME`: `play`
-- `D1_DATABASE_NAME`: 기존 운영 DB 이름
-- `D1_DATABASE_ID`: 기존 운영 DB ID
-- `CLOUDFLARE_ACCOUNT_ID`: 기존 계정 ID
-- `DEPLOY_ENABLED`: 설정과 최초 검증을 완료한 뒤 `true`
+GitHub는 자신이 작성한 PR의 자기 승인을 허용하지 않습니다. 소유자 본인 PR은 다른 검토자가 필요하거나 관리자의 명시적 병합 판단이 필요합니다. 에이전트가 대신 승인·병합하지 않습니다.
 
-production Environment Secret:
-- `CLOUDFLARE_API_TOKEN`: 해당 계정의 Worker 배포에 필요한 최소 권한으로 발급한 토큰. Wrangler 개인 OAuth 토큰을 복사하지 마세요.
+## 기존 Worker 연결 설정
 
-Google OAuth, 세션 서명, Sites 연결 등의 기존 Worker secrets는 유지하며 GitHub에 복사할 필요가 없습니다.
+Workers & Pages → play → Settings → Builds에서 gaaraam/jamopop을 연결합니다.
 
-main의 검증이 통과하고 DEPLOY_ENABLED=true인 경우 배포합니다. 공개 PR에는 배포 비밀키를 제공하지 않습니다. 토큰 등록 전에도 PR 검증은 동작합니다.
+- Production branch: main
+- Root directory: 저장소 루트
+- Build command: `npm run check:public && npm test && npm run typecheck && npm run build` (저장소의 `npm run ci`와 동일)
+- Deploy command: npm run deploy
+- 비운영 브랜치 자동 배포: 끔 (운영 DB와 로그인 정보 공유 방지)
+- Node.js: 24 (.node-version)
 
-## DB 변경
+Build variables:
+- NODE_VERSION: 24
+- WORKER_NAME: play
+- D1_DATABASE_NAME: 기존 운영 DB 이름
+- D1_DATABASE_ID: 기존 운영 DB ID
+- CLOUDFLARE_ACCOUNT_ID: 기존 계정 ID
 
-현재 운영 DB는 `0023_skin_shop.sql`까지 적용된 기준입니다. 과거 SQL을 자동으로 재실행하지 않습니다. `deploy-schema.json`은 이 기준의 파일 해시 목록이며, SQL이 달라지면 배포 스크립트가 중단합니다.
+빌드용 API 인증은 Cloudflare의 Builds 연결 설정에서 관리합니다. 운영 Google 로그인 키와 기존 기록 연결 키는 기존 Worker secrets에 유지합니다. GitHub Secret에 복사하지 않습니다.
 
-새 SQL은 별도 검토·백업·로컬 검증 후 운영에 적용합니다. 운영 적용이 확인된 뒤에만 기준 목록을 갱신하세요. 이 파일을 바꾸는 PR은 운영 DB 적용 증거를 포함해야 합니다. 코드 배포에 파괴적 DB 변경을 묶지 마세요.
+GitHub Actions 워크플로는 수동 실행용으로만 남깁니다. main의 필수 검사에 실행 불가능한 GitHub Actions checks를 남기지 않습니다. PR 검토·코드 소유자 승인·대화 해결 요건은 유지합니다. 현재 구성의 자동 테스트는 main 병합 후 배포 직전에 실행됩니다. PR에서의 사전 테스트는 기여자가 로컬에서 실행합니다.
 
-## 롤백
+## DB 변경과 롤백
 
-Cloudflare에서 직전 Worker 버전으로 롤백할 수 있습니다. DB는 코드 롤백으로 되돌아가지 않으므로 새 스키마는 이전 코드와 호환되게 추가합니다. 신규 DB로 실수 배포되지 않도록 빌드 대상과 배포 환경 변수를 검사합니다.
+기존 운영 DB를 그대로 연결하며 초기화하거나 마이그레이션을 자동 실행하지 않습니다. 운영 기준은 0023_skin_shop.sql까지입니다. deploy-schema.json과 SQL 해시가 다르면 배포를 중단합니다. 새 SQL은 백업·검토·운영 적용 확인 후에만 기준 목록을 갱신합니다.
+
+코드 롤백은 Cloudflare의 직전 배포 버전으로 수행합니다. DB는 코드 롤백으로 되돌아가지 않으므로 스키마 변경은 이전 코드와 호환되게 추가합니다.

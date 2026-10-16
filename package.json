@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "check:public": "node scripts/check-public.mjs",
     "db:local": "node scripts/db-local.mjs",
-    "deploy": "node scripts/deploy.mjs"
+    "deploy": "node scripts/deploy.mjs",
+    "ci": "npm run check:public && npm test && npm run typecheck && npm run build"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
