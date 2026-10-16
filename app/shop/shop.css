@@ -31,3 +31,15 @@ html .shop-error{padding:12px;background:var(--ui-surface-muted);border-radius:1
 html .skin-shop :is(button,a,summary):focus-visible{outline:3px solid var(--ui-focus);outline-offset:3px}
 @media(max-width:720px){html .skin-shop{padding:16px 12px 40px}html .shop-top{gap:4px}html .shop-top h1{font-size:22px}html .shop-top a{padding:0 8px;font-size:12px}html .gold-wallet{padding:10px;font-size:13px}html .shop-layout{grid-template-columns:1fr;gap:24px}html .skin-shop .skin-preview{padding:20px}html .skin-stage{height:175px}html .skin-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}html .skin-product .kongal-avatar{height:130px}html .shop-catalog nav{justify-content:flex-start}}
 @media(prefers-reduced-motion:reduce){html .skin-product{transition:none;transform:none}}
+html .skin-shop .card-skin-preview{width:100%;display:flex;align-items:center;gap:12px;border-radius:20px;padding:16px;min-width:0;box-sizing:border-box;min-height:150px;text-align:left}
+html .skin-shop .card-skin-preview .kongal-avatar{width:80px;height:94px;flex-shrink:0}
+html .skin-shop .card-skin-preview strong{font-size:14px;min-height:0;display:block;white-space:nowrap}html .skin-shop .card-skin-preview small{display:block;margin-top:8px;color:var(--ui-muted)}
+html .skin-shop .card-preview-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;width:65px;flex-shrink:0;margin-left:auto}
+html .skin-shop .card-preview-grid i{aspect-ratio:1;border-radius:2px;background:var(--ui-line)}
+html .skin-shop .card-skin-preview.small{padding:10px;gap:4px;min-height:130px}.skin-shop .card-skin-preview.small .kongal-avatar{width:58px;height:76px}html .skin-shop .card-skin-preview.small .card-preview-grid{width:45px}
+@media(max-width:400px){html .skin-shop .card-skin-preview:not(.small){gap:6px;padding:12px}html .skin-shop .card-skin-preview strong{font-size:12px}}
+html .skin-shop .shop-categories{display:flex;gap:8px;margin:0 0 24px;border-bottom:1px solid var(--ui-line);padding-bottom:12px}
+html .skin-shop .shop-categories button{min-height:44px;padding:10px 20px;border:1px solid transparent;border-radius:12px;background:transparent;color:var(--ui-muted);font-weight:700}
+html .skin-shop .shop-categories button[aria-pressed=true]{background:var(--ui-ink);color:var(--ui-surface);border-color:var(--ui-ink)}
+@media(max-width:720px){html .skin-shop .shop-categories button{flex:1}}
+@media(max-width:900px) and (hover:hover) and (pointer:fine){.app .card-skin-stars{display:none}}

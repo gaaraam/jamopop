@@ -1,4 +1,5 @@
 'use client';
+import {cardSkinClass} from '@/lib/card-skins';
 import {useEffect,useRef,useState,type ReactNode} from 'react';
 import {shouldCelebrateRank,shouldCelebrateWin} from '@/lib/rank-feedback';
 
@@ -14,8 +15,8 @@ function CheerBurst({emoji,eventId,confetti=false}:{emoji:string;eventId:string;
  return <span ref={anchor} className="member-cheer-burst" aria-hidden="true"><b className="cheer-still">{emoji}</b></span>;
 }
 
-type Props={successLabel?:string;hintUsed?:boolean;memberId:string;reactions:Cheer[];serverNow:number;roundId:string;rank?:number;won:boolean;attempts:number;status:string;name:string;children:ReactNode};
-export function ParticipantCard({successLabel,hintUsed,memberId,reactions,serverNow,roundId,rank,won,attempts,status,name,children}:Props){
+type Props={cardSkin?:string|null;successLabel?:string;hintUsed?:boolean;memberId:string;reactions:Cheer[];serverNow:number;roundId:string;rank?:number;won:boolean;attempts:number;status:string;name:string;children:ReactNode};
+export function ParticipantCard({cardSkin,successLabel,hintUsed,memberId,reactions,serverNow,roundId,rank,won,attempts,status,name,children}:Props){
  const card=useRef<HTMLElement>(null);
  const seenCheers=useRef(new Set(reactions.map(r=>r.id)));
  const [burst,setBurst]=useState<Cheer|null>(null);
@@ -45,7 +46,8 @@ export function ParticipantCard({successLabel,hintUsed,memberId,reactions,server
   previous.current={roundId,rank:podium};
  },[roundId,podium]);
  // A fresh round remounts the card, so no animation can spill into another puzzle.
- return <article ref={card} data-character-reaction={winBurst?'win':burst?'cheer':undefined} data-fx-member={memberId} className={`room-member ${won?'is-winner':''} ${podium?`podium-card podium-${podium}`:''}`}>
+ return <article ref={card} data-character-reaction={winBurst?'win':burst?'cheer':undefined} data-fx-member={memberId} className={`room-member ${cardSkinClass(cardSkin)} ${won?'is-winner':''} ${podium?`podium-card podium-${podium}`:''}`}>
+  {cardSkinClass(cardSkin)&&<span className="card-skin-stars" aria-hidden="true"><i/><i/><i/><i/><i/><i/><i/><i/></span>}
   {children}
   {hintUsed&&<span className="hint-used-badge">힌트 사용</span>}
   {winBurst>0&&<CheerBurst emoji="🎉" eventId={`win-${winBurst}`} confetti/>}
