@@ -1,0 +1,50 @@
+/* Shared type roles. Keep decorative type out of chat and account data. */
+@font-face {
+  font-family: 'Jamopop Nexon';
+  src: url('/fonts/NexonLv1Gothic-Bold.otf') format('opentype');
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Jamopop Pretendard';
+  src: url('/fonts/PretendardVariable.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+:root {
+  --font-body: 'Jamopop Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-game: 'Jamopop Nexon', var(--font-body);
+  --type-caption: .8125rem;
+  --type-body: 1rem;
+  --type-title: 1.5rem;
+}
+body { font-family: var(--font-body); }
+button, input, textarea, select { font-family: inherit; }
+h1, h2, h3,
+.primary, .room-enter, .lounge-solo strong, .game-tabs button,
+.room-card-heading h2, .room-card-heading h3,
+.tile, .key {
+  font-family: var(--font-game);
+  font-weight: 700;
+  font-synthesis: none;
+}
+h1, h2, h3 { letter-spacing: -.025em; }
+.tile, .key { letter-spacing: 0; }
+/* Metadata embedded in a heading should retain its quieter UI role. */
+h1 small, h2 small, h3 small,
+.lounge-heading h1 span, .lounge-player-info,
+.person-name, .coworker-top strong, .lobby-character-name,
+.round-timer, .room-count, .day-stamp {
+  font-family: var(--font-body);
+}
+.round-timer, .room-count, .day-stamp, progress {
+  font-variant-numeric: tabular-nums;
+}
+/* Spreadsheet and console views keep their established typography. */
+.terminal-view :is(h1,h2,h3,.primary,.tile,.key) { font-family: inherit; }
+
+@media (max-width:900px) and (hover:hover) and (pointer:fine) {
+  .app :is(h1,h2,h3,.primary,.room-enter,.tile,.key,.game-tabs button) { font-family: inherit; }
+}
