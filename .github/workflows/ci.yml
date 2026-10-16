@@ -1,8 +1,6 @@
 name: CI
+# Optional manual fallback; automatic builds run on Cloudflare.
 on:
-  pull_request:
-  push:
-    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
@@ -26,32 +24,3 @@ jobs:
       - run: npm test
       - run: npm run typecheck
       - run: npm run build
-  deploy:
-    needs: checks
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    environment: production
-    concurrency:
-      group: production
-      cancel-in-progress: false
-    env:
-      WORKER_NAME: ${{ vars.WORKER_NAME }}
-      D1_DATABASE_NAME: ${{ vars.D1_DATABASE_NAME }}
-      D1_DATABASE_ID: ${{ vars.D1_DATABASE_ID }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-      WRANGLER_SEND_METRICS: 'false'
-      CLOUDFLARE_CF_FETCH_ENABLED: 'false'
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: '24'
-          cache: npm
-      - run: npm ci
-      - run: npm run build
-      - run: npm run deploy
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
