@@ -1,0 +1,76 @@
+/* Arrival surfaces share the lobby's controls, colors and character artwork. */
+.kongal-intro{color:var(--ui-ink);padding:24px;isolation:isolate}
+.kongal-intro .signature-nav{display:flex;align-items:center;gap:8px}
+.kongal-intro .signature-center{margin:70px auto 32px;max-width:380px}
+.kongal-intro .signature-board{width:100%;gap:10px;transform:rotate(-3deg);margin:0 0 28px}
+.kongal-intro .signature-tile{border-radius:16px}
+.kongal-intro .signature-console{border:1px solid var(--ui-line);background:var(--ui-surface);border-radius:var(--ui-radius-control);color:var(--ui-ink)}
+.kongal-intro .signature-console :is(b,span,button){color:var(--ui-ink)}
+.kongal-intro .signature-console button{background:var(--ui-surface-muted);border-color:var(--ui-line)}
+.kongal-intro .signature-start{background:var(--ui-accent);color:var(--ui-accent-ink);border:1px solid var(--ui-line);border-radius:var(--ui-radius-control);box-shadow:0 4px 0 #ae893b25;font-family:var(--font-game,inherit);font-weight:800}
+.kongal-intro .signature-note,.kongal-intro .signature-legend{color:var(--ui-muted)}
+.intro-friends{position:absolute;inset:0;pointer-events:none;z-index:-1}
+.intro-friend{position:absolute;display:block;filter:drop-shadow(0 10px 5px #404d5a12)}
+.intro-friend .kongal-avatar{width:100%;height:100%}
+.friend-cat{width:170px;height:195px;left:-150px;top:190px;transform:rotate(-12deg)}
+.friend-rabbit{width:155px;height:190px;right:-138px;top:45px;transform:rotate(12deg)}
+.friend-frog{width:115px;height:130px;right:-112px;top:290px;transform:rotate(-8deg)}
+.entry-page .kongal-entry{display:grid;grid-template-columns:minmax(0,540px) minmax(0,380px);justify-content:center;align-items:start;gap:40px;max-width:980px;margin:40px auto;min-height:0;color:var(--ui-ink)}
+.entry-page .kongal-entry .join-panel{width:100%;max-width:none;padding:28px;background:var(--ui-surface);border:1px solid var(--ui-line);border-radius:var(--ui-radius-card);box-shadow:var(--ui-shadow)}
+.kongal-entry .section-label{display:block;font-size:12px;color:var(--ui-muted);margin-bottom:8px}
+.kongal-entry .join-panel h1{font-size:26px;line-height:1.3;margin:0 0 24px;overflow-wrap:anywhere;color:var(--ui-ink)}
+.kongal-entry .join-panel form{gap:18px}
+.entry-page .kongal-entry .join-panel :is(input,select){min-height:44px;background:var(--ui-surface-muted);border:1px solid var(--ui-line);border-radius:var(--ui-radius-control);padding:10px 12px;color:var(--ui-ink);font-size:16px;width:100%;min-width:0}
+.kongal-entry .join-panel .spectator-choice{display:flex;align-items:center;gap:8px}
+.entry-page .kongal-entry .join-panel input[type=checkbox]{width:16px;height:16px;min-height:0;accent-color:var(--ui-focus)}
+.kongal-entry .join-panel :is(label,legend){font-size:13px;color:var(--ui-ink)}
+.kongal-entry .join-panel .primary{min-height:48px;border-radius:var(--ui-radius-control);background:var(--ui-accent);color:var(--ui-accent-ink)}
+.kongal-entry .join-panel .avatar-picker{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;max-height:260px;overflow-y:auto;padding:3px;scrollbar-width:thin}
+.entry-page .kongal-entry .avatar-picker button{min-width:0;padding:6px 2px;border-radius:12px;border:2px solid transparent;background:var(--ui-surface-muted);color:var(--ui-ink)}
+.entry-page .kongal-entry .avatar-picker button.selected{border-color:var(--ui-focus);background:var(--ui-surface)}
+.kongal-entry .avatar-picker button>span{display:block;height:48px}
+.kongal-entry .avatar-picker .kongal-avatar{width:46px;height:48px}
+.kongal-entry .avatar-picker-name{font-size:11px}
+.kongal-entry .join-existing{border-color:var(--ui-line)}
+.kongal-entry .join-panel>.text-btn{display:block;margin:12px auto 0;padding:8px 16px;color:var(--ui-muted)}
+.entry-character-stage{position:sticky;top:80px;min-height:460px;display:flex;flex-direction:column;align-items:center;justify-content:center;isolation:isolate}
+.entry-stage-grid{position:absolute;inset:30px 0 70px;display:grid;grid-template-columns:repeat(5,1fr);gap:10px;transform:rotate(8deg);z-index:-2;opacity:.55}
+.entry-stage-grid i{border-radius:14px;border:1px solid var(--ui-line);background:var(--ui-surface)}
+.entry-stage-grid i:nth-child(7n){background:#b9ddcd}
+.entry-stage-grid i:nth-child(11n){background:#f5dfa0}
+.entry-stage-avatar{width:240px;height:260px;animation:entry-arrive .28s ease-out}
+.entry-stage-avatar .kongal-avatar{width:100%;height:100%;filter:drop-shadow(0 12px 8px #36425712)}
+.entry-stage-plinth{height:26px;width:190px;background:var(--ui-line);border-radius:50%;margin-top:-16px;z-index:-1;filter:blur(4px)}
+.entry-stage-name{display:flex;flex-direction:column;align-items:center;gap:5px;margin-top:18px;max-width:100%;padding:12px 24px;border:1px solid var(--ui-line);background:var(--ui-surface);border-radius:16px}
+.entry-stage-name strong{font-size:20px;overflow-wrap:anywhere;text-align:center;color:var(--ui-ink)}
+.entry-stage-name span{font-size:12px;color:var(--ui-muted)}
+@keyframes entry-arrive{from{opacity:.5;transform:translateY(8px) scale(.95)}to{opacity:1;transform:none}}
+@media(max-width:760px){
+ .entry-page .kongal-entry{grid-template-columns:minmax(0,1fr);gap:16px;max-width:540px;margin:24px auto}
+ .entry-character-stage{position:relative;top:auto;min-height:140px;grid-row:1;flex-direction:row;gap:16px;justify-content:center}
+ .entry-stage-avatar{width:118px;height:130px}
+ .entry-stage-grid{inset:8px 15%;gap:6px;grid-template-columns:repeat(5,1fr);opacity:.3;transform:rotate(-4deg)}
+ .entry-stage-plinth{display:none}.entry-stage-name{margin-top:0;max-width:55%;padding:10px 14px}
+ .entry-stage-name strong{font-size:18px}
+ .entry-page .kongal-entry .join-panel{padding:22px}
+}
+@media(max-width:680px){
+ .kongal-intro .signature-center{margin-top:130px;width:min(100%,340px)}
+ .friend-cat{width:100px;height:115px;top:-96px;left:4px;transform:rotate(-10deg)}
+ .friend-rabbit{width:94px;height:115px;top:-100px;right:12px;transform:rotate(10deg)}
+ .friend-frog{width:80px;height:90px;top:-78px;right:calc(50% - 40px);transform:none}
+ .kongal-intro .signature-board{gap:8px}.kongal-intro .signature-tile{border-radius:12px}
+ .kongal-intro .signature-legend{gap:10px;font-size:10px}
+}
+@media(max-width:390px){.entry-page .kongal-entry .join-panel{padding:16px}.kongal-entry .join-panel .avatar-picker{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){.entry-stage-avatar{animation:none}}
+.kongal-entry .entry-difficulty [role=combobox]{min-height:44px;min-width:100px;padding:10px 12px;border:1px solid var(--ui-line);border-radius:var(--ui-radius-control);background:var(--ui-surface-muted);color:var(--ui-ink);box-shadow:none}
+.entry-page.entry-setup{max-width:1100px}
+.entry-page.entry-setup>.entry-setup-nav{display:flex;justify-content:space-between;align-items:center;gap:12px;max-width:980px;margin:0 auto;padding:10px 0;background:transparent;border:0;border-bottom:1px solid var(--ui-line);border-radius:0;backdrop-filter:none;box-shadow:none}
+.entry-back{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:8px 12px;border:0;border-radius:var(--ui-radius-control);background:transparent;color:var(--ui-ink);font-size:14px;font-weight:700}
+.entry-back:hover{background:var(--ui-surface)}
+.entry-back>span{font-size:20px;line-height:1}
+.entry-setup-tools{display:flex;align-items:center;gap:8px}
+.entry-setup-tools>.icon-btn{width:40px;height:40px;color:var(--ui-muted)}
+.entry-setup .kongal-entry{margin-top:28px}
+@media(max-width:480px){.entry-setup-tools{gap:4px}.entry-page.entry-setup>.entry-setup-nav{padding:4px 0}.entry-back{padding-left:4px}.entry-setup-tools .account-trigger{padding:8px}}
