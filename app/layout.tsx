@@ -13,6 +13,7 @@ import './typography.css';
 import './design-system.css';
 import './room-system.css';
 import './card-skins.css';
+import './entry-system.css';
 import './mini.css';
 import {AppearanceProvider} from "@/components/theme";
 import {LegalLinks} from "@/components/legal/document";
