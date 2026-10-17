@@ -1,4 +1,5 @@
 'use client';
+import {GuestRecords} from '@/components/game/guest-records';
 import {ServiceHeader} from '@/components/game/service-header';
 import {GameInput} from '@/components/game/mobile-controls';
 import {draftKey,readDraft,writeDraft} from '@/lib/recovery.mjs';
@@ -17,6 +18,10 @@ const FLOOR_FRIENDS=['🐱','🐰','🐻','🦊','🐧'];
 const FRIEND_NAMES=['냥콩','토콩','곰콩','폭콩','펭콩'];
 type View=Omit<SoloState,'active'|'recent'> & {active:(Omit<SoloRun,'answer'>&{answer?:string})|null;stages:Stage[];unlocked:number;signedIn:boolean;serverNow:number};
 export default function Solo(){
+ const quickStarted=useRef(false);
+ const [recordsChecked,setRecordsChecked]=useState(false),[guestSoloPending,setGuestSoloPending]=useState(false);
+ const recordsReady=useCallback((pending:boolean)=>{setRecordsChecked(true);setGuestSoloPending(pending)},[]);
+ const [quickError,setQuickError]=useState(false);
  const [pickedFloor,setPickedFloor]=useState<number|null>(null);
  const [data,setData]=useState<View|null>(null),[draft,setDraftState]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[now,setNow]=useState(Date.now()),[onMap,setOnMap]=useState(true),[connected,setConnected]=useState(true);
  const latestRun=useRef<View['active']>(null),textRef=useRef('');
@@ -32,6 +37,8 @@ export default function Solo(){
  const stopped=active?.status!=='playing'||remaining===0;
  useEffect(()=>{if(remaining===0&&active?.status==='playing')void refresh()},[remaining,active?.status,refresh]);
  async function act(body:Record<string,unknown>){if(lock.current)return;lock.current=true;sequence.current++;setBusy(true);setError('');try{const response=await fetch('/api/solo',{method:'POST',signal:AbortSignal.timeout(10000),headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await response.json() as View & {error?:string};if(!response.ok){if(response.status===409){lock.current=false;await refresh();}throw Error(d.error);}accept(d);if(body.action==='start'||body.action==='guess')setDraft('');if(body.action==='start')setOnMap(false);return true;}catch(e){if(e instanceof TypeError||['TimeoutError','AbortError'].includes((e as Error).name))setConnected(false);setError((e as Error).message||'연결을 확인한 뒤 다시 시도해 주세요.');}finally{lock.current=false;setBusy(false);}}
+ async function startNext(){setQuickError(false);if(!data)return;const ok=await act({action:'start',stage:data.unlocked,previousId:data.active?.id||null});if(!ok)setQuickError(true)}
+ useEffect(()=>{if(!data||!recordsChecked||guestSoloPending||quickStarted.current||!new URLSearchParams(location.search).has('start'))return;quickStarted.current=true;if(data.active?.status==='playing'){setOnMap(false);return;}void startNext();},[data,recordsChecked,guestSoloPending]);
  function submit(){if(!active||!connected||!stage||stopped||composing.current||Date.now()-ended.current<100||!inputShape(draft.trim(),stage.width).valid)return;void act({action:'guess',runId:active.id,expected:active.guesses.length,word:draft});}
  const letters=splitWord(draft),colors:Record<string,Color>={};for(const g of active?.guesses||[])g.letters.forEach((key,i)=>{const strength={gray:1,yellow:2,green:3};if(!colors[key]||strength[g.colors[i]]>strength[colors[key]])colors[key]=g.colors[i]});
  const chapter=CHAPTERS[Math.floor(((stage?.id||data?.unlocked||1)-1)/3)];
@@ -39,10 +46,10 @@ export default function Solo(){
  const mapFirst=(mapChapter.id-1)*3+1;
  const mapComplete=[mapFirst,mapFirst+1,mapFirst+2].every(n=>data?.best[n]);
  const stars=Object.values(data?.best||{}).reduce((a,b)=>a+b,0);
- return <main className="solo-page glass" data-playing={!onMap}><ServiceHeader active="solo"/>
+ return <main className="solo-page glass" data-playing={!onMap}><ServiceHeader active="solo" playOnly={!data||(!Object.keys(data.best).length&&(!data.active||data.active.status==='playing'))}/>
  {!data?<section className="solo-loading"><p>{error||'도전 기록을 불러오는 중…'}</p><button onClick={()=>refresh()}>다시 불러오기</button></section>:<>
  <div className="solo-summary" aria-label="개인 도전 기록"><div className="solo-stat"><Star aria-hidden="true"/><div><span>획득 별</span><strong>{stars}<small>/ 45</small></strong></div></div><div className="solo-stat"><House aria-hidden="true"/><div><span>복구한 방</span><strong>{Object.keys(data.best).length}<small>/ 15</small></strong></div></div><div className="solo-stat"><Sparkles aria-hidden="true"/><div><span>경험치</span><strong>{data.xp.toLocaleString()}<small>XP</small></strong></div></div></div>
- <p className="solo-save-note">{data.signedIn?'계정에 진행과 보상이 저장됩니다.':'게스트 · 이 브라우저에서 이어할 수 있어요. 쿠키를 삭제하면 기록을 찾을 수 없습니다.'}</p>
+ <GuestRecords onReady={recordsReady} showLogin={!!active&&stopped}/>{quickError&&<button className="solo-primary" disabled={busy} onClick={()=>void startNext()}>도전 시작 다시 시도</button>}<p className="solo-save-note">{data.signedIn?'계정에 진행과 보상이 저장됩니다.':'게스트 · 이 브라우저에서 이어할 수 있어요. 쿠키를 삭제하면 기록을 찾을 수 없습니다.'}</p>
  {!connected&&<button className="text-btn" onClick={()=>void refresh()}>다시 연결</button>}{error&&<p className="solo-error" role="alert">{error}</p>}
  {onMap?<><section className="kongal-quest-heading"><div><span>콩알친구들 · 단어 복구 작전</span><h1>콩알 아파트</h1></div><span className="quest-total">{Object.keys(data.best).length}<small> / 15 복구</small></span></section>
  {stars===45&&<section className="quest-ending" role="status"><CharacterAvatar avatar="🐧" skin="solo-golden-penguin"/><div><h2>모든 창문에 별이 켜졌어요!</h2><p>냥콩, 토콩, 곰콩, 폭콩, 펭콩. 다섯 친구의 이름이 모두 돌아왔습니다.</p><strong>황금별 구조대 펭콩 획득</strong></div></section>}

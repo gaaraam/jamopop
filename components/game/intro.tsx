@@ -1,23 +1,39 @@
 'use client';
 import {CharacterAvatar} from '@/components/game/character-avatar';
 import {ThemeSwitch} from '@/components/theme';
-import {useState} from 'react';
-import {ArrowRight,RotateCcw,HelpCircle} from 'lucide-react';
-import {score,splitWord} from '@/lib/game';
-const examples=['사과','바람','구름','여름','수박'];
-const answer=splitWord('수박');
+import {useEffect,useRef,useState} from 'react';
+import {ArrowRight,HelpCircle} from 'lucide-react';
+import {WordBoard,WordKeyboard} from './word-controls';
+import {GameInput} from './mobile-controls';
+import {score,splitWord,type Color,type Guess} from '@/lib/game';
+import {blocksEnter} from '@/lib/input';
+import {FIRST_WORDS,firstGuess,readFirstPlay,saveFirstPlay} from '@/lib/first-play';
+const hints=['바람을 넣어 색을 확인해 보세요.','사과를 넣어 다른 단서를 찾아보세요.','이제 수박을 넣어 맞혀 보세요.'];
 export function Intro({onStart,onHelp}:{onStart:()=>void;onHelp:()=>void}){
- const [step,setStep]=useState(0);
- return <main className="signature-page kongal-intro">
+ const [playing,setPlaying]=useState(false),[guesses,setGuesses]=useState<Guess[]>([]),[draft,setDraft]=useState(''),[message,setMessage]=useState('');
+ const composing=useRef(false),ended=useRef(0),step=guesses.length,done=step===3;
+ const notificationSlot=useRef<HTMLSpanElement>(null);
+ useEffect(()=>{window.dispatchEvent(new CustomEvent('jamopop-header-slot',{detail:notificationSlot.current}));return()=>{window.dispatchEvent(new CustomEvent('jamopop-header-slot',{detail:null}))}},[]);
+ useEffect(()=>{const restored=readFirstPlay(sessionStorage);setGuesses(restored);setPlaying(restored.length>0)},[]);
+ const colors:Record<string,Color>={};for(const g of guesses)g.letters.forEach((letter,i)=>{const strength={gray:1,yellow:2,green:3};if(!colors[letter]||strength[g.colors[i]]>strength[colors[letter]])colors[letter]=g.colors[i]});
+ function submit(){if(composing.current||done)return;const g=firstGuess(step,draft);if(!g){setMessage(`${FIRST_WORDS[step]}을 입력해 보세요.`);return;}const next=[...guesses,g];setGuesses(next);saveFirstPlay(sessionStorage,next);setDraft('');setMessage('');}
+ return <main className={`signature-page kongal-intro first-play ${playing?'is-learning':''}`}>
   <h1 className="sr-only">자음모음팝</h1>
-  <header className="signature-nav"><ThemeSwitch/><button onClick={onHelp} aria-label="게임 방법"><HelpCircle size={18}/><span>게임 방법</span></button></header>
-  <section className="signature-center" aria-label="25칸 워들 체험">
+  <header className="signature-nav"><ThemeSwitch/><button onClick={onHelp} aria-label="게임 방법"><HelpCircle size={18}/><span>게임 방법</span></button><span id="service-notifications" ref={notificationSlot}/></header>
+  <section className="signature-center" aria-label="첫 판 연습">
    <div className="intro-friends" aria-hidden="true"><span className="intro-friend friend-cat"><CharacterAvatar avatar="🐱"/></span><span className="intro-friend friend-rabbit"><CharacterAvatar avatar="🐰"/></span><span className="intro-friend friend-frog"><CharacterAvatar avatar="🐸"/></span></div>
-   <div className="signature-board" aria-label="다섯 번의 시도, 각 다섯 칸">{examples.map((word,row)=>{const letters=splitWord(word),colors=score(letters,answer),submitted=row<step;return letters.map((letter,col)=><div key={`${row}-${col}-${submitted}`} className={`signature-tile ${submitted?colors[col]:row===step?'current':'empty'}`} style={{animationDelay:`${submitted?col*75:(row+col)*35}ms`}} aria-label={`${row+1}번째 줄 ${col+1}칸 ${submitted?letter+' '+{green:'위치 일치',yellow:'다른 위치',gray:'미포함 또는 초과'}[colors[col]]:row===step?letter:'빈칸'}`}><span>{submitted||row===step?letter:''}</span></div>);})}</div>
-   <div className="signature-console"><span aria-live="polite">{step===5?<><i className="signature-dot"/>정답 · 수박</>:<><b>{examples[step]}</b><span className="signature-arrow">→</span><span>{splitWord(examples[step]).join(' ')}</span></>}</span><button onClick={()=>setStep(s=>s===5?0:s+1)} aria-label={step===5?'체험 다시 하기':'예시 제출하기'}>{step===5?<RotateCcw size={15}/>:<ArrowRight size={15}/>}<span>{step===5?'다시':'제출'}</span></button></div>
-   <div className="signature-legend"><span><i className="good"/>위치 일치</span><span><i className="near"/>다른 위치</span><span><i className="miss"/>미포함·개수 초과</span></div>
-   <button className="signature-start" onClick={onStart}>시작하기<ArrowRight size={19}/></button>
-   <span className="signature-note">로그인 없이 참여 가능</span>
+   {playing?<>
+    <div className="first-play-heading"><h2>{done?'첫 판 완료!':'첫 판 연습'}</h2><span>시간 제한 없음 · 보상 없는 체험</span></div>
+    <WordBoard roundId="first-play" width={5} guesses={guesses} letters={splitWord(draft)} isFinished={done}/>
+    <div className="first-play-feedback" role="status" aria-live="polite">{step===1?<><b>같은 ㅏ도 판정이 달라요.</b><span>정답에 ㅏ는 하나. 네 번째 칸은 초록, 두 번째 칸은 초과해서 회색이에요.</span></>:step===2?<><b>초록은 제자리, 노랑은 다른 자리.</b><span>ㅅ은 첫 칸에, ㄱ은 다른 칸에 있어요.</span></>:done?<><b>수박 → ㅅ ㅜ ㅂ ㅏ ㄱ</b><span>다섯 칸이 모두 초록이면 정답!</span></>:<><b>바람 → ㅂ ㅏ ㄹ ㅏ ㅁ</b><span>한글 글자 수가 아닌, 풀어 쓴 자모 다섯 칸이에요.</span></>}</div>
+    {!done?<form onSubmit={e=>{e.preventDefault();submit()}} className="first-play-form"><label htmlFor="first-word">{hints[step]}</label><GameInput id="first-word" aria-label="연습 단어 입력" value={draft} maxLength={16} onChange={e=>setDraft(e.target.value)} onCompositionStart={()=>{composing.current=true}} onCompositionEnd={()=>{composing.current=false;ended.current=Date.now()}} onKeyDown={e=>{if(e.key==='Enter'&&blocksEnter(e.nativeEvent,composing.current,ended.current))e.preventDefault()}} autoComplete="off" autoCorrect="off" spellCheck={false}/><div className="first-play-actions"><button className="secondary-btn" type="button" onClick={()=>{setDraft(FIRST_WORDS[step]);setMessage('')}}>{FIRST_WORDS[step]} 넣기</button><button className="primary" type="submit" disabled={!draft.trim()}>제출하기<ArrowRight size={17}/></button></div>{message&&<p role="alert">{message}</p>}<WordKeyboard keyboardColors={colors} onKey={key=>{if(composing.current)return;setDraft(value=>key==='Backspace'?splitWord(value).slice(0,-1).join(''):splitWord(value+key).slice(0,5).join(''));setMessage('')}}/></form>:<div className="first-play-next"><a className="primary" href="/solo?start=1">개인 도전 시작<ArrowRight size={18}/></a><button className="secondary-btn" onClick={onStart}>함께 풀러 가기</button></div>}
+   </>:<>
+    <div className="signature-board" aria-label="25칸 게임판">{Array.from({length:25},(_,i)=><div key={i} className={`signature-tile ${i<5?score(splitWord('바람'),splitWord('수박'))[i]:'empty'}`}><span>{i<5?splitWord('바람')[i]:''}</span></div>)}</div>
+    <div className="signature-legend"><span><i className="good"/>위치 일치</span><span><i className="near"/>다른 위치</span><span><i className="miss"/>미포함·개수 초과</span></div>
+    <button className="signature-start" onClick={()=>setPlaying(true)}>시작하기<ArrowRight size={19}/></button>
+   </>}
+   {!done&&<button className="text-btn first-play-skip" onClick={onStart}>{playing?'연습 건너뛰고 대기실':'바로 대기실'}</button>}
+   <span className="signature-note">로그인 없이 플레이 가능</span>
   </section>
  </main>;
 }

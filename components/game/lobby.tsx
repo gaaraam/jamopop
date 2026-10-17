@@ -45,10 +45,12 @@ export function Lobby({onSelect,onCreate,onRegister,signedIn,playerName,playerAv
   try{const response=await fetch('/api/game',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:archived?'restore_room':'archive_room',room:room.id})});const data=await response.json() as {error?:string};if(!response.ok)throw new Error(data.error||'방을 정리하지 못했어요.');setRooms(v=>v.filter(r=>r.id!==room.id));}
   catch(e){setError(e instanceof Error?e.message:'다시 시도해 주세요.');}finally{mutating.current=false;setBusy(null);}
  };
+ const firstVisit=!self||(self.level===1&&self.current===0);
  const visible=rooms.filter(r=>(!activeOnly||r.onlineCount>0)&&`${r.name} ${r.hostName||''}`.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()));
  return <section className="room-lobby game-lounge" aria-label="방 대기실">
-  <ServiceHeader active="lobby" title={archived?'보관된 방':'대기실'} tools={headerTools}><button className="primary lounge-create" onClick={onCreate}><Plus size={18}/>방 만들기</button></ServiceHeader>
+  <ServiceHeader playOnly={firstVisit} active="lobby" title={archived?'보관된 방':'대기실'} tools={headerTools}><button className="primary lounge-create" onClick={onCreate}><Plus size={18}/>방 만들기</button></ServiceHeader>
   <div className="lounge-layout"><div className="lounge-play-area">
+  {!archived&&<section className="first-play-lobby"><CharacterAvatar avatar="🐱"/><div><h2>{self?'이어서 도전하기':'혼자서도 바로 한 판'}</h2><p>빈 방을 기다리지 않고 개인 도전을 시작해요.</p></div><a className="primary" href="/solo?start=1">개인 도전<ArrowRight size={17}/></a></section>}
   {isAdmin&&<div className="lobby-archive-tabs"><button className={!archived?'lobby-filter selected':'lobby-filter'} aria-pressed={!archived} disabled={loading||!!busy} onClick={()=>{if(archived){setRooms([]);setArchived(false);}}}>열린 방</button><button className={archived?'lobby-filter selected':'lobby-filter'} aria-pressed={archived} disabled={loading||!!busy} onClick={()=>{if(!archived){setRooms([]);setArchived(true);}}}><Archive size={15}/>보관된 방</button><span>보관해도 게임과 기록은 유지됩니다.</span></div>}
   <div className="lobby-toolbar"><label className="lobby-search"><Search size={18}/><input aria-label="방 이름 또는 방장 검색" placeholder="방 이름 또는 방장 검색" value={search} onChange={e=>setSearch(e.target.value)}/></label><button className={activeOnly?'lobby-filter selected':'lobby-filter'} aria-pressed={activeOnly} onClick={()=>setActiveOnly(v=>!v)}>접속 중인 방</button><button className="icon-btn" aria-label="방 목록 새로고침" disabled={loading} onClick={()=>void refresh()}><RefreshCw size={18}/></button></div>
   {error&&<div className="lobby-error" role="alert">{error}<button className="text-btn" onClick={()=>void refresh()} disabled={loading}>다시 시도</button></div>}
@@ -60,12 +62,12 @@ export function Lobby({onSelect,onCreate,onRegister,signedIn,playerName,playerAv
     <div className="room-card-footer"><span className="room-count" aria-label={`참가자 ${r.memberCount}명, 최대 40명`}><Users size={17}/><b>{r.memberCount}</b><span>/ 40</span></span><button className="room-enter" aria-label={`${r.name} ${signedIn===false?'게스트로 입장':'입장'}`} onClick={()=>onSelect(r)}>{signedIn===false?'게스트로 입장':'입장하기'}<ArrowRight size={18}/></button></div>
    </article>)}
   </div>
-  {!visible.length&&!error&&<div className="lobby-empty" role="status">{loading?'방 목록을 불러오는 중…':search||activeOnly?'조건에 맞는 방이 없어요.':archived?'보관된 방이 없어요.':'아직 방이 없어요. 첫 방을 만들어 보세요.'}</div>}
+  {!visible.length&&!error&&<div className="lobby-empty" role="status">{loading?'방 목록을 불러오는 중…':search||activeOnly?'조건에 맞는 방이 없어요.':archived?'보관된 방이 없어요.':'아직 열린 방이 없어요. 개인 도전을 하거나 방을 만들어 보세요.'}</div>}
   {hasMore&&<p className="lobby-note">최근 활동 순으로 100개 방까지 표시합니다.</p>}
   </div><aside className="lounge-sidebar" aria-label="내 정보와 친구">
    <section className="lounge-account">
     <button className="lounge-player" onClick={onRegister} aria-label="내 캐릭터와 프로필"><span className="lounge-my-avatar"><CharacterAvatar avatar={profile?.avatar||playerAvatar||'🐱'} skin={profile?.skin}/></span><span className="lounge-player-info"><small>{signedIn?'내 캐릭터':'게스트 프로필'}</small><strong>{playerName||'게스트'}</strong>{self&&<><em>Lv.{self.level}</em><progress aria-label="레벨 경험치" value={self.current} max={self.required}/></>}</span><ArrowRight size={16}/></button>
-    <div className="lounge-account-actions"><a href="/shop">콩알 옷장<ArrowRight size={15}/></a>{signedIn===false&&<button onClick={onRegister}>계정 연동<ArrowRight size={15}/></button>}{isAdmin&&<a href="/admin">운영<ArrowRight size={15}/></a>}</div>
+    <div className="lounge-account-actions">{!firstVisit&&<a href="/shop">콩알 옷장<ArrowRight size={15}/></a>}{signedIn===false&&<button onClick={onRegister}>계정 연동<ArrowRight size={15}/></button>}{isAdmin&&<a href="/admin">운영<ArrowRight size={15}/></a>}</div>
    </section>
    <Companions snapshot={people} onRoom={onSelect} onRegister={onRegister}/>
   </aside></div>

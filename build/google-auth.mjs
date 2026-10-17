@@ -18,6 +18,8 @@ export async function googleAuth(req,env){
  const url=new URL(req.url);if(!url.pathname.startsWith('/auth/'))return null;
  if(url.origin!==ORIGIN)return page('사용할 수 없는 주소','<a href="'+ORIGIN+'">새 주소로 이동</a>',400);
  if(!env.GOOGLE_CLIENT_ID||!env.GOOGLE_CLIENT_SECRET)return page('로그인 준비 중','<a href="/">돌아가기</a>',503);
+ let returnPath='/?lobby=1';
+ const retry=()=>'/auth/google/start?return_to='+encodeURIComponent(returnPath);
  try{
  if(url.pathname==='/auth/google/start'&&req.method==='GET'){
   const state=random(),verifier=random(),nonce=random(),now=Date.now();
@@ -30,8 +32,9 @@ export async function googleAuth(req,env){
   const state=url.searchParams.get('state')||'',verifier=cookie(req,BROWSER);
   if(!/^[a-f0-9]{64}$/.test(state)||!/^[a-f0-9]{64}$/.test(verifier))return page('다시 로그인해 주세요','<a href="/auth/google/start">Google 로그인</a>',400);
   const attempt=await env.DB.prepare('DELETE FROM google_oauth_attempts WHERE state_hash=? AND browser_hash=? AND expires_at>? RETURNING nonce,return_path').bind(await hash(state),await hash(verifier),Date.now()).first();
+  if(attempt)returnPath=safeReturn(attempt.return_path);
   if(!attempt)return page('로그인이 만료되었습니다','<a href="/auth/google/start">다시 로그인</a>',400);
-  if(url.searchParams.has('error'))return redirect('/',[secureCookie(BROWSER,'',0)]);
+  if(url.searchParams.has('error'))return redirect(returnPath,[secureCookie(BROWSER,'',0)]);
   const code=url.searchParams.get('code');if(!code||code.length>4096)throw Error('Invalid callback');
   const response=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({code,client_id:env.GOOGLE_CLIENT_ID,client_secret:env.GOOGLE_CLIENT_SECRET,redirect_uri:CALLBACK,grant_type:'authorization_code',code_verifier:verifier}),signal:AbortSignal.timeout(15000)});
   if(!response.ok)throw Error('Token exchange failed');const tokens=await response.json();
@@ -55,5 +58,5 @@ export async function googleAuth(req,env){
   return redirect('/?lobby=1');
  }
  return page('페이지를 찾을 수 없습니다','<a href="/">돌아가기</a>',404);
- }catch{return page('로그인을 완료하지 못했어요','<p>잠시 후 다시 시도해 주세요.</p><a href="/auth/google/start">Google 로그인</a>',503);}
+ }catch{return page('로그인을 완료하지 못했어요','<p>잠시 후 다시 시도해 주세요.</p><a href="'+esc(retry())+'">다시 로그인</a><a href="'+esc(returnPath)+'">게임으로 돌아가기</a>',503);}
 }

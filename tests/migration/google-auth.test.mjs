@@ -16,3 +16,12 @@ test('callback fails before database access without browser-bound state; logout 
  assert.equal((await googleAuth(new Request(ORIGIN+'/auth/logout',{method:'POST',headers:{origin:'https://evil.test'}}),env)).status,403);
  assert.equal((await googleAuth(new Request(ORIGIN+'/auth/google/start'),{})).status,503);
 });
+test('cancel and failed exchange preserve the room invitation return path without external redirects',async()=>{
+ const state='a'.repeat(64),browser='b'.repeat(64),path='/?r=0123456789abcdef01234567&lobby=1';
+ const env={GOOGLE_CLIENT_ID:'id',GOOGLE_CLIENT_SECRET:'local-test',DB:{prepare(){return {bind(){return {first:async()=>({nonce:'nonce',return_path:path})}}}}}};
+ const url=ORIGIN+'/auth/google/callback?state='+state;
+ const headers={cookie:'__Host-jamopop_oauth='+browser};
+ const cancelled=await googleAuth(new Request(url+'&error=access_denied',{headers}),env);assert.equal(cancelled.headers.get('location'),path);
+ const previous=globalThis.fetch;globalThis.fetch=async()=>new Response('',{status:503});
+ try{const failed=await googleAuth(new Request(url+'&code=local-test',{headers}),env);assert.equal(failed.status,503);const html=await failed.text();assert.ok(html.includes(encodeURIComponent(path)));assert.ok(html.includes('게임으로 돌아가기'));}finally{globalThis.fetch=previous}
+});
