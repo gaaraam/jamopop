@@ -82,7 +82,7 @@ test('real route: shared five-minute deadline, server expiry, reset, legacy and 
     );
     urls['@/lib/account'] = stub(
       'account',
-      `export const accountId=()=>null,isSiteAdmin=()=>false,isAdminAccount=()=>false,accountProgressions=async()=>new Map(),avatarAccess=async()=>['🐱'];export async function findMember(req,r){return globalThis.__timerStore.one('SELECT * FROM members WHERE room_id=? ORDER BY rowid LIMIT 1',r)}`,
+      `export const accountId=()=>null,isSiteAdmin=()=>false,isAdminAccount=()=>false,accountProgressions=async()=>new Map(),avatarAccess=async()=>['🐱'];export async function findMember(req,r){const id=req.headers.get('x-test-member');return id?globalThis.__timerStore.one('SELECT * FROM members WHERE room_id=? AND id=?',r,id):globalThis.__timerStore.one('SELECT * FROM members WHERE room_id=? ORDER BY rowid LIMIT 1',r)}`,
     );
     urls['@/lib/cosmetics'] = stub(
       'cosmetics',
@@ -119,7 +119,7 @@ test('real route: shared five-minute deadline, server expiry, reset, legacy and 
     for (const [from, to] of Object.entries(urls))
       partyCode = partyCode.replaceAll(`'${from}'`, JSON.stringify(to));
     urls['@/lib/party'] = stub('party', partyCode);
-    for (const part of ['http', 'lobby', 'profile'])
+    for (const part of ['http', 'lobby', 'profile', 'runtime', 'rooms', 'rounds', 'submission'])
       urls['@/lib/game-api/' + part] = compile('lib/game-api/' + part + '.ts', 'game-' + part);
     let compiled = ts.transpileModule(readFileSync('app/api/game/route.ts', 'utf8'), {
       compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
@@ -298,6 +298,56 @@ test('real route: shared five-minute deadline, server expiry, reset, legacy and 
     assert.equal(
       db.prepare('SELECT active_speed_id FROM rooms WHERE id=?').get(room).active_speed_id,
       null,
+    );
+    const savedPlays = JSON.stringify(db.prepare('SELECT * FROM plays ORDER BY id').all());
+    db.prepare(
+      'INSERT INTO members(id,room_id,token_hash,name,avatar,last_seen) VALUES(?,?,?,?,?,?)',
+    ).run('visitor', room, 'visitor-token', 'visitor', '🐱', now);
+    const asVisitor = (body) =>
+      POST(
+        new Request('https://test.local/api/game', {
+          method: 'POST',
+          headers: {
+            origin: 'https://test.local',
+            'content-type': 'application/json',
+            'x-test-member': 'visitor',
+          },
+          body: JSON.stringify({ ...body, room }),
+        }),
+      );
+    for (const action of ['kick', 'transfer', 'rotate_invite'])
+      assert.equal(
+        (await asVisitor({ action, memberId: member })).status,
+        403,
+        action + ' requires host',
+      );
+    assert.equal(
+      (await post({ action: 'archive_room', room })).status,
+      403,
+      'archive requires site admin',
+    );
+    const oldInvite = db.prepare('SELECT invite_code FROM rooms WHERE id=?').get(room).invite_code;
+    assert.equal((await post({ action: 'rotate_invite', room })).status, 200);
+    assert.notEqual(
+      db.prepare('SELECT invite_code FROM rooms WHERE id=?').get(room).invite_code,
+      oldInvite,
+    );
+    assert.equal((await post({ action: 'transfer', room, memberId: 'visitor' })).status, 200);
+    assert.equal(
+      (await post({ action: 'kick', room, memberId: 'visitor' })).status,
+      403,
+      'old host loses permission',
+    );
+    assert.equal((await asVisitor({ action: 'kick', memberId: member })).status, 200);
+    assert.equal(
+      (await get(room)).status,
+      403,
+      'kicked participant cannot reenter via old session',
+    );
+    assert.equal(
+      JSON.stringify(db.prepare('SELECT * FROM plays ORDER BY id').all()),
+      savedPlays,
+      'management preserves all submitted records',
     );
   } finally {
     Date.now = realNow;

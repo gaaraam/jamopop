@@ -1,55 +1,53 @@
 'use client';
-import { SafetyActions } from '@/components/safety/actions';
-import { GuestRecords } from '@/components/game/guest-records';
-import { EntryCharacter } from '@/components/game/entry-character';
-import { WorksheetChrome } from '@/components/game/worksheet-chrome';
 import { CharacterAvatar } from '@/components/game/character-avatar';
+import { EntryCharacter } from '@/components/game/entry-character';
+import { GuestRecords } from '@/components/game/guest-records';
+import { useRoomSync } from '@/components/game/hooks/use-room-sync';
+import { useWordInput } from '@/components/game/hooks/use-word-input';
+import { WorksheetChrome } from '@/components/game/worksheet-chrome';
+import { SafetyActions } from '@/components/safety/actions';
 
+import { AccountPanel } from '@/components/game/account-panel';
+import { AvatarPicker } from '@/components/game/avatar-picker';
+import { RoomChat } from '@/components/game/chat';
+import { GameEffects } from '@/components/game/game-effects';
+import { Intro } from '@/components/game/intro';
+import { Lobby, type LobbyRoom } from '@/components/game/lobby';
 import { GameInput, RoundOptions } from '@/components/game/mobile-controls';
-import { draftKey, readDraft, writeDraft, rememberRoom, checkedFetch } from '@/lib/recovery.mjs';
+import { Difficulty, ReviewPanel, RoomSettings, WeeklyRanking } from '@/components/game/panels';
+import { ParticipantCard } from '@/components/game/participant-card';
+import { PartyPanel, titleNames } from '@/components/game/party-panel';
+import { PlayerProfile } from '@/components/game/player-profile';
 import { RoundResult } from '@/components/game/round-result';
 import { Rules } from '@/components/game/rules';
 import { WordBoard, WordKeyboard } from '@/components/game/word-controls';
-import { ownSync, publishNotice, publishInvitations, publishRoom } from '@/lib/sync-client';
-import { mergeSubmission } from '@/lib/submission.mjs';
-import { pollDelay } from '@/lib/sync-policy.mjs';
-import { PartyPanel, titleNames } from '@/components/game/party-panel';
-import './party.css';
-import './game-fx.css';
-import { PlayerProfile } from '@/components/game/player-profile';
-import { GameEffects } from '@/components/game/game-effects';
-import { deadlinePassed } from '@/lib/round-timer';
 import { ThemeSwitch } from '@/components/theme';
-import { Intro } from '@/components/game/intro';
-import { AvatarPicker } from '@/components/game/avatar-picker';
-import { AVATARS } from '@/lib/cosmetics';
-import { ParticipantCard } from '@/components/game/participant-card';
-import { AccountPanel } from '@/components/game/account-panel';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Difficulty, WeeklyRanking, ReviewPanel, RoomSettings } from '@/components/game/panels';
 import { activeChatBubbles, type BubbleMessage } from '@/lib/chat-bubbles';
-import { RoomChat } from '@/components/game/chat';
-import { Lobby, type LobbyRoom } from '@/components/game/lobby';
-import { Toaster, toast } from 'sonner';
+import { AVATARS } from '@/lib/cosmetics';
+import { splitWord, type Color, type GameState, type Player } from '@/lib/game';
+import { blocksEnter, inputShape, previewKey } from '@/lib/input';
+import { checkedFetch, draftKey, readDraft, rememberRoom, writeDraft } from '@/lib/recovery.mjs';
+import { deadlinePassed } from '@/lib/round-timer';
+import { mergeSubmission } from '@/lib/submission.mjs';
+import { publishInvitations, publishNotice, publishRoom } from '@/lib/sync-client';
 import {
-  Users,
+  Clock,
   Copy,
-  Trophy,
   HelpCircle,
   LogOut,
-  Play,
   RotateCcw,
-  Delete,
-  Clock,
-  Check,
+  Settings,
+  Trophy,
+  Users,
   Volume2,
   VolumeX,
-  Settings,
 } from 'lucide-react';
-import { blocksEnter, inputShape, keyboardJamo, appendKey, previewKey } from '@/lib/input';
-import { KEYS, splitWord, type GameState, type Color, type Player } from '@/lib/game';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Toaster, toast } from 'sonner';
+import './game-fx.css';
+import './party.css';
 
 const slots = [
   { left: '42%', top: '45%' },
@@ -195,17 +193,10 @@ export default function Home() {
   const [entryOpen, setEntryOpen] = useState(false),
     [joiningFromLobby, setJoiningFromLobby] = useState(false);
   const [profileTarget, setProfileTarget] = useState<{ id: string; name: string } | null>(null);
-  const [pendingSubmission, setPendingSubmission] = useState<{
-    roundId: string;
-    row: number;
-  } | null>(null);
   const [composing, setComposing] = useState(false),
     [pressed, setPressed] = useState({ key: '', seq: 0 }),
     [shake, setShake] = useState(0),
-    [reveal, setReveal] = useState<{ roundId: string; row: number } | null>(null),
-    [preview, setPreview] = useState<{ key: string; status: 'valid' | 'invalid' | 'error' } | null>(
-      null,
-    );
+    [reveal, setReveal] = useState<{ roundId: string; row: number } | null>(null);
   const composingRef = useRef(false),
     compositionEnded = useRef(0),
     audioRef = useRef<AudioContext | null>(null),
@@ -235,7 +226,6 @@ export default function Home() {
     dataRef = useRef<GameState | null>(null),
     draftRef = useRef(''),
     busyRef = useRef(false),
-    polling = useRef(false),
     offset = useRef(0),
     lastWon = useRef('');
   roomRef.current = room;
@@ -353,33 +343,21 @@ export default function Home() {
     setData(d);
     setConnection(true);
   }
-  const refresh = useCallback(async (r = roomRef.current, m = modeRef.current) => {
-    if (!r || polling.current) return;
-    polling.current = true;
-    try {
-      const response = await checkedFetch(
-        `/api/game?room=${r}&mode=${m}&away=${Date.now() - lastActivity.current > 90000 ? 1 : 0}`,
-      );
-      const d: any = await response.json();
-      if (r !== roomRef.current || m !== modeRef.current) return;
-      if (response.ok) {
-        if (r === roomRef.current && m === modeRef.current) accept(d);
-      } else if (response.status === 401 || response.status === 403) {
-        setData(null);
-        setEntryError(response.status === 403 ? d.error : '');
-      } else if (response.status === 404 && m !== 'daily') {
-        setMode('daily');
-        modeRef.current = 'daily';
-      } else {
-        setConnection(false);
-      }
-    } catch {
-      setConnection(false);
-    } finally {
-      polling.current = false;
-      setRestoring(false);
-    }
-  }, []);
+  const refresh = useRoomSync({
+    dataRef,
+    roomRef,
+    modeRef,
+    busyRef,
+    lastActivity,
+    chatOpen,
+    active: !!data,
+    accept,
+    setData,
+    setEntryError,
+    setMode,
+    setConnection,
+    setRestoring,
+  });
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const r = params.get('r') || '';
@@ -406,56 +384,6 @@ export default function Home() {
     setSound(localStorage.getItem('bw_sound') === '1');
     localStorage.removeItem('bw_view');
   }, [refresh]);
-  useEffect(() => {
-    const online = () => {
-      void refresh();
-    };
-    const offline = () => setConnection(false);
-    window.addEventListener('online', online);
-    window.addEventListener('offline', offline);
-    window.addEventListener('pageshow', online);
-    return () => {
-      window.removeEventListener('online', online);
-      window.removeEventListener('offline', offline);
-      window.removeEventListener('pageshow', online);
-    };
-  }, [refresh]);
-  useEffect(() => {
-    if (!data) return;
-    const release = ownSync();
-    let last = Date.now();
-    const run = () => {
-      last = Date.now();
-      if (!document.hidden && !busyRef.current) void refresh();
-    };
-    const timer = setInterval(() => {
-      const d = dataRef.current;
-      const finished =
-        !!d &&
-        (!!d.round.expired ||
-          (d.players.length > 0 &&
-            d.players.every((p) => p.status === 'won' || p.status === 'lost')));
-      if (
-        !document.hidden &&
-        Date.now() - last >=
-          pollDelay({
-            idleMs: Date.now() - lastActivity.current,
-            finished,
-            chatOpen: chatOpen.current,
-          })
-      )
-        run();
-    }, 500);
-    const visible = () => {
-      if (!document.hidden) run();
-    };
-    document.addEventListener('visibilitychange', visible);
-    return () => {
-      release();
-      clearInterval(timer);
-      document.removeEventListener('visibilitychange', visible);
-    };
-  }, [!!data, refresh]);
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now() + offset.current), 250);
     return () => clearInterval(id);
@@ -596,160 +524,27 @@ export default function Home() {
       await refresh(room, next);
     }
   }
-  async function submit(value = draftRef.current) {
-    const d = dataRef.current;
-    if (
-      !d ||
-      !connection ||
-      busyRef.current ||
-      composingRef.current ||
-      Date.now() - compositionEnded.current < 80 ||
-      d.play.status !== 'playing' ||
-      d.round.mode !== modeRef.current ||
-      d.round.phase !== 'running' ||
-      deadlinePassed(d.round.endsAt, Date.now() + offset.current)
-    )
-      return null;
-    const shape = inputShape(value, d.round.width);
-    if (!shape.valid) {
-      rejectInput();
-      return null;
-    }
-    const key = previewKey(d.round.id, value);
-    if (d.round.dictionaryVersion === 1 && preview?.key === key && preview.status === 'invalid') {
-      rejectInput();
-      return null;
-    }
-    setPendingSubmission({ roundId: d.round.id, row: d.play.guesses.length });
-    ping('submit');
-    try {
-      const r = await act('guess', {
-        fast: true,
-        mode: modeRef.current,
-        roundId: d.round.id,
-        word: value,
-        expected: d.play.guesses.length,
-      });
-      if (r) {
-        updateDraft('');
-      } else {
-        rejectInput();
-        void refresh();
-      }
-      return r;
-    } finally {
-      setPendingSubmission(null);
-    }
-  }
-  function typeKey(key: string) {
-    const d = dataRef.current;
-    if (
-      !d ||
-      busyRef.current ||
-      composingRef.current ||
-      d.play.status !== 'playing' ||
-      d.round.mode !== modeRef.current ||
-      d.round.phase !== 'running' ||
-      Date.now() + offset.current < d.round.startsAt ||
-      deadlinePassed(d.round.endsAt, Date.now() + offset.current)
-    )
-      return;
-    if (key === 'Enter') {
-      void submit();
-      return;
-    }
-    const next =
-      key === 'Backspace'
-        ? splitWord(draftRef.current).slice(0, -1).join('')
-        : appendKey(draftRef.current, key, d.round.width);
-    if (next === draftRef.current) {
-      if (key !== 'Backspace') rejectInput();
-      return;
-    }
-    updateDraft(next);
-    press(key);
-  }
-  useEffect(() => {
-    const listener = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      if (
-        target?.closest(
-          'input,textarea,select,[contenteditable="true"],[role="dialog"],[role="alertdialog"]',
-        ) ||
-        document.querySelector('[role="dialog"],[role="alertdialog"]') ||
-        e.ctrlKey ||
-        e.metaKey ||
-        e.altKey ||
-        e.isComposing ||
-        e.keyCode === 229 ||
-        help ||
-        settings
-      )
-        return;
-      if (
-        e.key === 'Enter' &&
-        (e.repeat || target?.closest('button,[role="tab"],[role="combobox"]'))
-      )
-        return;
-      const key = keyboardJamo(e.key, e.shiftKey);
-      if (key) {
-        e.preventDefault();
-        typeKey(key);
-      }
-    };
-    window.addEventListener('keydown', listener);
-    return () => window.removeEventListener('keydown', listener);
+  const { submit, typeKey, preview, pendingSubmission } = useWordInput({
+    data,
+    draft,
+    composing,
+    connection,
+    help,
+    settings,
+    dataRef,
+    modeRef,
+    draftRef,
+    busyRef,
+    composingRef,
+    compositionEnded,
+    offset,
+    act,
+    refresh,
+    updateDraft,
+    press,
+    rejectInput,
+    ping,
   });
-  useEffect(() => {
-    const d = data;
-    if (
-      !d ||
-      composing ||
-      d.play.status !== 'playing' ||
-      d.round.dictionaryVersion !== 1 ||
-      !inputShape(draft, d.round.width).valid
-    )
-      return;
-    const controller = new AbortController(),
-      key = previewKey(d.round.id, draft);
-    const timeout = setTimeout(() => {
-      setPreview({ key, status: 'error' });
-      controller.abort();
-    }, 5000);
-    const timer = setTimeout(async () => {
-      try {
-        const response = await fetch('/api/game', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'check_word',
-            room: d.room.id,
-            mode: d.round.mode,
-            roundId: d.round.id,
-            word: draft,
-          }),
-          signal: controller.signal,
-        });
-        if (!response.ok) throw new Error('check failed');
-        const result: any = await response.json();
-        if (
-          !controller.signal.aborted &&
-          result.roundId === d.round.id &&
-          result.word === splitWord(draft).join('')
-        )
-          setPreview({ key, status: result.valid ? 'valid' : 'invalid' });
-      } catch {
-        if (!controller.signal.aborted) setPreview({ key, status: 'error' });
-      } finally {
-        clearTimeout(timeout);
-      }
-    }, 180);
-    return () => {
-      clearTimeout(timer);
-      clearTimeout(timeout);
-      controller.abort();
-    };
-  }, [draft, composing, data?.round.id, data?.round.dictionaryVersion, data?.play.status]);
   const submitRef = useRef(submit);
   submitRef.current = submit;
 
