@@ -1,140 +1,33 @@
+import { date } from '@/lib/game-api/runtime';
 import { GET as announcementGet } from '@/app/api/announcements/route';
-import {
-  accountId,
-  accountProgressions,
-  avatarAccess,
-  findMember,
-  isAdminAccount,
-  isSiteAdmin,
-} from '@/lib/account';
-import { settleSpeed, speedPlayingSQL } from '@/lib/competition';
-import { AVATARS, equippedAtLevel } from '@/lib/cosmetics';
+import { accountProgressions, isSiteAdmin } from '@/lib/account';
+import { settleSpeed } from '@/lib/competition';
+import { equippedAtLevel } from '@/lib/cosmetics';
 import { dataRevision, derivedCache } from '@/lib/derived-cache';
-import { rankPlayers, score, splitWord, weekStart, type Guess } from '@/lib/game';
+import { rankPlayers, weekStart, type Guess } from '@/lib/game';
 import { check, failure, reply, UserError } from '@/lib/game-api/http';
 import { lobbyResponse } from '@/lib/game-api/lobby';
 import { publicProfile } from '@/lib/game-api/profile';
+import { handleRoomEntry, handleRoomManagement } from '@/lib/game-api/rooms';
+import { nextRound } from '@/lib/game-api/rounds';
+import {
+  auth,
+  choose,
+  getRound,
+  presenceNotice,
+  resolveRoom,
+  uuid,
+  widthOf,
+} from '@/lib/game-api/runtime';
+import { submitGuess } from '@/lib/game-api/submission';
 import { acceptsGuess } from '@/lib/guess-dictionary';
 import { inputShape } from '@/lib/input';
 import { createInquiry, inquiryCommand, inquiryOwner } from '@/lib/inquiries';
-import { ensureLoadout, expirePlays, isSpectator, partyState, trackSpectator } from '@/lib/party';
+import { expirePlays, isSpectator, partyState } from '@/lib/party';
 import { invitationInbox } from '@/lib/room-invitations';
-import {
-  allowRoomPasswordAttempt,
-  hashRoomPassword,
-  validRoomPassword,
-  verifyRoomPassword,
-} from '@/lib/room-password';
-import { ROOM_ROUND_MS } from '@/lib/round-timer';
-import { all, database, one, run } from '@/lib/store';
+import { all, one, run } from '@/lib/store';
 import { PRESENCE_INTERVAL, PRESENCE_OFFLINE } from '@/lib/sync-policy.mjs';
-import { randomWord, WORD_COUNTS } from '@/lib/words';
-const avatars = AVATARS;
-const uuid = () => crypto.randomUUID(),
-  key = () => uuid().replaceAll('-', '').slice(0, 24);
-function cookie(req: Request) {
-  return (
-    req.headers
-      .get('cookie')
-      ?.split(';')
-      .map((s) => s.trim())
-      .find((s) => s.startsWith('bw_session='))
-      ?.slice(11) || ''
-  );
-}
-async function hash(s: string) {
-  return [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)))]
-    .map((x) => x.toString(16).padStart(2, '0'))
-    .join('');
-}
-function date(n = Date.now()) {
-  return new Date(n + 9 * 3600000).toISOString().slice(0, 10);
-}
-function widthOf(value: any, fallback = 5) {
-  const n = value === undefined ? fallback : Number(value);
-  check([5, 6, 7].includes(n), '5·6·7칸 중에서 선택해 주세요.');
-  return n;
-}
-async function auth(req: Request, roomId: string) {
-  check(typeof roomId === 'string' && /^[a-f0-9]{24}$/.test(roomId), '초대 링크를 확인해 주세요.');
-  const m = await findMember(req, roomId);
-  check(m, '이 방에 먼저 입장해 주세요.', 401);
-  check(!m.blocked || isSiteAdmin(req), '이 방에서 내보내졌어요.', 403);
-  return m;
-}
-async function resolveRoom(req: Request, link: string) {
-  check(typeof link === 'string' && /^[a-f0-9]{24}$/.test(link), '초대 링크를 확인해 주세요.');
-  let r = await one(
-    'SELECT * FROM rooms WHERE invite_code=? OR (id=? AND invite_code IS NULL)',
-    link,
-    link,
-  );
-  if (!r) {
-    const existing = await one('SELECT * FROM rooms WHERE id=?', link);
-    if (existing) {
-      await auth(req, link);
-      r = existing;
-    }
-  }
-  check(r, '사용할 수 없는 초대 링크예요. 방장에게 새 링크를 받아 주세요.', 404);
-  return r;
-}
-async function choose(roomId: string, width: number, owner?: string) {
-  const recent = await all(
-    `SELECT answer FROM rounds WHERE room_id=? AND (mode<>'practice' OR owner_id=?) ORDER BY starts_at DESC,id DESC LIMIT 30`,
-    roomId,
-    owner || '',
-  );
-  return randomWord(
-    undefined,
-    width,
-    recent.map((x) => x.answer),
-  );
-}
-async function getRound(room: any, m: any, mode: string) {
-  if (mode === 'live') {
-    check(room.live_id, '아직 대기실이 없어요.', 404);
-    return one('SELECT * FROM rounds WHERE id=?', room.live_id);
-  }
-  if (mode === 'practice') {
-    check(m.practice_id, '연습을 시작해 주세요.', 404);
-    return one('SELECT * FROM rounds WHERE id=?', m.practice_id);
-  }
-  // Upgrade legacy rooms lazily without replacing their problem or submissions.
-  if (!room.current_round_id) {
-    const previous = await one(
-      "SELECT * FROM rounds WHERE room_id=? AND mode='daily' ORDER BY starts_at DESC,id DESC LIMIT 1",
-      room.id,
-    );
-    const id = previous?.id || uuid();
-    if (!previous)
-      await run(
-        'INSERT INTO rounds(id,room_id,mode,answer,starts_at,dictionary_version) VALUES(?,?,?,?,?,1)',
-        id,
-        room.id,
-        'daily',
-        await choose(room.id, 5),
-        Date.now(),
-      );
-    await database().batch([
-      database()
-        .prepare(
-          'UPDATE rooms SET current_round_id=?,round_no=1 WHERE id=? AND current_round_id IS NULL',
-        )
-        .bind(id, room.id),
-      database()
-        .prepare(
-          'UPDATE rounds SET ends_at=NULL WHERE id=(SELECT current_round_id FROM rooms WHERE id=?)',
-        )
-        .bind(room.id),
-    ]);
-    Object.assign(
-      room,
-      await one('SELECT current_round_id,round_no FROM rooms WHERE id=?', room.id),
-    );
-  }
-  return one('SELECT * FROM rounds WHERE id=?', room.current_round_id);
-}
+import { WORD_COUNTS } from '@/lib/words';
 async function liveInfo(room: any, memberId: string, now: number) {
   if (!room.live_id) return null;
   const r = await one('SELECT * FROM rounds WHERE id=?', room.live_id);
@@ -409,20 +302,6 @@ async function tryStart(roundId: string, now: number) {
     roundId,
   );
 }
-async function presenceNotice(m: any, now: number) {
-  const condition = 'id=? AND blocked=0 AND (chat_seen=0 OR (last_seen<? AND chat_seen<?))';
-  await database().batch([
-    database()
-      .prepare(
-        `INSERT INTO chat_messages(room_id,member_id,channel,request_id,body,created_at,system) SELECT room_id,id,CASE WHEN spectator=1 OR EXISTS(SELECT 1 FROM spectators sp JOIN rooms rr ON rr.current_round_id=sp.round_id WHERE sp.member_id=members.id AND rr.id=members.room_id) THEN 'spectator' ELSE 'player' END,?, '접속했습니다',?,1 FROM members WHERE ${condition} ON CONFLICT(member_id,request_id) DO NOTHING`,
-      )
-      .bind('presence:' + m.id + ':' + m.last_seen, now, m.id, now - 90000, now - 120000),
-    database()
-      .prepare(`UPDATE members SET chat_seen=? WHERE ${condition}`)
-      .bind(now, m.id, now - 90000, now - 120000),
-    database().prepare('UPDATE members SET last_seen=? WHERE id=?').bind(now, m.id),
-  ]);
-}
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url),
@@ -467,160 +346,8 @@ export async function POST(req: Request) {
     const b: any = await req.json();
     check(b && typeof b === 'object' && !Array.isArray(b), '요청을 확인해 주세요.');
     const now = Date.now();
-    if (b.action === 'archive_room' || b.action === 'restore_room') {
-      check(isSiteAdmin(req), '관리자만 방을 정리할 수 있어요.', 403);
-      check(typeof b.room === 'string' && /^[a-f0-9]{24}$/.test(b.room), '방을 확인해 주세요.');
-      const changed = await run(
-        'UPDATE rooms SET archived_at=? WHERE id=?',
-        b.action === 'archive_room' ? now : null,
-        b.room,
-      );
-      check(changed.meta.changes, '방을 찾을 수 없어요.', 404);
-      return reply({ ok: true });
-    }
-    if (b.action === 'create' || b.action === 'join') {
-      const name = typeof b.name === 'string' ? b.name.trim().slice(0, 16) : '';
-      check(name, '닉네임을 입력해 주세요.');
-      const avatar = avatars.includes(b.avatar) ? b.avatar : avatars[0];
-      let token = cookie(req);
-      if (!/^[a-f0-9]{64}$/.test(token))
-        token = uuid().replaceAll('-', '') + uuid().replaceAll('-', '');
-      const tokenHash = await hash(token),
-        id = uuid(),
-        owner = accountId(req);
-      check(
-        (await avatarAccess(req)).includes(avatar),
-        '아직 해금되지 않은 캐릭터예요. 필요한 레벨을 확인해 주세요.',
-        403,
-      );
-      if (b.action === 'create') {
-        check(
-          b.password === undefined || b.password === '' || validRoomPassword(b.password),
-          '비밀번호는 4~32자로 입력해 주세요.',
-        );
-        const passwordHash = b.password ? await hashRoomPassword(b.password) : null;
-        const variant = b.variant ?? 'normal';
-        check(['normal', 'items'].includes(variant), '대전 방식을 확인해 주세요.');
-        const recent = await one(
-          'SELECT COUNT(*) n FROM members m JOIN rooms r ON r.host_id=m.id WHERE m.token_hash=? AND r.created_at>?',
-          tokenHash,
-          now - 3600000,
-        );
-        check(recent.n < 5, '한 시간에 최대 5개 방을 만들 수 있어요.', 429);
-        const roomId = key(),
-          inviteKey = key(),
-          roundId = uuid(),
-          width = widthOf(b.width);
-        const roomName = typeof b.roomName === 'string' ? b.roomName.trim().slice(0, 24) : '';
-        check(roomName, '방 이름을 입력해 주세요.');
-        await database().batch([
-          database()
-            .prepare(
-              'INSERT INTO rooms(id,name,host_id,created_at,current_round_id,round_no,invite_code,password_hash) VALUES(?,?,?,?,?,1,?,?)',
-            )
-            .bind(roomId, roomName, id, now, roundId, inviteKey, passwordHash),
-          database()
-            .prepare(
-              'INSERT INTO rounds(id,room_id,mode,answer,starts_at,ends_at,width,dictionary_version,variant,hint_policy) VALUES(?,?,?,?,?,?,?,1,?,1)',
-            )
-            .bind(
-              roundId,
-              roomId,
-              'daily',
-              randomWord(undefined, width),
-              now,
-              now + ROOM_ROUND_MS,
-              width,
-              variant,
-            ),
-          database()
-            .prepare(
-              'INSERT INTO members(id,room_id,token_hash,name,avatar,last_seen,account_id,last_active) VALUES(?,?,?,?,?,?,?,?)',
-            )
-            .bind(id, roomId, tokenHash, name, avatar, now, owner, now),
-        ]);
-        return reply({ roomId }, 200, token, req);
-      }
-      const room =
-        b.lobby === true
-          ? await one('SELECT * FROM rooms WHERE id=?', typeof b.room === 'string' ? b.room : '')
-          : await resolveRoom(req, b.room);
-      check(room, '방을 찾을 수 없어요.', 404);
-      const existing = await findMember(req, room.id);
-      if (room.password_hash && !existing && !isSiteAdmin(req)) {
-        check(
-          await allowRoomPasswordAttempt(
-            room.id,
-            (req.headers.get('CF-Connecting-IP') || 'local') + ':' + (accountId(req) || tokenHash),
-          ),
-          '시도가 많아요. 잠시 후 다시 입력해 주세요.',
-          429,
-        );
-        check(
-          await verifyRoomPassword(b.password, room.password_hash),
-          '방 비밀번호를 확인해 주세요.',
-          403,
-        );
-      }
-      if (b.spectator === true && existing)
-        check(
-          !(await one(
-            "SELECT 1 FROM plays WHERE round_id=? AND member_id=? AND guesses<>'[]'",
-            room.current_round_id,
-            existing.id,
-          )),
-          '제출한 판에는 관전으로 전환할 수 없어요.',
-        );
-      const occupied = await one(
-        'SELECT id,account_id FROM members WHERE room_id=? AND token_hash=?',
-        room.id,
-        tokenHash,
-      );
-      if (!existing && occupied) {
-        token = uuid().replaceAll('-', '') + uuid().replaceAll('-', '');
-      }
-      const joinHash = await hash(token);
-      check(!existing?.blocked || isSiteAdmin(req), '이 방에서 내보내졌어요.', 403);
-      const duplicate = await one(
-        'SELECT id FROM members WHERE room_id=? AND name=?',
-        room.id,
-        name,
-      );
-      check(!duplicate || duplicate.id === existing?.id, '이미 사용 중인 닉네임이에요.');
-      if (existing) {
-        if (!existing.chat_seen || now - existing.last_seen >= 90000)
-          await presenceNotice(existing, now);
-        await run('UPDATE members SET name=?,avatar=? WHERE id=?', name, avatar, existing.id);
-      } else {
-        const inserted = await run(
-          'INSERT INTO members(id,room_id,token_hash,name,avatar,last_seen,account_id,last_active) SELECT ?,?,?,?,?,?,?,? WHERE (?=1 OR (SELECT COUNT(*) FROM members WHERE room_id=? AND blocked=0)<40)',
-          id,
-          room.id,
-          joinHash,
-          name,
-          avatar,
-          now,
-          owner,
-          now,
-          isSiteAdmin(req) ? 1 : 0,
-          room.id,
-        );
-        check(inserted.meta.changes, '이 방은 최대 40명까지 참여할 수 있어요.');
-      }
-      if (b.spectator === true) {
-        const changedRole = await run(
-          "UPDATE members SET spectator=1 WHERE id=? AND NOT EXISTS(SELECT 1 FROM plays WHERE round_id=? AND member_id=members.id AND guesses<>'[]')",
-          existing?.id || id,
-          room.current_round_id,
-        );
-        check(changedRole.meta.changes, '이미 제출한 판에는 관전할 수 없어요.', 409);
-        await trackSpectator(
-          { ...existing, id: existing?.id || id, spectator: 1 },
-          room.current_round_id,
-        );
-      }
-      return reply({ roomId: room.id }, 200, token, req);
-    }
+    const entry = await handleRoomEntry(req, b, now);
+    if (entry) return entry;
     const m = await auth(req, b.room),
       room = await one('SELECT * FROM rooms WHERE id=?', b.room);
     check(room, '방을 찾을 수 없어요.', 404);
@@ -721,125 +448,10 @@ export async function POST(req: Request) {
         valid: shape.valid && acceptsGuess(shape.letters, r.dictionary_version),
       });
     }
-    if (b.action === 'rename') {
-      const name = typeof b.name === 'string' ? b.name.trim().slice(0, 16) : '';
-      check(name, '닉네임을 입력해 주세요.');
-      const result = await run(
-        'UPDATE members SET name=? WHERE id=? AND NOT EXISTS(SELECT 1 FROM members WHERE room_id=? AND name=? AND id<>?)',
-        name,
-        m.id,
-        room.id,
-        name,
-        m.id,
-      );
-      check(result.meta.changes, '이미 사용 중인 닉네임이에요.');
-      return reply(await state(req, room.id, responseMode));
-    }
-    if (['transfer', 'kick', 'rotate_invite'].includes(b.action)) {
-      check(room.host_id === m.id || isSiteAdmin(req), '방장만 사용할 수 있어요.', 403);
-      if (b.action === 'rotate_invite') {
-        const changed = await run(
-          'UPDATE rooms SET invite_code=? WHERE id=? AND host_id=?',
-          key(),
-          room.id,
-          room.host_id,
-        );
-        check(changed.meta.changes, '방장이 변경됐어요.', 409);
-        return reply(await state(req, room.id, responseMode));
-      }
-      const target = await one(
-        'SELECT * FROM members WHERE id=? AND room_id=? AND blocked=0',
-        b.memberId,
-        room.id,
-      );
-      check(
-        target && (target.id !== m.id || (isSiteAdmin(req) && b.action === 'transfer')),
-        '다른 참가자를 선택해 주세요.',
-      );
-      if (b.action === 'kick')
-        check(
-          !target.account_id ||
-            !(
-              isAdminAccount(target.account_id) ||
-              (await one(
-                'SELECT account_id FROM linked_game_accounts WHERE account_id=? AND is_admin=1',
-                target.account_id,
-              ))
-            ),
-          '관리자는 내보낼 수 없어요.',
-          403,
-        );
-      if (b.action === 'transfer') {
-        const changed = await run(
-          'UPDATE rooms SET host_id=? WHERE id=? AND host_id=?',
-          target.id,
-          room.id,
-          room.host_id,
-        );
-        check(changed.meta.changes, '방장이 이미 변경됐어요.', 409);
-      } else {
-        const changed = await run(
-          `UPDATE members SET blocked=1 WHERE id=? AND room_id=? AND blocked=0 AND EXISTS(SELECT 1 FROM rooms WHERE id=? AND host_id=? AND host_id<>?)`,
-          target.id,
-          room.id,
-          room.id,
-          room.host_id,
-          target.id,
-        );
-        check(changed.meta.changes, '방장이 변경됐거나 이미 내보낸 참가자예요.', 409);
-        await run(
-          "DELETE FROM live_participants WHERE member_id=? AND round_id IN(SELECT id FROM rounds WHERE room_id=? AND phase='lobby')",
-          target.id,
-          room.id,
-        );
-      }
-      return reply(await state(req, room.id, responseMode));
-    }
-    if (b.action === 'reset' || b.action === 'force_reset') {
-      const force = b.action === 'force_reset';
-      await settleSpeed(room.id, now);
-      check(
-        !(await one(
-          `SELECT 1 FROM rooms WHERE id=? AND EXISTS(${speedPlayingSQL})`,
-          room.id,
-          now,
-          now,
-        )),
-        '스피드전이 진행 중이에요. 묶음 종료 후 모드를 바꿔 주세요.',
-        409,
-      );
-      check(room.host_id === m.id || isSiteAdmin(req), '방장만 새 문제를 시작할 수 있어요.', 403);
-      const current = await getRound(room, m, 'daily');
-      check(current.id === b.roundId, '이미 새 문제로 넘어갔어요.', 409);
-      const id = uuid(),
-        width = widthOf(b.width, current.width);
-      const answer = await choose(room.id, width);
-      if (current.ends_at) await expirePlays(current, now);
-      const variant = b.variant ?? current.variant ?? 'normal';
-      check(['normal', 'items'].includes(variant), '대전 방식을 확인해 주세요.');
-      const result = await database().batch([
-        database()
-          .prepare(
-            'INSERT INTO rounds(id,room_id,mode,answer,starts_at,ends_at,width,dictionary_version,variant,hint_policy) VALUES(?,?,?,?,?,?,?,1,?,1)',
-          )
-          .bind(id, room.id, 'daily', answer, now, now + ROOM_ROUND_MS, width, variant),
-        database()
-          .prepare(
-            `UPDATE rooms SET current_round_id=?,active_speed_id=NULL,round_no=round_no+1 WHERE id=? AND host_id=? AND current_round_id=? AND NOT EXISTS(${speedPlayingSQL}) AND (?=1 OR NOT EXISTS(SELECT 1 FROM plays p JOIN members m ON m.id=p.member_id WHERE p.round_id=? AND p.status='playing' AND p.guesses<>'[]' AND m.blocked=0))`,
-          )
-          .bind(id, room.id, room.host_id, current.id, now, now, force ? 1 : 0, current.id),
-        database()
-          .prepare(
-            "UPDATE rounds SET retired_at=?,phase=CASE WHEN ?=1 THEN 'interrupted' ELSE phase END WHERE id=? AND EXISTS(SELECT 1 FROM rooms WHERE id=? AND current_round_id=?)",
-          )
-          .bind(now, force ? 1 : 0, current.id, room.id, id),
-      ]);
-      if (!result[1].meta.changes) {
-        await run('DELETE FROM rounds WHERE id=?', id);
-        throw new UserError('풀이 중인 사람이 있거나 문제가 바뀌었어요.', 409);
-      }
-      return reply(await state(req, room.id, 'daily'));
-    }
+    const management = await handleRoomManagement(req, b, m, room, responseMode, state);
+    if (management) return management;
+    if (b.action === 'reset' || b.action === 'force_reset')
+      return await nextRound(req, b, m, room, now, state);
     if (b.action === 'lobby' || b.action === 'rematch')
       throw new UserError('라이브 대전은 종료됐어요. 우리 방 문제를 이용해 주세요.', 410);
     if (['join_lobby', 'ready', 'leave_lobby', 'start', 'cancel_lobby'].includes(b.action)) {
@@ -936,85 +548,7 @@ export async function POST(req: Request) {
       await run('DELETE FROM reactions WHERE room_id=? AND created_at<?', room.id, now - 60000);
       return reply({ ok: true, reaction });
     }
-    check(b.action === 'guess', '요청을 확인해 주세요.');
-    check(['daily', 'live', 'practice'].includes(b.mode), '게임 모드를 확인해 주세요.');
-    check(b.mode !== 'daily' || !room.active_speed_id, '스피드전으로 전환됐어요.', 409);
-    const r = await getRound(room, m, b.mode);
-    check(r && r.id === b.roundId, '문제가 바뀌었어요. 다시 확인해 주세요.', 409);
-    check(r.phase === 'running', '대전이 시작된 뒤 제출해 주세요.', 409);
-    check(now >= r.starts_at, '카운트다운이 끝나면 제출할 수 있어요.');
-    const loadout = await ensureLoadout(r, m);
-    const effectiveEnd = loadout?.ends_at ?? r.ends_at;
-    check(!effectiveEnd || now < effectiveEnd, '이번 게임이 끝났어요.', 409);
-    check(!r.owner_id || r.owner_id === m.id, '본인의 연습 문제만 풀 수 있어요.', 403);
-    if (r.restricted)
-      check(
-        await one(
-          'SELECT member_id FROM live_participants WHERE round_id=? AND member_id=?',
-          r.id,
-          m.id,
-        ),
-        '관전 중에는 제출할 수 없어요.',
-        403,
-      );
-    const letters = typeof b.word === 'string' ? splitWord(b.word) : [];
-    check(
-      letters.length === r.width &&
-        letters.every((c) => 'ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎㅏㅑㅓㅕㅗㅛㅜㅠㅡㅣ'.includes(c)),
-      `자음·모음 ${r.width}칸을 채워 주세요.`,
-    );
-    check(
-      acceptsGuess(letters, r.dictionary_version),
-      '등록된 단어가 아니에요. 다른 단어로 시도해 주세요.',
-    );
-    await run(
-      'INSERT INTO plays(id,round_id,member_id,updated_at) VALUES(?,?,?,?) ON CONFLICT(round_id,member_id) DO NOTHING',
-      uuid(),
-      r.id,
-      m.id,
-      0,
-    );
-    const p = await one('SELECT * FROM plays WHERE round_id=? AND member_id=?', r.id, m.id);
-    check(p.status === 'playing', '이미 마친 문제예요.', 409);
-    const guesses: Guess[] = JSON.parse(p.guesses);
-    check(b.expected === guesses.length, '다른 창에서 기록이 바뀌었어요. 다시 확인해 주세요.', 409);
-    check(guesses.length < 5, '다섯 번의 기회를 모두 사용했어요.');
-    check(!guesses.some((g) => g.letters.join('') === letters.join('')), '이미 제출한 단어예요.');
-    check(now - p.updated_at >= 500, '잠깐만 기다렸다 다시 제출해 주세요.', 429);
-    const colors = score(letters, splitWord(r.answer));
-    guesses.push({ letters, colors });
-    const status = colors.every((c) => c === 'green')
-      ? 'won'
-      : guesses.length === 5
-        ? 'lost'
-        : 'playing';
-    const updated = await run(
-      `UPDATE plays SET guesses=?,status=?,finished_at=?,updated_at=? WHERE id=? AND guesses=? AND status='playing' AND EXISTS(SELECT 1 FROM members WHERE id=? AND blocked=0) AND (?<>? OR EXISTS(SELECT 1 FROM rooms WHERE id=? AND current_round_id=? AND active_speed_id IS NULL)) AND EXISTS(SELECT 1 FROM rounds r WHERE r.id=plays.round_id AND (COALESCE((SELECT ends_at FROM item_loadouts WHERE round_id=r.id AND member_id=plays.member_id),r.ends_at) IS NULL OR COALESCE((SELECT ends_at FROM item_loadouts WHERE round_id=r.id AND member_id=plays.member_id),r.ends_at)>?)) AND NOT EXISTS(SELECT 1 FROM spectators WHERE round_id=plays.round_id AND member_id=plays.member_id) AND EXISTS(SELECT 1 FROM members WHERE id=plays.member_id AND spectator=0)`,
-      JSON.stringify(guesses),
-      status,
-      status === 'playing' ? null : now,
-      now,
-      p.id,
-      p.guesses,
-      m.id,
-      b.mode,
-      'daily',
-      room.id,
-      r.id,
-      Date.now(),
-    );
-    check(updated.meta.changes, '기록 또는 참가 상태가 바뀌었어요. 다시 확인해 주세요.', 409);
-    if (b.fast === true)
-      return reply({
-        submitted: true,
-        roomId: room.id,
-        roundId: r.id,
-        memberId: m.id,
-        serverNow: Date.now(),
-        finishedAt: status === 'playing' ? null : now,
-        play: { guesses, status, ...(status !== 'playing' ? { answer: r.answer } : {}) },
-      });
-    return reply(await state(req, room.id, b.mode));
+    return await submitGuess(req, b, m, room, now, state);
   } catch (e) {
     return failure(e);
   }

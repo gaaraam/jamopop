@@ -93,7 +93,7 @@ test('party integration: items, concurrency, deadlines, titles, hints, spectator
       'app/api/announcements/route.ts',
       'announcements',
     );
-    for (const part of ['http', 'lobby', 'profile'])
+    for (const part of ['http', 'lobby', 'profile', 'runtime', 'rooms', 'rounds', 'submission'])
       urls['@/lib/game-api/' + part] = compile('lib/game-api/' + part + '.ts', 'game-' + part);
     const party = await import(urls['@/lib/party']),
       api = await import(compile('app/api/party/route.ts', 'api')),

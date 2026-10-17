@@ -320,7 +320,7 @@ test('account ownership, safe claims, privacy, pagination and preservation', asy
       '@/lib/words': pathToFileURL(wordsPath).href,
       '@/lib/guess-dictionary': pathToFileURL(dictPath).href,
     };
-    for (const part of ['http', 'lobby', 'profile']) {
+    for (const part of ['http', 'lobby', 'profile', 'runtime', 'rooms', 'rounds', 'submission']) {
       let extracted = ts.transpileModule(readFileSync('lib/game-api/' + part + '.ts', 'utf8'), {
         compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
       }).outputText;
