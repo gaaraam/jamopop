@@ -1,26 +1,415 @@
 'use client';
-import {CharacterAvatar} from '@/components/game/character-avatar';
+import { CharacterAvatar } from '@/components/game/character-avatar';
 
-import {useState} from 'react';
-import {Dialog,DialogContent,DialogTitle,DialogDescription} from '@/components/ui/dialog';
-import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,AlertDialogAction,AlertDialogCancel,AlertDialogFooter} from '@/components/ui/alert-dialog';
-import {Select,SelectTrigger,SelectValue,SelectContent,SelectItem} from '@/components/ui/select';
-import {Trophy,Check,Users,Copy,RotateCcw} from 'lucide-react';
-import {toast} from 'sonner';
-import type {GameState} from '@/lib/game';
-export type Action=(name:string,extra?:Record<string,unknown>)=>Promise<any>;
-export function Difficulty({value,onChange,disabled=false,label='난이도'}:{value:number;onChange:(n:number)=>void;disabled?:boolean;label?:string}){return <Select value={String(value)} onValueChange={v=>onChange(Number(v))} disabled={disabled}><SelectTrigger aria-label={label} className="difficulty-select"><SelectValue/></SelectTrigger><SelectContent>{[5,6,7].map(n=><SelectItem value={String(n)} key={n}>{n}칸</SelectItem>)}</SelectContent></Select>}
-export function WeeklyRanking({data}:{data:GameState}){return <details className="ranking-card folded-panel"><summary className="card-heading"><h2><Trophy size={18}/>{data.party?.variant==='items'?'아이템전 주간 순위':'일반전 주간 순위'}</h2><span>{data.weekLabel.slice(5).replace('-','.') } 월요일부터 <b className="fold-chevron">⌄</b></span></summary>{data.weekly.length?<div className="weekly-list">{data.weekly.map(p=><div className="rank-row" key={p.id}><b className="rank-number">{p.rank}</b><span><CharacterAvatar avatar={p.avatar} skin={p.skin}/></span><strong>{p.name}{p.blocked?' (퇴장)':''}</strong><div className="weekly-score"><b>{p.wins}승</b><small>평균 {p.average.toFixed(2)}회</small></div></div>)}</div>:<div className="empty-rank">이번 주 성공 기록이 아직 없어요.</div>}</details>}
-export function LivePanel({data,busy,act,onLive}:{data:GameState;busy:boolean;act:Action;onLive:()=>void}){
- const [width,setWidth]=useState(data.live?.width||5),live=data.live;
- async function doAction(action:string,extra:Record<string,unknown>={}){const r=await act(action,{roundId:live?.id,width,...extra});if(r)onLive();}
- if(!live||['finished','cancelled'].includes(live.phase))return <section className="lobby-card"><div className="card-heading"><h2><span className="live-badge">LIVE</span>{live?.phase==='finished'?'재대결':'라이브 대전'}</h2>{data.room.isHost&&<Difficulty value={width} onChange={setWidth} disabled={busy} label="라이브 난이도"/>}</div><p className="panel-note">2명 이상, 참가자 전원 준비하면 시작합니다.</p>{data.room.isHost?<button className="primary" disabled={busy} onClick={()=>doAction(live?.phase==='finished'?'rematch':'lobby')}>{live?.phase==='finished'?<><RotateCcw size={16}/>같은 멤버로 재대결</>:'대기실 만들기'}</button>:<p className="panel-note">방장이 대기실을 열면 참여할 수 있어요.</p>}{live?.phase==='finished'&&<button className="text-btn" onClick={onLive}>지난 대전 결과 보기</button>}</section>;
- if(live.phase==='running')return <section className="live-card"><div><span className="live-badge">LIVE</span><h2>{live.width}칸 대전 진행 중</h2><p>{live.restricted?`${live.participants.length}명 참가`:'기존 대전 계속 진행 중'}</p></div><button className="primary" onClick={onLive}>{live.joined?'대전 보기':'관전'}</button></section>;
- return <section className="lobby-card"><div className="card-heading"><h2><Users size={18}/>라이브 대기실</h2><span>{live.width}칸 · 3분</span></div><div className="lobby-members">{live.participants.map(p=><div key={p.id}><span><CharacterAvatar avatar={p.avatar} skin={p.skin}/></span><strong>{p.name}{p.id===data.me.id?' (나)':''}</strong><span className={p.ready?'ready-label':'not-ready'}>{p.ready?<><Check size={14}/>준비 완료</>:'준비 전'}</span></div>)}</div><p className="panel-note">{live.participants.length<2?'2명 이상 참여해야 시작할 수 있어요.':`${live.participants.filter(p=>p.ready).length}/${live.participants.length}명 준비 · 모두 준비하면 자동 시작`}</p><button className="primary" disabled={busy} onClick={()=>doAction(live.joined?'ready':'join_lobby',{ready:!live.ready})}>{!live.joined?'대기실 참여':live.ready?'준비 취소':'준비'}</button><div className="lobby-footer">{live.joined&&<button className="text-btn" disabled={busy} onClick={()=>doAction('leave_lobby')}>대기실 나가기</button>}{data.room.isHost&&<button className="text-btn" disabled={busy} onClick={()=>doAction('cancel_lobby')}>대기실 닫기</button>}</div></section>;
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogFooter,
+} from '@/components/ui/alert-dialog';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
+import { Trophy, Check, Users, Copy, RotateCcw } from 'lucide-react';
+import { toast } from 'sonner';
+import type { GameState } from '@/lib/game';
+export type Action = (name: string, extra?: Record<string, unknown>) => Promise<any>;
+export function Difficulty({
+  value,
+  onChange,
+  disabled = false,
+  label = '난이도',
+}: {
+  value: number;
+  onChange: (n: number) => void;
+  disabled?: boolean;
+  label?: string;
+}) {
+  return (
+    <Select value={String(value)} onValueChange={(v) => onChange(Number(v))} disabled={disabled}>
+      <SelectTrigger aria-label={label} className="difficulty-select">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {[5, 6, 7].map((n) => (
+          <SelectItem value={String(n)} key={n}>
+            {n}칸
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 }
-export function ReviewPanel({data}:{data:GameState}){const [open,setOpen]=useState(false);return <><button className="secondary-btn review-button" disabled={!data.reviews.length} onClick={()=>setOpen(true)}>종료한 사람들의 풀이 비교</button><Dialog open={open} onOpenChange={setOpen}><DialogContent className="review-dialog"><DialogTitle>풀이 비교 · {data.play.answer}</DialogTitle><DialogDescription>게임을 끝낸 참가자의 제출 순서입니다.</DialogDescription><div className="review-list">{data.reviews.map(p=><article key={p.id}><h3><CharacterAvatar avatar={p.avatar} skin={p.skin}/> {p.name}<small>{p.status==='won'?`${p.guesses.length}회 성공`:'종료'}</small></h3>{p.guesses.map((g,i)=><div className="review-guess" key={i} style={{gridTemplateColumns:`repeat(${g.letters.length},minmax(0,1fr))`}}>{g.letters.map((l,j)=><span className={`tile ${g.colors[j]}`} key={j}>{l}</span>)}</div>)}</article>)}</div></DialogContent></Dialog></>}
-export function RoomSettings({data,open,onOpenChange,busy,act,onCopy}:{data:GameState;open:boolean;onOpenChange:(v:boolean)=>void;busy:boolean;act:Action;onCopy:()=>void}){
- const [nickname,setNickname]=useState(data.me.name),[confirm,setConfirm]=useState<{action:string;memberId?:string;title:string;description:string}|null>(null);
- async function apply(){if(!confirm)return;const r=await act(confirm.action,{memberId:confirm.memberId});if(r){setConfirm(null);toast.success('변경했어요.');}}
- return <><Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="settings-dialog"><DialogTitle>방 설정</DialogTitle><DialogDescription>{data.room.name}{data.room.isAdmin?' · 전체 방 관리자':''}</DialogDescription><form onSubmit={async e=>{e.preventDefault();const r=await act('rename',{name:nickname});if(r)toast.success('닉네임을 변경했어요.');}}><label>내 닉네임<input value={nickname} onChange={e=>setNickname(e.target.value)} maxLength={16}/></label><button className="secondary-btn" disabled={busy||!nickname.trim()} type="submit">변경</button></form><div className="settings-invite"><button className="secondary-btn" onClick={onCopy}><Copy size={15}/>초대 링크 복사</button>{data.room.isHost&&<button className="secondary-btn" disabled={busy} onClick={()=>setConfirm({action:'rotate_invite',title:'초대 링크를 재발급할까요?',description:'기존 초대 링크로는 새로 입장할 수 없게 됩니다. 이미 참여한 사람과 모든 게임 기록은 유지됩니다.'})}>링크 재발급</button>}</div><div className="settings-roster">{data.roster.map(p=><div key={p.id}><span><CharacterAvatar avatar={p.avatar} skin={p.skin}/></span><strong>{p.name}{p.id===data.room.hostId?' · 방장':''}</strong>{data.room.isHost&&(p.id!==data.me.id||data.room.isAdmin)&&p.id!==data.room.hostId&&<><button className="text-btn" disabled={busy} onClick={()=>setConfirm({action:'transfer',memberId:p.id,title:`${p.name}님에게 방장을 넘길까요?`,description:'새 문제 시작과 방 관리 권한을 넘깁니다. 진행 중인 기록은 유지됩니다.'})}>방장 넘기기</button><button className="text-btn danger" disabled={busy||p.id===data.me.id} onClick={()=>setConfirm({action:'kick',memberId:p.id,title:`${p.name}님을 내보낼까요?`,description:'이 브라우저의 방 참여를 차단합니다. 풀이 중이어도 즉시 내보냅니다. 기존 점수·제출 기록·대화는 유지됩니다.'})}>내보내기</button></>}</div>)}</div></DialogContent></Dialog><AlertDialog open={!!confirm} onOpenChange={v=>{if(!v)setConfirm(null)}}><AlertDialogContent className="settings-dialog"><AlertDialogTitle>{confirm?.title}</AlertDialogTitle><AlertDialogDescription>{confirm?.description}</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel disabled={busy}>취소</AlertDialogCancel><AlertDialogAction disabled={busy} onClick={e=>{e.preventDefault();void apply()}}>확인</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></>;
+export function WeeklyRanking({ data }: { data: GameState }) {
+  return (
+    <details className="ranking-card folded-panel">
+      <summary className="card-heading">
+        <h2>
+          <Trophy size={18} />
+          {data.party?.variant === 'items' ? '아이템전 주간 순위' : '일반전 주간 순위'}
+        </h2>
+        <span>
+          {data.weekLabel.slice(5).replace('-', '.')} 월요일부터 <b className="fold-chevron">⌄</b>
+        </span>
+      </summary>
+      {data.weekly.length ? (
+        <div className="weekly-list">
+          {data.weekly.map((p) => (
+            <div className="rank-row" key={p.id}>
+              <b className="rank-number">{p.rank}</b>
+              <span>
+                <CharacterAvatar avatar={p.avatar} skin={p.skin} />
+              </span>
+              <strong>
+                {p.name}
+                {p.blocked ? ' (퇴장)' : ''}
+              </strong>
+              <div className="weekly-score">
+                <b>{p.wins}승</b>
+                <small>평균 {p.average.toFixed(2)}회</small>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="empty-rank">이번 주 성공 기록이 아직 없어요.</div>
+      )}
+    </details>
+  );
+}
+export function LivePanel({
+  data,
+  busy,
+  act,
+  onLive,
+}: {
+  data: GameState;
+  busy: boolean;
+  act: Action;
+  onLive: () => void;
+}) {
+  const [width, setWidth] = useState(data.live?.width || 5),
+    live = data.live;
+  async function doAction(action: string, extra: Record<string, unknown> = {}) {
+    const r = await act(action, { roundId: live?.id, width, ...extra });
+    if (r) onLive();
+  }
+  if (!live || ['finished', 'cancelled'].includes(live.phase))
+    return (
+      <section className="lobby-card">
+        <div className="card-heading">
+          <h2>
+            <span className="live-badge">LIVE</span>
+            {live?.phase === 'finished' ? '재대결' : '라이브 대전'}
+          </h2>
+          {data.room.isHost && (
+            <Difficulty value={width} onChange={setWidth} disabled={busy} label="라이브 난이도" />
+          )}
+        </div>
+        <p className="panel-note">2명 이상, 참가자 전원 준비하면 시작합니다.</p>
+        {data.room.isHost ? (
+          <button
+            className="primary"
+            disabled={busy}
+            onClick={() => doAction(live?.phase === 'finished' ? 'rematch' : 'lobby')}
+          >
+            {live?.phase === 'finished' ? (
+              <>
+                <RotateCcw size={16} />
+                같은 멤버로 재대결
+              </>
+            ) : (
+              '대기실 만들기'
+            )}
+          </button>
+        ) : (
+          <p className="panel-note">방장이 대기실을 열면 참여할 수 있어요.</p>
+        )}
+        {live?.phase === 'finished' && (
+          <button className="text-btn" onClick={onLive}>
+            지난 대전 결과 보기
+          </button>
+        )}
+      </section>
+    );
+  if (live.phase === 'running')
+    return (
+      <section className="live-card">
+        <div>
+          <span className="live-badge">LIVE</span>
+          <h2>{live.width}칸 대전 진행 중</h2>
+          <p>{live.restricted ? `${live.participants.length}명 참가` : '기존 대전 계속 진행 중'}</p>
+        </div>
+        <button className="primary" onClick={onLive}>
+          {live.joined ? '대전 보기' : '관전'}
+        </button>
+      </section>
+    );
+  return (
+    <section className="lobby-card">
+      <div className="card-heading">
+        <h2>
+          <Users size={18} />
+          라이브 대기실
+        </h2>
+        <span>{live.width}칸 · 3분</span>
+      </div>
+      <div className="lobby-members">
+        {live.participants.map((p) => (
+          <div key={p.id}>
+            <span>
+              <CharacterAvatar avatar={p.avatar} skin={p.skin} />
+            </span>
+            <strong>
+              {p.name}
+              {p.id === data.me.id ? ' (나)' : ''}
+            </strong>
+            <span className={p.ready ? 'ready-label' : 'not-ready'}>
+              {p.ready ? (
+                <>
+                  <Check size={14} />
+                  준비 완료
+                </>
+              ) : (
+                '준비 전'
+              )}
+            </span>
+          </div>
+        ))}
+      </div>
+      <p className="panel-note">
+        {live.participants.length < 2
+          ? '2명 이상 참여해야 시작할 수 있어요.'
+          : `${live.participants.filter((p) => p.ready).length}/${live.participants.length}명 준비 · 모두 준비하면 자동 시작`}
+      </p>
+      <button
+        className="primary"
+        disabled={busy}
+        onClick={() => doAction(live.joined ? 'ready' : 'join_lobby', { ready: !live.ready })}
+      >
+        {!live.joined ? '대기실 참여' : live.ready ? '준비 취소' : '준비'}
+      </button>
+      <div className="lobby-footer">
+        {live.joined && (
+          <button className="text-btn" disabled={busy} onClick={() => doAction('leave_lobby')}>
+            대기실 나가기
+          </button>
+        )}
+        {data.room.isHost && (
+          <button className="text-btn" disabled={busy} onClick={() => doAction('cancel_lobby')}>
+            대기실 닫기
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+export function ReviewPanel({ data }: { data: GameState }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        className="secondary-btn review-button"
+        disabled={!data.reviews.length}
+        onClick={() => setOpen(true)}
+      >
+        종료한 사람들의 풀이 비교
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="review-dialog">
+          <DialogTitle>풀이 비교 · {data.play.answer}</DialogTitle>
+          <DialogDescription>게임을 끝낸 참가자의 제출 순서입니다.</DialogDescription>
+          <div className="review-list">
+            {data.reviews.map((p) => (
+              <article key={p.id}>
+                <h3>
+                  <CharacterAvatar avatar={p.avatar} skin={p.skin} /> {p.name}
+                  <small>{p.status === 'won' ? `${p.guesses.length}회 성공` : '종료'}</small>
+                </h3>
+                {p.guesses.map((g, i) => (
+                  <div
+                    className="review-guess"
+                    key={i}
+                    style={{ gridTemplateColumns: `repeat(${g.letters.length},minmax(0,1fr))` }}
+                  >
+                    {g.letters.map((l, j) => (
+                      <span className={`tile ${g.colors[j]}`} key={j}>
+                        {l}
+                      </span>
+                    ))}
+                  </div>
+                ))}
+              </article>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+export function RoomSettings({
+  data,
+  open,
+  onOpenChange,
+  busy,
+  act,
+  onCopy,
+}: {
+  data: GameState;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  busy: boolean;
+  act: Action;
+  onCopy: () => void;
+}) {
+  const [nickname, setNickname] = useState(data.me.name),
+    [confirm, setConfirm] = useState<{
+      action: string;
+      memberId?: string;
+      title: string;
+      description: string;
+    } | null>(null);
+  async function apply() {
+    if (!confirm) return;
+    const r = await act(confirm.action, { memberId: confirm.memberId });
+    if (r) {
+      setConfirm(null);
+      toast.success('변경했어요.');
+    }
+  }
+  return (
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="settings-dialog">
+          <DialogTitle>방 설정</DialogTitle>
+          <DialogDescription>
+            {data.room.name}
+            {data.room.isAdmin ? ' · 전체 방 관리자' : ''}
+          </DialogDescription>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const r = await act('rename', { name: nickname });
+              if (r) toast.success('닉네임을 변경했어요.');
+            }}
+          >
+            <label>
+              내 닉네임
+              <input
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                maxLength={16}
+              />
+            </label>
+            <button className="secondary-btn" disabled={busy || !nickname.trim()} type="submit">
+              변경
+            </button>
+          </form>
+          <div className="settings-invite">
+            <button className="secondary-btn" onClick={onCopy}>
+              <Copy size={15} />
+              초대 링크 복사
+            </button>
+            {data.room.isHost && (
+              <button
+                className="secondary-btn"
+                disabled={busy}
+                onClick={() =>
+                  setConfirm({
+                    action: 'rotate_invite',
+                    title: '초대 링크를 재발급할까요?',
+                    description:
+                      '기존 초대 링크로는 새로 입장할 수 없게 됩니다. 이미 참여한 사람과 모든 게임 기록은 유지됩니다.',
+                  })
+                }
+              >
+                링크 재발급
+              </button>
+            )}
+          </div>
+          <div className="settings-roster">
+            {data.roster.map((p) => (
+              <div key={p.id}>
+                <span>
+                  <CharacterAvatar avatar={p.avatar} skin={p.skin} />
+                </span>
+                <strong>
+                  {p.name}
+                  {p.id === data.room.hostId ? ' · 방장' : ''}
+                </strong>
+                {data.room.isHost &&
+                  (p.id !== data.me.id || data.room.isAdmin) &&
+                  p.id !== data.room.hostId && (
+                    <>
+                      <button
+                        className="text-btn"
+                        disabled={busy}
+                        onClick={() =>
+                          setConfirm({
+                            action: 'transfer',
+                            memberId: p.id,
+                            title: `${p.name}님에게 방장을 넘길까요?`,
+                            description:
+                              '새 문제 시작과 방 관리 권한을 넘깁니다. 진행 중인 기록은 유지됩니다.',
+                          })
+                        }
+                      >
+                        방장 넘기기
+                      </button>
+                      <button
+                        className="text-btn danger"
+                        disabled={busy || p.id === data.me.id}
+                        onClick={() =>
+                          setConfirm({
+                            action: 'kick',
+                            memberId: p.id,
+                            title: `${p.name}님을 내보낼까요?`,
+                            description:
+                              '이 브라우저의 방 참여를 차단합니다. 풀이 중이어도 즉시 내보냅니다. 기존 점수·제출 기록·대화는 유지됩니다.',
+                          })
+                        }
+                      >
+                        내보내기
+                      </button>
+                    </>
+                  )}
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+      <AlertDialog
+        open={!!confirm}
+        onOpenChange={(v) => {
+          if (!v) setConfirm(null);
+        }}
+      >
+        <AlertDialogContent className="settings-dialog">
+          <AlertDialogTitle>{confirm?.title}</AlertDialogTitle>
+          <AlertDialogDescription>{confirm?.description}</AlertDialogDescription>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>취소</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={busy}
+              onClick={(e) => {
+                e.preventDefault();
+                void apply();
+              }}
+            >
+              확인
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
 }

@@ -1,1 +1,119 @@
-.global-announcement{position:sticky;top:0;z-index:45;display:flex;align-items:center;gap:12px;padding:12px max(18px,calc((100vw - 1160px)/2));background:linear-gradient(110deg,#eee3bbf5,#f4eddbf5);border-bottom:1px solid #d4c18880;backdrop-filter:blur(18px);color:#65562e;font-size:14px;box-shadow:0 4px 18px #3e331212}.global-announcement>svg,.global-announcement strong{flex-shrink:0}.global-announcement p{flex:1;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;max-height:25dvh;overflow:auto;line-height:1.6}.global-announcement button{border:0;background:transparent;color:inherit;display:grid;place-items:center;min-width:32px;min-height:32px}.notice-editor{max-width:800px;margin:40px auto}.notice-editor h1{font-size:25px;margin-bottom:12px}.notice-editor label{display:block;margin-top:22px;font-weight:650}.notice-editor textarea{display:block;width:100%;margin:10px 0;padding:16px;border:1px solid #b7c2d4;border-radius:16px;background:#ffffff90;color:inherit;font:inherit;resize:vertical}.notice-editor small{color:#8490a5}.notice-preview{margin:24px 0;padding:18px;border-radius:16px;background:#b6a25b14;border:1px solid #b6a25b40}.notice-preview p{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:8px}.notice-actions{display:flex;gap:10px;flex-wrap:wrap}.notice-actions button{padding:10px 15px;border-radius:12px;border:1px solid #a2aec54a}.notice-editor [role=alert]{color:#c25959}.notice-editor [role=status]{color:#54866b}html[data-theme=dark] .global-announcement{background:linear-gradient(110deg,#3f3725f5,#292c37f5);color:#e9d9aa;border-color:#74613c}html[data-theme=dark] .notice-editor textarea{background:#273344;color:#e1e8f5}html[data-theme=dark] .notice-actions button:not(.primary){background:#344154;color:#e1e8f5}@media(max-width:600px){.global-announcement{gap:8px;font-size:12px;padding:10px 12px}.global-announcement strong{font-size:11px}.notice-editor{margin:20px 0}}
+.global-announcement {
+  position: sticky;
+  top: 0;
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px max(18px, calc((100vw - 1160px) / 2));
+  background: linear-gradient(110deg, #eee3bbf5, #f4eddbf5);
+  border-bottom: 1px solid #d4c18880;
+  backdrop-filter: blur(18px);
+  color: #65562e;
+  font-size: 14px;
+  box-shadow: 0 4px 18px #3e331212;
+}
+.global-announcement > svg,
+.global-announcement strong {
+  flex-shrink: 0;
+}
+.global-announcement p {
+  flex: 1;
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 25dvh;
+  overflow: auto;
+  line-height: 1.6;
+}
+.global-announcement button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  display: grid;
+  place-items: center;
+  min-width: 32px;
+  min-height: 32px;
+}
+.notice-editor {
+  max-width: 800px;
+  margin: 40px auto;
+}
+.notice-editor h1 {
+  font-size: 25px;
+  margin-bottom: 12px;
+}
+.notice-editor label {
+  display: block;
+  margin-top: 22px;
+  font-weight: 650;
+}
+.notice-editor textarea {
+  display: block;
+  width: 100%;
+  margin: 10px 0;
+  padding: 16px;
+  border: 1px solid #b7c2d4;
+  border-radius: 16px;
+  background: #ffffff90;
+  color: inherit;
+  font: inherit;
+  resize: vertical;
+}
+.notice-editor small {
+  color: #8490a5;
+}
+.notice-preview {
+  margin: 24px 0;
+  padding: 18px;
+  border-radius: 16px;
+  background: #b6a25b14;
+  border: 1px solid #b6a25b40;
+}
+.notice-preview p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin-top: 8px;
+}
+.notice-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.notice-actions button {
+  padding: 10px 15px;
+  border-radius: 12px;
+  border: 1px solid #a2aec54a;
+}
+.notice-editor [role='alert'] {
+  color: #c25959;
+}
+.notice-editor [role='status'] {
+  color: #54866b;
+}
+html[data-theme='dark'] .global-announcement {
+  background: linear-gradient(110deg, #3f3725f5, #292c37f5);
+  color: #e9d9aa;
+  border-color: #74613c;
+}
+html[data-theme='dark'] .notice-editor textarea {
+  background: #273344;
+  color: #e1e8f5;
+}
+html[data-theme='dark'] .notice-actions button:not(.primary) {
+  background: #344154;
+  color: #e1e8f5;
+}
+@media (max-width: 600px) {
+  .global-announcement {
+    gap: 8px;
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+  .global-announcement strong {
+    font-size: 11px;
+  }
+  .notice-editor {
+    margin: 20px 0;
+  }
+}

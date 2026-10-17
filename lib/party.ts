@@ -1,33 +1,269 @@
-import {one,all,run,database} from '@/lib/store';
-export const TITLE_NAMES:Record<string,string>={last_second:'벼락치기',last_chance:'벼랑 끝 생존자'};
-export function memberOwner(m:any){return m.account_id?'account:'+m.account_id:'guest:'+m.token_hash}
-export async function isSpectator(m:any,roundId:string){return !!m.spectator||!!await one('SELECT 1 FROM spectators WHERE round_id=? AND member_id=?',roundId,m.id)}
-export async function trackSpectator(m:any,roundId:string){if(m.spectator)await run('INSERT INTO spectators(round_id,member_id) VALUES(?,?) ON CONFLICT DO NOTHING',roundId,m.id);return isSpectator(m,roundId)}
-export async function ensureLoadout(r:any,m:any){if(r.variant!=='items'||r.mode!=='daily'||!r.ends_at||await isSpectator(m,r.id))return null;const support=['shield','reflect','boost'][crypto.getRandomValues(new Uint8Array(1))[0]%3];await run('INSERT INTO item_loadouts(round_id,member_id,ends_at,support) VALUES(?,?,?,?) ON CONFLICT DO NOTHING',r.id,m.id,r.ends_at,support);return one('SELECT * FROM item_loadouts WHERE round_id=? AND member_id=?',r.id,m.id)}
-export async function awardTitles(r:any,m:any){const p=await one('SELECT * FROM plays WHERE round_id=? AND member_id=?',r.id,m.id);if(!p||p.status!=='won'||r.mode!=='daily')return;const loadout=await one('SELECT ends_at FROM item_loadouts WHERE round_id=? AND member_id=?',r.id,m.id);const end=loadout?.ends_at??r.ends_at;const titles=[];if(end&&p.finished_at<end&&end-p.finished_at<=10000)titles.push('last_second');if(JSON.parse(p.guesses).length===5)titles.push('last_chance');for(const title of titles)await run('INSERT INTO earned_titles(owner,title,earned_at) VALUES(?,?,?) ON CONFLICT DO NOTHING',memberOwner(m),title,p.finished_at)}
-export async function expirePlays(r:any,now:number){await run(`UPDATE plays SET status='lost',finished_at=COALESCE((SELECT ends_at FROM item_loadouts l WHERE l.round_id=plays.round_id AND l.member_id=plays.member_id),?),updated_at=? WHERE round_id=? AND status='playing' AND guesses<>'[]' AND COALESCE((SELECT ends_at FROM item_loadouts l WHERE l.round_id=plays.round_id AND l.member_id=plays.member_id),?)<=?`,r.ends_at,now,r.id,r.ends_at,now)}
-export async function partyState(r:any,m:any){
- const spectator=await trackSpectator(m,r.id),loadout=await ensureLoadout(r,m);await awardTitles(r,m);
- const titles=await all('SELECT title,earned_at AS earnedAt FROM earned_titles WHERE owner=?',memberOwner(m)),equipped=await one('SELECT title FROM equipped_titles WHERE owner=?',memberOwner(m));
- const hints=await all('SELECT h.member_id AS memberId,m.name,h.updated_at AS updatedAt FROM drawing_hints h JOIN members m ON m.id=h.member_id WHERE h.round_id=? AND m.blocked=0',r.id);
- const events=r.variant==='items'?await all('SELECT e.id,e.actor AS actorId,e.target AS targetId,e.effect,e.created_at AS createdAt,a.name AS actor,t.name AS target FROM item_events e JOIN members a ON a.id=e.actor JOIN members t ON t.id=e.target WHERE e.round_id=? AND e.applied=1 ORDER BY e.created_at DESC LIMIT 6',r.id):[];
- return {hintPolicy:!!r.hint_policy,hintUsed:!!await one('SELECT 1 FROM hint_views WHERE round_id=? AND member_id=?',r.id,m.id),spectator,nextParticipant:spectator&&!m.spectator,variant:r.variant||'normal',loadout:loadout?{endsAt:loadout.ends_at,attackUsed:!!loadout.attack_used,support:loadout.support,supportUsed:!!loadout.support_used,defense:loadout.defense,protectedUntil:loadout.protected_until,damage:loadout.damage}:null,titles:titles.map(t=>({...t,name:TITLE_NAMES[t.title]})),equipped:equipped?.title||'',hints,events};
+import { one, all, run, database } from '@/lib/store';
+export const TITLE_NAMES: Record<string, string> = {
+  last_second: '벼락치기',
+  last_chance: '벼랑 끝 생존자',
+};
+export function memberOwner(m: any) {
+  return m.account_id ? 'account:' + m.account_id : 'guest:' + m.token_hash;
 }
-export function validateStrokes(value:any){return Array.isArray(value)&&value.length<=100&&value.every(s=>s&&['#273449','#ef6464','#4e9f78','#5a80d8','#e5b344'].includes(s.color)&&[3,6,10].includes(s.width)&&Array.isArray(s.points)&&s.points.length>0&&s.points.length<=300&&s.points.every((p:any)=>Array.isArray(p)&&p.length===2&&p.every((v:any)=>Number.isFinite(v)&&v>=0&&v<=1)))}
+export async function isSpectator(m: any, roundId: string) {
+  return (
+    !!m.spectator ||
+    !!(await one('SELECT 1 FROM spectators WHERE round_id=? AND member_id=?', roundId, m.id))
+  );
+}
+export async function trackSpectator(m: any, roundId: string) {
+  if (m.spectator)
+    await run(
+      'INSERT INTO spectators(round_id,member_id) VALUES(?,?) ON CONFLICT DO NOTHING',
+      roundId,
+      m.id,
+    );
+  return isSpectator(m, roundId);
+}
+export async function ensureLoadout(r: any, m: any) {
+  if (r.variant !== 'items' || r.mode !== 'daily' || !r.ends_at || (await isSpectator(m, r.id)))
+    return null;
+  const support = ['shield', 'reflect', 'boost'][crypto.getRandomValues(new Uint8Array(1))[0] % 3];
+  await run(
+    'INSERT INTO item_loadouts(round_id,member_id,ends_at,support) VALUES(?,?,?,?) ON CONFLICT DO NOTHING',
+    r.id,
+    m.id,
+    r.ends_at,
+    support,
+  );
+  return one('SELECT * FROM item_loadouts WHERE round_id=? AND member_id=?', r.id, m.id);
+}
+export async function awardTitles(r: any, m: any) {
+  const p = await one('SELECT * FROM plays WHERE round_id=? AND member_id=?', r.id, m.id);
+  if (!p || p.status !== 'won' || r.mode !== 'daily') return;
+  const loadout = await one(
+    'SELECT ends_at FROM item_loadouts WHERE round_id=? AND member_id=?',
+    r.id,
+    m.id,
+  );
+  const end = loadout?.ends_at ?? r.ends_at;
+  const titles = [];
+  if (end && p.finished_at < end && end - p.finished_at <= 10000) titles.push('last_second');
+  if (JSON.parse(p.guesses).length === 5) titles.push('last_chance');
+  for (const title of titles)
+    await run(
+      'INSERT INTO earned_titles(owner,title,earned_at) VALUES(?,?,?) ON CONFLICT DO NOTHING',
+      memberOwner(m),
+      title,
+      p.finished_at,
+    );
+}
+export async function expirePlays(r: any, now: number) {
+  await run(
+    `UPDATE plays SET status='lost',finished_at=COALESCE((SELECT ends_at FROM item_loadouts l WHERE l.round_id=plays.round_id AND l.member_id=plays.member_id),?),updated_at=? WHERE round_id=? AND status='playing' AND guesses<>'[]' AND COALESCE((SELECT ends_at FROM item_loadouts l WHERE l.round_id=plays.round_id AND l.member_id=plays.member_id),?)<=?`,
+    r.ends_at,
+    now,
+    r.id,
+    r.ends_at,
+    now,
+  );
+}
+export async function partyState(r: any, m: any) {
+  const spectator = await trackSpectator(m, r.id),
+    loadout = await ensureLoadout(r, m);
+  await awardTitles(r, m);
+  const titles = await all(
+      'SELECT title,earned_at AS earnedAt FROM earned_titles WHERE owner=?',
+      memberOwner(m),
+    ),
+    equipped = await one('SELECT title FROM equipped_titles WHERE owner=?', memberOwner(m));
+  const hints = await all(
+    'SELECT h.member_id AS memberId,m.name,h.updated_at AS updatedAt FROM drawing_hints h JOIN members m ON m.id=h.member_id WHERE h.round_id=? AND m.blocked=0',
+    r.id,
+  );
+  const events =
+    r.variant === 'items'
+      ? await all(
+          'SELECT e.id,e.actor AS actorId,e.target AS targetId,e.effect,e.created_at AS createdAt,a.name AS actor,t.name AS target FROM item_events e JOIN members a ON a.id=e.actor JOIN members t ON t.id=e.target WHERE e.round_id=? AND e.applied=1 ORDER BY e.created_at DESC LIMIT 6',
+          r.id,
+        )
+      : [];
+  return {
+    hintPolicy: !!r.hint_policy,
+    hintUsed: !!(await one(
+      'SELECT 1 FROM hint_views WHERE round_id=? AND member_id=?',
+      r.id,
+      m.id,
+    )),
+    spectator,
+    nextParticipant: spectator && !m.spectator,
+    variant: r.variant || 'normal',
+    loadout: loadout
+      ? {
+          endsAt: loadout.ends_at,
+          attackUsed: !!loadout.attack_used,
+          support: loadout.support,
+          supportUsed: !!loadout.support_used,
+          defense: loadout.defense,
+          protectedUntil: loadout.protected_until,
+          damage: loadout.damage,
+        }
+      : null,
+    titles: titles.map((t) => ({ ...t, name: TITLE_NAMES[t.title] })),
+    equipped: equipped?.title || '',
+    hints,
+    events,
+  };
+}
+export function validateStrokes(value: any) {
+  return (
+    Array.isArray(value) &&
+    value.length <= 100 &&
+    value.every(
+      (s) =>
+        s &&
+        ['#273449', '#ef6464', '#4e9f78', '#5a80d8', '#e5b344'].includes(s.color) &&
+        [3, 6, 10].includes(s.width) &&
+        Array.isArray(s.points) &&
+        s.points.length > 0 &&
+        s.points.length <= 300 &&
+        s.points.every(
+          (p: any) =>
+            Array.isArray(p) &&
+            p.length === 2 &&
+            p.every((v: any) => Number.isFinite(v) && v >= 0 && v <= 1),
+        ),
+    )
+  );
+}
 // All item writes run in one D1 batch. The event gate checks both revisions, roles,
 // current round and live deadlines; only that accepted event can update inventories.
-export async function useItem(r:any,m:any,b:any){
- if(r.variant!=='items'||r.mode!=='daily'||await isSpectator(m,r.id))throw Error('아이템전 참가자만 사용할 수 있어요.');
- if(!['attack','support'].includes(b.kind)||typeof b.requestId!=='string'||!/^[a-f0-9-]{36}$/.test(b.requestId))throw Error('아이템 요청을 확인해 주세요.');
- const prior=await one('SELECT * FROM item_events WHERE id=?',b.requestId);if(prior){if(prior.actor!==m.id||prior.round_id!==r.id||prior.kind!==b.kind||prior.target!==(b.kind==='attack'?b.targetId:m.id))throw Error('이미 사용된 요청 번호예요.');return;}
- const target=b.kind==='attack'?await one('SELECT * FROM members WHERE id=? AND room_id=? AND blocked=0',b.targetId,r.room_id):m;
- if(!target||b.kind==='attack'&&target.id===m.id||await isSpectator(target,r.id))throw Error('다른 참가자를 선택해 주세요.');
- const a=await ensureLoadout(r,m),t=target.id===m.id?a:await ensureLoadout(r,target),now=Date.now();if(!a||!t||a.ends_at<=now||t.ends_at<=now)throw Error('이미 시간이 끝났어요.');
- if(b.kind==='attack'&&(a.attack_used||t.protected_until>now||t.damage>=45000))throw Error('공격을 사용했거나 상대가 보호 중이에요.');if(b.kind==='support'&&a.support_used)throw Error('이미 사용한 아이템이에요.');
- const nextA={...a},nextT=target.id===m.id?nextA:{...t};let effect='';
- if(b.kind==='support'){nextA.support_used=1;if(a.support==='boost'){nextA.ends_at+=15000;effect='시간 충전 +15초'}else{nextA.defense=a.support;effect=a.support==='shield'?'방패 준비':'반사 준비'}}
- else{nextA.attack_used=1;nextT.protected_until=now+15000;if(t.defense==='shield'){nextT.defense='';effect='방패로 공격 차단'}else if(t.defense==='reflect'){nextT.defense='';if(a.defense){nextA.defense='';effect='반사 · 방어막으로 차단'}else if(a.protected_until<=now&&a.damage<45000){const damage=Math.min(15000,45000-a.damage);nextA.damage+=damage;nextA.ends_at-=damage;nextA.protected_until=now+15000;effect='반사! 공격자 -15초'}else effect='반사 · 공격자는 보호 중'}else{const damage=Math.min(15000,45000-t.damage);nextT.damage+=damage;nextT.ends_at-=damage;effect='시간 도둑 -15초'}}
- const db=database();const statements=[db.prepare(`INSERT INTO item_events(id,round_id,actor,target,kind,effect,created_at) SELECT ?,?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM rooms WHERE id=? AND current_round_id=?) AND EXISTS(SELECT 1 FROM item_loadouts WHERE round_id=? AND member_id=? AND revision=? AND ends_at>?) AND EXISTS(SELECT 1 FROM item_loadouts WHERE round_id=? AND member_id=? AND revision=? AND ends_at>?) AND NOT EXISTS(SELECT 1 FROM plays WHERE round_id=? AND member_id IN (?,?) AND status<>'playing') AND (SELECT COUNT(*) FROM members WHERE id IN (?,?) AND blocked=0 AND spectator=0)=? AND NOT EXISTS(SELECT 1 FROM spectators WHERE round_id=? AND member_id IN (?,?)) ON CONFLICT DO NOTHING`).bind(b.requestId,r.id,m.id,target.id,b.kind,effect,now,r.room_id,r.id,r.id,m.id,a.revision,now,r.id,target.id,t.revision,now,r.id,m.id,target.id,m.id,target.id,m.id===target.id?1:2,r.id,m.id,target.id)];
- for(const row of target.id===m.id?[nextA]:[nextA,nextT])statements.push(db.prepare(`UPDATE item_loadouts SET ends_at=?,attack_used=?,support_used=?,defense=?,damage=?,protected_until=?,revision=revision+1 WHERE round_id=? AND member_id=? AND EXISTS(SELECT 1 FROM item_events WHERE id=? AND applied=0)`).bind(row.ends_at,row.attack_used,row.support_used,row.defense,row.damage,row.protected_until,r.id,row.member_id,b.requestId));
- statements.push(db.prepare('UPDATE item_events SET applied=1 WHERE id=? AND applied=0').bind(b.requestId));const result=await db.batch(statements);if(!result[0].meta.changes)throw Error('상태가 바뀌었어요. 다시 확인해 주세요.');
+export async function useItem(r: any, m: any, b: any) {
+  if (r.variant !== 'items' || r.mode !== 'daily' || (await isSpectator(m, r.id)))
+    throw Error('아이템전 참가자만 사용할 수 있어요.');
+  if (
+    !['attack', 'support'].includes(b.kind) ||
+    typeof b.requestId !== 'string' ||
+    !/^[a-f0-9-]{36}$/.test(b.requestId)
+  )
+    throw Error('아이템 요청을 확인해 주세요.');
+  const prior = await one('SELECT * FROM item_events WHERE id=?', b.requestId);
+  if (prior) {
+    if (
+      prior.actor !== m.id ||
+      prior.round_id !== r.id ||
+      prior.kind !== b.kind ||
+      prior.target !== (b.kind === 'attack' ? b.targetId : m.id)
+    )
+      throw Error('이미 사용된 요청 번호예요.');
+    return;
+  }
+  const target =
+    b.kind === 'attack'
+      ? await one(
+          'SELECT * FROM members WHERE id=? AND room_id=? AND blocked=0',
+          b.targetId,
+          r.room_id,
+        )
+      : m;
+  if (!target || (b.kind === 'attack' && target.id === m.id) || (await isSpectator(target, r.id)))
+    throw Error('다른 참가자를 선택해 주세요.');
+  const a = await ensureLoadout(r, m),
+    t = target.id === m.id ? a : await ensureLoadout(r, target),
+    now = Date.now();
+  if (!a || !t || a.ends_at <= now || t.ends_at <= now) throw Error('이미 시간이 끝났어요.');
+  if (b.kind === 'attack' && (a.attack_used || t.protected_until > now || t.damage >= 45000))
+    throw Error('공격을 사용했거나 상대가 보호 중이에요.');
+  if (b.kind === 'support' && a.support_used) throw Error('이미 사용한 아이템이에요.');
+  const nextA = { ...a },
+    nextT = target.id === m.id ? nextA : { ...t };
+  let effect = '';
+  if (b.kind === 'support') {
+    nextA.support_used = 1;
+    if (a.support === 'boost') {
+      nextA.ends_at += 15000;
+      effect = '시간 충전 +15초';
+    } else {
+      nextA.defense = a.support;
+      effect = a.support === 'shield' ? '방패 준비' : '반사 준비';
+    }
+  } else {
+    nextA.attack_used = 1;
+    nextT.protected_until = now + 15000;
+    if (t.defense === 'shield') {
+      nextT.defense = '';
+      effect = '방패로 공격 차단';
+    } else if (t.defense === 'reflect') {
+      nextT.defense = '';
+      if (a.defense) {
+        nextA.defense = '';
+        effect = '반사 · 방어막으로 차단';
+      } else if (a.protected_until <= now && a.damage < 45000) {
+        const damage = Math.min(15000, 45000 - a.damage);
+        nextA.damage += damage;
+        nextA.ends_at -= damage;
+        nextA.protected_until = now + 15000;
+        effect = '반사! 공격자 -15초';
+      } else effect = '반사 · 공격자는 보호 중';
+    } else {
+      const damage = Math.min(15000, 45000 - t.damage);
+      nextT.damage += damage;
+      nextT.ends_at -= damage;
+      effect = '시간 도둑 -15초';
+    }
+  }
+  const db = database();
+  const statements = [
+    db
+      .prepare(
+        `INSERT INTO item_events(id,round_id,actor,target,kind,effect,created_at) SELECT ?,?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM rooms WHERE id=? AND current_round_id=?) AND EXISTS(SELECT 1 FROM item_loadouts WHERE round_id=? AND member_id=? AND revision=? AND ends_at>?) AND EXISTS(SELECT 1 FROM item_loadouts WHERE round_id=? AND member_id=? AND revision=? AND ends_at>?) AND NOT EXISTS(SELECT 1 FROM plays WHERE round_id=? AND member_id IN (?,?) AND status<>'playing') AND (SELECT COUNT(*) FROM members WHERE id IN (?,?) AND blocked=0 AND spectator=0)=? AND NOT EXISTS(SELECT 1 FROM spectators WHERE round_id=? AND member_id IN (?,?)) ON CONFLICT DO NOTHING`,
+      )
+      .bind(
+        b.requestId,
+        r.id,
+        m.id,
+        target.id,
+        b.kind,
+        effect,
+        now,
+        r.room_id,
+        r.id,
+        r.id,
+        m.id,
+        a.revision,
+        now,
+        r.id,
+        target.id,
+        t.revision,
+        now,
+        r.id,
+        m.id,
+        target.id,
+        m.id,
+        target.id,
+        m.id === target.id ? 1 : 2,
+        r.id,
+        m.id,
+        target.id,
+      ),
+  ];
+  for (const row of target.id === m.id ? [nextA] : [nextA, nextT])
+    statements.push(
+      db
+        .prepare(
+          `UPDATE item_loadouts SET ends_at=?,attack_used=?,support_used=?,defense=?,damage=?,protected_until=?,revision=revision+1 WHERE round_id=? AND member_id=? AND EXISTS(SELECT 1 FROM item_events WHERE id=? AND applied=0)`,
+        )
+        .bind(
+          row.ends_at,
+          row.attack_used,
+          row.support_used,
+          row.defense,
+          row.damage,
+          row.protected_until,
+          r.id,
+          row.member_id,
+          b.requestId,
+        ),
+    );
+  statements.push(
+    db.prepare('UPDATE item_events SET applied=1 WHERE id=? AND applied=0').bind(b.requestId),
+  );
+  const result = await db.batch(statements);
+  if (!result[0].meta.changes) throw Error('상태가 바뀌었어요. 다시 확인해 주세요.');
 }

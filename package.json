@@ -14,7 +14,9 @@
     "check:public": "node scripts/check-public.mjs",
     "db:local": "node scripts/db-local.mjs",
     "deploy": "node scripts/deploy.mjs",
-    "ci": "npm run check:public && npm test && npm run typecheck && npm run build"
+    "ci": "npm run format:check && npm run check:public && npm test && npm run typecheck && npm run build",
+    "format": "prettier --write app components lib scripts tests *.ts *.mjs package.json",
+    "format:check": "prettier --check app components lib scripts tests *.ts *.mjs package.json"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -27,6 +29,7 @@
     "drizzle-orm": "0.45.2",
     "embla-carousel-react": "^8.6.0",
     "input-otp": "^1.4.2",
+    "jose": "6.2.12",
     "lucide-react": "^1.31.0",
     "next": "16.3.4",
     "next-themes": "^0.4.6",
@@ -41,8 +44,7 @@
     "tailwind-merge": "3.6.0",
     "three": "0.180.0",
     "vaul": "^1.1.2",
-    "zod": "^3.25.76",
-    "jose": "6.2.12"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",
@@ -57,6 +59,7 @@
     "eslint": "9.39.4",
     "eslint-config-next": "16.3.4",
     "json-rpc-2.0": "1.7.1",
+    "prettier": "3.6.2",
     "raw-body": "3.0.2",
     "react-server-dom-webpack": "19.2.6",
     "tailwindcss": "4.2.1",
