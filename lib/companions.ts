@@ -13,7 +13,7 @@ export async function companions(req: Request) {
       now,
       now - 30000,
     );
-  const rows = await all(
+  const rowsPromise = all(
     `SELECT m.id,m.account_id,m.name,m.avatar,m.skin_id AS skin,m.last_seen,MAX(m.last_seen,COALESCE(ap.last_seen,0)) onlineSeen,r.id roomId,r.name roomName
  FROM members mine JOIN members m ON m.room_id=mine.room_id AND m.id<>mine.id JOIN rooms r ON r.id=m.room_id LEFT JOIN account_presence ap ON ap.account_id=m.account_id
  WHERE ${owner ? 'mine.account_id=?' : 'mine.account_id IS NULL AND mine.token_hash=?'} AND mine.blocked=0 AND m.blocked=0 AND r.archived_at IS NULL
@@ -21,6 +21,23 @@ export async function companions(req: Request) {
     owner || guest,
     owner || '',
   );
+  const linksPromise = owner
+    ? all(
+        `SELECT f.id,f.status,f.requester=? outgoing,COALESCE(p.name,m.name,'플레이어') name,COALESCE(p.avatar,m.avatar,'🐱') avatar,CASE WHEN p.id IS NOT NULL THEN p.skin_id ELSE m.skin_id END skin,m.id memberId,
+ MAX(COALESCE(m.last_seen,0),COALESCE(ap.last_seen,0)) lastSeen,m.last_seen roomSeen,r.id roomId,r.name roomName
+ FROM friendships f LEFT JOIN profiles p ON p.id=CASE WHEN f.requester=? THEN f.recipient ELSE f.requester END
+ LEFT JOIN account_presence ap ON ap.account_id=CASE WHEN f.requester=? THEN f.recipient ELSE f.requester END
+ LEFT JOIN members m ON m.id=(SELECT x.id FROM members x JOIN rooms xr ON xr.id=x.room_id WHERE x.account_id=CASE WHEN f.requester=? THEN f.recipient ELSE f.requester END AND x.blocked=0 AND xr.archived_at IS NULL ORDER BY x.last_seen DESC,x.id LIMIT 1)
+ LEFT JOIN rooms r ON r.id=m.room_id WHERE (f.requester=? OR f.recipient=?) AND f.status<>'declined' ORDER BY f.status DESC,f.updated_at DESC LIMIT 100`,
+        owner,
+        owner,
+        owner,
+        owner,
+        owner,
+        owner,
+      )
+    : [];
+  const [rows, links] = await Promise.all([rowsPromise, linksPromise]);
   const seen = new Set<string>();
   const recent = rows
     .filter((m) => {
@@ -39,22 +56,6 @@ export async function companions(req: Request) {
       online: m.onlineSeen > now - 45000,
       room: m.last_seen > now - 45000 ? { id: m.roomId, name: m.roomName } : null,
     }));
-  const links = owner
-    ? await all(
-        `SELECT f.id,f.status,f.requester=? outgoing,COALESCE(p.name,m.name,'플레이어') name,COALESCE(p.avatar,m.avatar,'🐱') avatar,CASE WHEN p.id IS NOT NULL THEN p.skin_id ELSE m.skin_id END skin,m.id memberId,
- MAX(COALESCE(m.last_seen,0),COALESCE(ap.last_seen,0)) lastSeen,m.last_seen roomSeen,r.id roomId,r.name roomName
- FROM friendships f LEFT JOIN profiles p ON p.id=CASE WHEN f.requester=? THEN f.recipient ELSE f.requester END
- LEFT JOIN account_presence ap ON ap.account_id=CASE WHEN f.requester=? THEN f.recipient ELSE f.requester END
- LEFT JOIN members m ON m.id=(SELECT x.id FROM members x JOIN rooms xr ON xr.id=x.room_id WHERE x.account_id=CASE WHEN f.requester=? THEN f.recipient ELSE f.requester END AND x.blocked=0 AND xr.archived_at IS NULL ORDER BY x.last_seen DESC,x.id LIMIT 1)
- LEFT JOIN rooms r ON r.id=m.room_id WHERE (f.requester=? OR f.recipient=?) AND f.status<>'declined' ORDER BY f.status DESC,f.updated_at DESC LIMIT 100`,
-        owner,
-        owner,
-        owner,
-        owner,
-        owner,
-        owner,
-      )
-    : [];
   return {
     signedIn: !!owner,
     recent,

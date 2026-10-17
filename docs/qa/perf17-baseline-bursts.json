@@ -1,0 +1,55 @@
+{
+  "environment": "remote-protected-synthetic",
+  "results": [
+    {
+      "concurrency": 10,
+      "rooms": 1,
+      "snapshot": {
+        "requests": 10,
+        "p50Ms": 1302,
+        "p95Ms": 1592
+      },
+      "submission": {
+        "requests": 10,
+        "p50Ms": 1098,
+        "p95Ms": 1357
+      },
+      "duplicate": {
+        "requests": 10,
+        "p50Ms": 770,
+        "p95Ms": 900
+      },
+      "restore": {
+        "requests": 10,
+        "p50Ms": 1074,
+        "p95Ms": 1493
+      },
+      "verified": "one persisted guess per participant"
+    },
+    {
+      "concurrency": 50,
+      "rooms": 5,
+      "snapshot": {
+        "requests": 50,
+        "p50Ms": 2989,
+        "p95Ms": 3127
+      },
+      "submission": {
+        "requests": 50,
+        "p50Ms": 1718,
+        "p95Ms": 1993
+      },
+      "duplicate": {
+        "requests": 50,
+        "p50Ms": 1336,
+        "p95Ms": 1447
+      },
+      "restore": {
+        "requests": 50,
+        "p50Ms": 2668,
+        "p95Ms": 2788
+      },
+      "verified": "one persisted guess per participant"
+    }
+  ]
+}

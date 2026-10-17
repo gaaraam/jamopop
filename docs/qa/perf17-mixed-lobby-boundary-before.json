@@ -1,0 +1,339 @@
+{
+  "environment": "remote-protected-synthetic",
+  "users": 30,
+  "linked": 15,
+  "durationSeconds": 92,
+  "cycles": 30,
+  "failures": [
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    },
+    {
+      "endpoint": "/api/game",
+      "status": 503
+    }
+  ],
+  "metrics": {
+    "/healthz": {
+      "requests": 1,
+      "p50Ms": 370,
+      "p95Ms": 370,
+      "statuses": {
+        "200": 1
+      }
+    },
+    "setup": {
+      "requests": 30,
+      "p50Ms": 1058,
+      "p95Ms": 1426,
+      "statuses": {
+        "200": 30
+      }
+    },
+    "initial": {
+      "requests": 30,
+      "p50Ms": 738,
+      "p95Ms": 879,
+      "statuses": {
+        "200": 30
+      }
+    },
+    "submit": {
+      "requests": 30,
+      "p50Ms": 848,
+      "p95Ms": 1038,
+      "statuses": {
+        "200": 30
+      }
+    },
+    "snapshot": {
+      "requests": 900,
+      "p50Ms": 1029,
+      "p95Ms": 1282,
+      "statuses": {
+        "200": 900
+      }
+    },
+    "/api/lobby-chat": {
+      "requests": 30,
+      "p50Ms": 319,
+      "p95Ms": 478,
+      "statuses": {
+        "200": 30
+      }
+    },
+    "lobby": {
+      "requests": 60,
+      "p50Ms": 758,
+      "p95Ms": 1186,
+      "statuses": {
+        "503": 60
+      }
+    },
+    "/api/solo": {
+      "requests": 60,
+      "p50Ms": 316,
+      "p95Ms": 601,
+      "statuses": {
+        "200": 60
+      }
+    },
+    "duplicate": {
+      "requests": 90,
+      "p50Ms": 470,
+      "p95Ms": 629,
+      "statuses": {
+        "409": 90
+      }
+    },
+    "/api/shop": {
+      "requests": 30,
+      "p50Ms": 492,
+      "p95Ms": 722,
+      "statuses": {
+        "200": 30
+      }
+    },
+    "account": {
+      "requests": 90,
+      "p50Ms": 600,
+      "p95Ms": 909,
+      "statuses": {
+        "200": 90
+      }
+    }
+  }
+}

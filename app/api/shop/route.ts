@@ -10,9 +10,10 @@ export async function GET(req: Request) {
   try {
     const id = accountId(req);
     if (!id) return send({ error: '로그인 후 상점을 이용할 수 있어요.' }, 401);
+    const [state, allowed] = await Promise.all([shopState(id), avatarAccess(req)]);
     return send({
-      ...(await shopState(id)),
-      allowed: await avatarAccess(req),
+      ...state,
+      allowed,
       skins: ALL_SKINS,
       cardSkins: CARD_SKINS,
     });

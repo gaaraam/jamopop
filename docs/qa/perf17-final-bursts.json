@@ -1,0 +1,80 @@
+{
+  "environment": "remote-protected-synthetic",
+  "results": [
+    {
+      "concurrency": 10,
+      "rooms": 1,
+      "snapshot": {
+        "requests": 10,
+        "p50Ms": 767,
+        "p95Ms": 914
+      },
+      "submission": {
+        "requests": 10,
+        "p50Ms": 386,
+        "p95Ms": 512
+      },
+      "duplicate": {
+        "requests": 10,
+        "p50Ms": 290,
+        "p95Ms": 341
+      },
+      "restore": {
+        "requests": 10,
+        "p50Ms": 533,
+        "p95Ms": 584
+      },
+      "verified": "one persisted guess per participant"
+    },
+    {
+      "concurrency": 50,
+      "rooms": 5,
+      "snapshot": {
+        "requests": 50,
+        "p50Ms": 1663,
+        "p95Ms": 1869
+      },
+      "submission": {
+        "requests": 50,
+        "p50Ms": 639,
+        "p95Ms": 695
+      },
+      "duplicate": {
+        "requests": 50,
+        "p50Ms": 442,
+        "p95Ms": 506
+      },
+      "restore": {
+        "requests": 50,
+        "p50Ms": 1385,
+        "p95Ms": 1431
+      },
+      "verified": "one persisted guess per participant"
+    },
+    {
+      "concurrency": 100,
+      "rooms": 10,
+      "snapshot": {
+        "requests": 100,
+        "p50Ms": 2995,
+        "p95Ms": 3121
+      },
+      "submission": {
+        "requests": 100,
+        "p50Ms": 860,
+        "p95Ms": 1057
+      },
+      "duplicate": {
+        "requests": 100,
+        "p50Ms": 623,
+        "p95Ms": 785
+      },
+      "restore": {
+        "requests": 100,
+        "p50Ms": 2514,
+        "p95Ms": 2640
+      },
+      "verified": "one persisted guess per participant"
+    }
+  ]
+}

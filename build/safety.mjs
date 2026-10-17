@@ -32,6 +32,15 @@ export async function rateLimit(env,key,limit,ms,now=Date.now()){
  const grant=await one(env,`INSERT INTO safety_rate(key,hits,expires_at) VALUES(?,1,?) ON CONFLICT(key) DO UPDATE SET hits=CASE WHEN safety_rate.expires_at<=? THEN 1 ELSE safety_rate.hits+1 END,expires_at=excluded.expires_at WHERE safety_rate.expires_at<=? OR safety_rate.hits<? RETURNING hits`,key,expires,now,now,limit);
  return {allowed:!!grant,retryAfter:Math.max(1,Math.ceil((expires-now)/1000))};
 }
+// Charge actor and edge-IP budgets in one atomic storage request. A rejected
+// budget still fails closed; no local cache can grant a write.
+async function rateLimits(env, keys, ms, now=Date.now()){
+ if(!keys.length)return {allowed:true,retryAfter:1};
+ const expires=(Math.floor(now/ms)+1)*ms;
+ const sql=`INSERT INTO safety_rate(key,hits,expires_at) VALUES ${keys.map(()=>'(?,1,?)').join(',')} ON CONFLICT(key) DO UPDATE SET hits=CASE WHEN safety_rate.expires_at<=? THEN 1 ELSE safety_rate.hits+1 END,expires_at=excluded.expires_at WHERE safety_rate.expires_at<=? OR safety_rate.hits<CASE safety_rate.key ${keys.map(()=>'WHEN ? THEN ?').join(' ')} ELSE 0 END RETURNING key`;
+ const result=await env.DB.prepare(sql).bind(...keys.flatMap(([key])=>[key,expires]),now,now,...keys.flatMap(([key,limit])=>[key,limit])).all();
+ return {allowed:result.results.length===keys.length,retryAfter:Math.max(1,Math.ceil((expires-now)/1000))};
+}
 function quota(path,b){
  if(path==='/auth/google/start')return ['login',10,300000,100];
  if(path==='/api/safety')return b.action==='report'?['report',5,3600000,100]:['safety',30,60000,300];
@@ -65,9 +74,9 @@ export async function safetyBefore(req,env){
    const ip=req.headers.get('CF-Connecting-IP');
    const fingerprint=ip?await hash(new Date().toISOString().slice(0,10)+':'+ip):null;
    const keys=[...(fingerprint?[[`ip:${fingerprint}`,policy[3]]]:[]),...(actor.subject?[[actor.subject,policy[1]]]:[])];
-   for(const [key,limit] of keys){const q=await rateLimit(env,policy[0]+':'+key,limit,policy[2]);if(!q.allowed)return {response:json({error:'요청이 많아요. 잠시 후 다시 시도해 주세요.',retryAfter:q.retryAfter},429,{'Retry-After':String(q.retryAfter)})}}
-   // Bound stale counters without adding a timer or retaining raw IP logs.
-   await run(env,'DELETE FROM safety_rate WHERE key IN(SELECT key FROM safety_rate WHERE expires_at<? LIMIT 100)',Date.now()-86400000);
+   const q=await rateLimits(env,keys.map(([key,limit])=>[policy[0]+':'+key,limit]),policy[2]);if(!q.allowed)return {response:json({error:'요청이 많아요. 잠시 후 다시 시도해 주세요.',retryAfter:q.retryAfter},429,{'Retry-After':String(q.retryAfter)})};
+   // Expired counters are bounded by the daily technical-expiry Cron. Never make
+   // every player write contend on a global cleanup scan. Quotas remain atomic.
   }
   if(write&&path==='/api/game'&&body.action==='join'&&typeof body.room==='string'&&req.headers.get('CF-Connecting-IP')){const room=await one(env,'SELECT id FROM rooms WHERE (id=? OR invite_code=?) AND password_hash IS NOT NULL',body.room,body.room);if(room){const fingerprint=await hash(req.headers.get('CF-Connecting-IP'));const q=await rateLimit(env,'password-ip:'+room.id+':'+fingerprint,60,60000);if(!q.allowed)return {response:json({error:'비밀번호 시도가 많아요. 잠시 후 다시 입력해 주세요.'},429,{'Retry-After':String(q.retryAfter)})}}}
   const limited=await restriction(env,actor);
@@ -177,7 +186,11 @@ export async function safetyEndpoint(req,env,context={}){
 export async function safetyAfter(req,env,response,context={}){
  const path=new URL(req.url).pathname;
  if(response.status!==200||!response.headers.get('content-type')?.includes('application/json')||!['/api/game','/api/speed','/api/lobby-chat','/api/party','/api/companions','/api/invitations','/api/home/life'].includes(path))return response;
- const actor=context.actor||await safetyIdentity(req,env),data=await response.json(),aliases=actor.aliases;
+ const data=await response.json();
+ // A confirmed own submission has no peer/social content to filter. Keep this
+ // exact allowlist narrow so adding chat/hints later cannot bypass blocking.
+ if(path==='/api/game'&&data.submitted===true&&Object.keys(data).every(k=>['submitted','roomId','roundId','memberId','serverNow','finishedAt','play'].includes(k))){const h=new Headers(response.headers);h.delete('content-length');h.set('Cache-Control','private, no-store');return new Response(JSON.stringify(data),{status:response.status,headers:h})}
+ const actor=context.actor||await safetyIdentity(req,env),aliases=actor.aliases;
  let hidden=new Set(),blocked=new Set();
  if(aliases.length){
   const rows=await all(env,`SELECT owner,target,target_alias,mode FROM safety_blocks WHERE owner IN (SELECT value FROM json_each(?)) OR (mode='block' AND (target IN (SELECT value FROM json_each(?)) OR target_alias IN (SELECT value FROM json_each(?))))`,JSON.stringify(aliases),JSON.stringify(aliases),JSON.stringify(aliases));

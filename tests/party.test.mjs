@@ -26,7 +26,11 @@ test('party integration: items, concurrency, deadlines, titles, hints, spectator
         batch: async (qs) => {
           db.exec('BEGIN');
           try {
-            const out = qs.map((q) => ({ meta: db.prepare(q.s).run(...q.v) }));
+            const out = qs.map((q) =>
+              /^SELECT/i.test(q.s.trim())
+                ? { results: db.prepare(q.s).all(...q.v) }
+                : { meta: db.prepare(q.s).run(...q.v) },
+            );
             db.exec('COMMIT');
             return out;
           } catch (e) {
@@ -270,6 +274,15 @@ test('party integration: items, concurrency, deadlines, titles, hints, spectator
       409,
     );
     await hintGet('a');
+    const changesBeforeRead = db.prepare('SELECT total_changes() AS n').get().n;
+    const reread = await api.GET(req('a', null, `/api/party?room=${room}&roundId=${rid}`));
+    assert.equal(reread.status, 200);
+    assert.equal((await reread.json()).hints.length, 1);
+    assert.equal(
+      db.prepare('SELECT total_changes() AS n').get().n,
+      changesBeforeRead,
+      'previously disclosed hint reads are read-only',
+    );
     await hintGet('a');
     assert.equal(db.prepare('SELECT COUNT(*) n FROM hint_views').get().n, 1);
     await hintGet('c');

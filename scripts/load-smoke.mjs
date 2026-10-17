@@ -95,7 +95,13 @@ for (const concurrency of levels) {
       }),
     ),
   );
-  if (duplicates.some((x) => x.status !== 409)) throw Error('Duplicate was not rejected');
+  if (duplicates.some((x) => x.status !== 409))
+    throw Error(
+      'Duplicate status counts: ' +
+        JSON.stringify(
+          duplicates.reduce((out, x) => ((out[x.status] = (out[x.status] || 0) + 1), out), {}),
+        ),
+    );
   const restored = await Promise.all(
     users.map((u) => request(u.cookie, '/api/game?room=' + u.room)),
   );

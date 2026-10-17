@@ -34,7 +34,11 @@ test('account ownership, safe claims, privacy, pagination and preservation', asy
         batch: async (queries) => {
           db.exec('BEGIN');
           try {
-            const out = queries.map((q) => q.run());
+            const out = queries.map((q) =>
+              /^SELECT/i.test(q.sql.trim())
+                ? { results: db.prepare(q.sql).all(...q.args) }
+                : q.run(),
+            );
             db.exec('COMMIT');
             return out;
           } catch (e) {

@@ -27,42 +27,55 @@ export async function GET(req: Request) {
       id,
       Date.now(),
     );
-    const progression = (await accountProgressions([id])).get(id);
-    const equipped = await one(
+    const progressionPromise = accountProgressions([id]);
+    const equippedPromise = one(
       'SELECT name_color,avatar_frame FROM account_cosmetics WHERE account_id=?',
       id,
     );
-    const cosmetics = equippedAtLevel(
-      equipped?.name_color,
-      equipped?.avatar_frame,
-      progression?.level || 1,
-    );
-    const profile = await one('SELECT name,avatar,skin_id AS skin FROM profiles WHERE id=?', id);
-    const guestSolo = await guestSoloStatus(guest, id);
-    const pending = guest
-      ? await one(`SELECT COUNT(*) n FROM members WHERE token_hash=? AND account_id IS NULL`, guest)
+    const profilePromise = one('SELECT name,avatar,skin_id AS skin FROM profiles WHERE id=?', id);
+    const guestSoloPromise = guestSoloStatus(guest, id);
+    const pendingPromise = guest
+      ? one(`SELECT COUNT(*) n FROM members WHERE token_hash=? AND account_id IS NULL`, guest)
       : { n: 0 };
-    const conflicts = guest
-      ? await one(
+    const conflictsPromise = guest
+      ? one(
           `SELECT COUNT(*) n FROM members g WHERE g.token_hash=? AND g.account_id IS NULL AND EXISTS(SELECT 1 FROM members a WHERE a.room_id=g.room_id AND a.account_id=?)`,
           guest,
           id,
         )
       : { n: 0 };
-    const stats = await one(
+    const statsPromise = one(
       `SELECT COUNT(*) completed,COALESCE(SUM(p.status='won'),0) wins,AVG(CASE WHEN p.status='won' THEN json_array_length(p.guesses)*1.0/CASE WHEN r.mode='speed' THEN 5 ELSE 1 END END) average FROM plays p JOIN members m ON m.id=p.member_id JOIN rounds r ON r.id=p.round_id WHERE m.account_id=? AND r.mode<>'practice' AND p.status IN('won','lost','forfeited')`,
       id,
     );
-    const rooms = await all(
+    const roomsPromise = all(
       `SELECT r.id,r.name,m.name AS nickname,m.avatar,m.skin_id AS skin,m.blocked,m.last_seen AS lastSeen FROM members m JOIN rooms r ON r.id=m.room_id WHERE m.account_id=? ORDER BY m.last_seen DESC,r.id LIMIT 100`,
       id,
     );
     const rawOffset = Number(new URL(req.url).searchParams.get('offset') || 0),
       offset = Number.isSafeInteger(rawOffset) && rawOffset >= 0 ? Math.min(rawOffset, 100000) : 0;
-    const rows = await all(
+    const rowsPromise = all(
       `SELECT p.id,r.room_id AS roomId,rm.name AS roomName,r.mode,r.width,p.status,p.guesses,p.updated_at AS updatedAt,r.phase,CASE WHEN p.status IN('won','lost','forfeited') OR r.retired_at IS NOT NULL THEN r.answer ELSE NULL END AS answer FROM plays p JOIN members m ON m.id=p.member_id JOIN rounds r ON r.id=p.round_id JOIN rooms rm ON rm.id=r.room_id WHERE m.account_id=? AND p.guesses<>'[]' ORDER BY p.updated_at DESC,p.id LIMIT 21 OFFSET ?`,
       id,
       offset,
+    );
+    const [levels, equipped, profile, guestSolo, pending, conflicts, stats, rooms, rows] =
+      await Promise.all([
+        progressionPromise,
+        equippedPromise,
+        profilePromise,
+        guestSoloPromise,
+        pendingPromise,
+        conflictsPromise,
+        statsPromise,
+        roomsPromise,
+        rowsPromise,
+      ]);
+    const progression = levels.get(id);
+    const cosmetics = equippedAtLevel(
+      equipped?.name_color,
+      equipped?.avatar_frame,
+      progression?.level || 1,
     );
     return reply({
       signedIn: true,

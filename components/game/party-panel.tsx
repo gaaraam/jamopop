@@ -243,7 +243,8 @@ export function PartyPanel({
   useEffect(() => {
     if (!watchTarget && open !== 'hints') return;
     let alive = true,
-      inflight = false;
+      inflight = false,
+      consented = false;
     async function load() {
       if (inflight) return;
       inflight = true;
@@ -251,7 +252,7 @@ export function PartyPanel({
         const response = await fetch(
           `/api/party?${base}${watchTarget ? '&watch=' + encodeURIComponent(watchTarget) : ''}`,
           {
-            ...(!watchTarget
+            ...(!watchTarget && !consented
               ? {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -270,6 +271,7 @@ export function PartyPanel({
         if (alive) {
           if (watchTarget) setWatch(d);
           else {
+            consented = true;
             setHints(d.hints);
             if (d.hints.length && refreshedHint.current !== base) {
               refreshedHint.current = base;

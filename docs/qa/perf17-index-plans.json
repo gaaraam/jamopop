@@ -1,0 +1,26 @@
+{
+  "before": {
+    "account_identity": [
+      "SCAN members",
+      "USE TEMP B-TREE FOR DISTINCT"
+    ],
+    "guest_identity": [
+      "SCAN members"
+    ],
+    "player_rewards": [
+      "SCAN plays"
+    ]
+  },
+  "after": {
+    "account_identity": [
+      "SEARCH members USING INDEX members_account_seen (account_id=?)",
+      "USE TEMP B-TREE FOR DISTINCT"
+    ],
+    "guest_identity": [
+      "SEARCH members USING INDEX members_unlinked_token (token_hash=?)"
+    ],
+    "player_rewards": [
+      "SEARCH plays USING INDEX plays_member_status (member_id=? AND status=?)"
+    ]
+  }
+}

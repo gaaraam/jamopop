@@ -1,5 +1,5 @@
 import { findMember, isSiteAdmin } from '@/lib/account';
-import { all, one, run } from '@/lib/store';
+import { all, one, run, database } from '@/lib/store';
 import {
   isSpectator,
   trackSpectator,
@@ -13,19 +13,27 @@ const reply = (d: unknown, status = 200) =>
 async function context(req: Request, roomId: any, roundId: any) {
   if (typeof roomId !== 'string' || typeof roundId !== 'string')
     throw Error('방과 문제를 확인해 주세요.');
-  const m = await findMember(req, roomId);
+  const [m, room, r] = await Promise.all([
+    findMember(req, roomId),
+    one('SELECT * FROM rooms WHERE id=?', roomId),
+    one('SELECT * FROM rounds WHERE id=?', roundId),
+  ]);
   if (!m || m.blocked) throw Error('이 방에 먼저 입장해 주세요.');
-  const room = await one('SELECT * FROM rooms WHERE id=?', roomId);
   if (!room || room.current_round_id !== roundId)
     throw Error('문제가 바뀌었어요. 다시 확인해 주세요.');
-  const r = await one('SELECT * FROM rounds WHERE id=?', roundId);
-  await trackSpectator(m, r.id);
+  if (!r || r.room_id !== roomId) throw Error('문제를 확인해 주세요.');
+  if (m.spectator) await trackSpectator(m, r.id);
   return { m, r, room };
 }
-async function readParty(req: Request, consented = false) {
+async function readParty(
+  req: Request,
+  consented = false,
+  verified?: Awaited<ReturnType<typeof context>>,
+) {
   try {
     const u = new URL(req.url),
-      { m, r } = await context(req, u.searchParams.get('room'), u.searchParams.get('roundId'));
+      { m, r } =
+        verified ?? (await context(req, u.searchParams.get('room'), u.searchParams.get('roundId')));
     if (u.searchParams.has('watch')) {
       if (!(await isSpectator(m, r.id)))
         return reply({ error: '관전자만 제출 단어를 볼 수 있어요.' }, 403);
@@ -52,43 +60,37 @@ async function readParty(req: Request, consented = false) {
       r.id,
     ); // Record only a non-empty disclosure to a still-active competitor. Finished players and observers are exempt.
     if (rows.length && r.hint_policy && !(await isSpectator(m, r.id))) {
-      const play = await one(
-        'SELECT status FROM plays WHERE round_id=? AND member_id=?',
-        r.id,
-        m.id,
-      );
-      const end =
-        (
-          await one(
-            'SELECT ends_at FROM item_loadouts WHERE round_id=? AND member_id=?',
-            r.id,
-            m.id,
-          )
-        )?.ends_at ?? r.ends_at;
-      if (
-        !consented &&
-        (!play || play.status === 'playing') &&
-        end > Date.now() &&
-        !(await one('SELECT 1 FROM hint_views WHERE round_id=? AND member_id=?', r.id, m.id))
-      )
+      const db = database();
+      const [plays, ends, views] = await db.batch([
+        db.prepare('SELECT status FROM plays WHERE round_id=? AND member_id=?').bind(r.id, m.id),
+        db
+          .prepare('SELECT ends_at FROM item_loadouts WHERE round_id=? AND member_id=?')
+          .bind(r.id, m.id),
+        db.prepare('SELECT 1 FROM hint_views WHERE round_id=? AND member_id=?').bind(r.id, m.id),
+      ]);
+      const play = plays.results[0] as any;
+      const end = (ends.results[0] as any)?.ends_at ?? r.ends_at;
+      const alreadyViewed = views.results.length > 0;
+      if (!consented && (!play || play.status === 'playing') && end > Date.now() && !alreadyViewed)
         return reply({ error: '힌트 보기 버튼으로 순위 안내를 확인해 주세요.' }, 409);
-      await run(
-        `INSERT INTO hint_views(round_id,member_id,viewed_at) SELECT ?,?,? WHERE EXISTS(SELECT 1 FROM rooms WHERE id=? AND current_round_id=?) AND EXISTS(SELECT 1 FROM members WHERE id=? AND blocked=0 AND spectator=0) AND NOT EXISTS(SELECT 1 FROM spectators WHERE round_id=? AND member_id=?) AND NOT EXISTS(SELECT 1 FROM plays WHERE round_id=? AND member_id=? AND status<>'playing') AND COALESCE((SELECT ends_at FROM item_loadouts WHERE round_id=? AND member_id=?),?)>? ON CONFLICT DO NOTHING`,
-        r.id,
-        m.id,
-        Date.now(),
-        r.room_id,
-        r.id,
-        m.id,
-        r.id,
-        m.id,
-        r.id,
-        m.id,
-        r.id,
-        m.id,
-        r.ends_at,
-        Date.now(),
-      );
+      if (!alreadyViewed && (!play || play.status === 'playing') && end > Date.now())
+        await run(
+          `INSERT INTO hint_views(round_id,member_id,viewed_at) SELECT ?,?,? WHERE EXISTS(SELECT 1 FROM rooms WHERE id=? AND current_round_id=?) AND EXISTS(SELECT 1 FROM members WHERE id=? AND blocked=0 AND spectator=0) AND NOT EXISTS(SELECT 1 FROM spectators WHERE round_id=? AND member_id=?) AND NOT EXISTS(SELECT 1 FROM plays WHERE round_id=? AND member_id=? AND status<>'playing') AND COALESCE((SELECT ends_at FROM item_loadouts WHERE round_id=? AND member_id=?),?)>? ON CONFLICT DO NOTHING`,
+          r.id,
+          m.id,
+          Date.now(),
+          r.room_id,
+          r.id,
+          m.id,
+          r.id,
+          m.id,
+          r.id,
+          m.id,
+          r.id,
+          m.id,
+          r.ends_at,
+          Date.now(),
+        );
     }
     return reply({ hints: rows.map((h) => ({ ...h, strokes: JSON.parse(h.strokes) })) });
   } catch (e) {
@@ -106,7 +108,8 @@ export async function POST(req: Request) {
     if (raw.length > 150000)
       return reply({ error: '그림이 너무 복잡해요. 조금 줄여 주세요.' }, 400);
     const b = JSON.parse(raw),
-      { m, r } = await context(req, b.room, b.roundId);
+      verified = await context(req, b.room, b.roundId),
+      { m, r } = verified;
     if (b.action === 'view_hints')
       return readParty(
         new Request(
@@ -117,6 +120,7 @@ export async function POST(req: Request) {
           { headers: req.headers },
         ),
         true,
+        verified,
       );
     if (b.action === 'item') {
       await useItem(r, m, b);

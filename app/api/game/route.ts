@@ -14,6 +14,7 @@ import {
   auth,
   choose,
   getRound,
+  normalSubmissionContext,
   presenceNotice,
   resolveRoom,
   uuid,
@@ -25,7 +26,7 @@ import { inputShape } from '@/lib/input';
 import { createInquiry, inquiryCommand, inquiryOwner } from '@/lib/inquiries';
 import { expirePlays, isSpectator, partyState } from '@/lib/party';
 import { invitationInbox } from '@/lib/room-invitations';
-import { all, one, run } from '@/lib/store';
+import { all, one, run, database } from '@/lib/store';
 import { PRESENCE_INTERVAL, PRESENCE_OFFLINE } from '@/lib/sync-policy.mjs';
 import { WORD_COUNTS } from '@/lib/words';
 async function liveInfo(room: any, memberId: string, now: number) {
@@ -60,41 +61,59 @@ async function liveInfo(room: any, memberId: string, now: number) {
     ready: !!participants.find((p) => p.id === memberId)?.ready,
   };
 }
-async function state(req: Request, roomId: string, mode: string) {
-  const m = await auth(req, roomId),
-    room = await one('SELECT * FROM rooms WHERE id=?', roomId);
+async function state(req: Request, roomId: string, mode: string, verifiedMember?: any) {
+  const [m, room] = await Promise.all([
+    verifiedMember ? Promise.resolve(verifiedMember) : auth(req, roomId),
+    one('SELECT * FROM rooms WHERE id=?', roomId),
+  ]);
   check(room, '방을 찾을 수 없어요.', 404);
   if (room.active_speed_id) await settleSpeed(roomId);
   const r = await getRound(room, m, mode);
   check(r, '문제를 찾을 수 없어요.', 404);
-  const party = await partyState(r, m),
-    personalEnd = party.loadout?.endsAt ?? r.ends_at;
   const now = Date.now(),
     active = new URL(req.url).searchParams.get('away') !== '1';
-  if (
-    !m.chat_seen ||
-    now - m.last_seen >= PRESENCE_INTERVAL ||
-    (active && now - m.last_active >= PRESENCE_INTERVAL)
-  ) {
-    if (!m.chat_seen || now - m.last_seen >= 90000) await presenceNotice(m, now);
-    await run(
-      'UPDATE members SET last_seen=?,last_active=CASE WHEN ?=1 THEN ? ELSE last_active END WHERE id=? AND (last_seen<=? OR (?=1 AND last_active<=?))',
-      now,
-      active ? 1 : 0,
-      now,
-      m.id,
-      now - PRESENCE_INTERVAL,
-      active ? 1 : 0,
-      now - PRESENCE_INTERVAL,
-    );
-  }
-  // Only item attacks can shorten an individual deadline before the shared deadline.
-  if (mode === 'daily' && r.ends_at && (r.variant === 'items' || now >= r.ends_at))
-    await expirePlays(r, now);
-  const [p, live] = await Promise.all([
-    one('SELECT * FROM plays WHERE round_id=? AND member_id=?', r.id, m.id),
+  const [party, revision, chat, notice, invitations, live, snapshot] = await Promise.all([
+    partyState(r, m),
+    dataRevision(),
+    chatState(roomId, m),
+    announcementGet(req).then((r) => r.json() as Promise<{ announcement?: unknown }>),
+    invitationInbox(req),
     liveInfo(room, m.id, now),
+    (async () => {
+      if (
+        !m.chat_seen ||
+        now - m.last_seen >= PRESENCE_INTERVAL ||
+        (active && now - m.last_active >= PRESENCE_INTERVAL)
+      ) {
+        if (!m.chat_seen || now - m.last_seen >= 90000) await presenceNotice(m, now);
+        await run(
+          'UPDATE members SET last_seen=?,last_active=CASE WHEN ?=1 THEN ? ELSE last_active END WHERE id=? AND (last_seen<=? OR (?=1 AND last_active<=?))',
+          now,
+          active ? 1 : 0,
+          now,
+          m.id,
+          now - PRESENCE_INTERVAL,
+          active ? 1 : 0,
+          now - PRESENCE_INTERVAL,
+        );
+      }
+      // Only item attacks can shorten an individual deadline before the shared deadline.
+      if (mode === 'daily' && r.ends_at && (r.variant === 'items' || now >= r.ends_at))
+        await expirePlays(r, now);
+      const db = database();
+      const result = await db.batch([
+        db.prepare('SELECT * FROM plays WHERE round_id=? AND member_id=?').bind(r.id, m.id),
+        db
+          .prepare(
+            `SELECT m.id,m.name,m.avatar,m.skin_id AS skin,m.account_id,cs.skin_id AS cardSkin,c.name_color,c.avatar_frame,m.last_seen,m.last_active,m.spectator,p.guesses,p.status,p.finished_at,EXISTS(SELECT 1 FROM hint_views hv WHERE hv.round_id=? AND hv.member_id=m.id) AS hint_used,et.title AS title,COALESCE(il.ends_at,?) AS personal_end,EXISTS(SELECT 1 FROM spectators sp WHERE sp.round_id=? AND sp.member_id=m.id) AS watched FROM members m LEFT JOIN equipped_card_skins cs ON cs.account_id=m.account_id LEFT JOIN account_cosmetics c ON c.account_id=m.account_id LEFT JOIN equipped_titles et ON et.owner=CASE WHEN m.account_id IS NOT NULL THEN 'account:'||m.account_id ELSE 'guest:'||m.token_hash END LEFT JOIN item_loadouts il ON il.round_id=? AND il.member_id=m.id LEFT JOIN plays p ON p.member_id=m.id AND p.round_id=? WHERE m.room_id=? AND m.blocked=0 ORDER BY m.rowid ASC`,
+          )
+          .bind(r.id, r.ends_at, r.id, r.id, r.id, roomId),
+      ]);
+      return { p: result[0].results[0] as any, rows: result[1].results as any[] };
+    })(),
   ]);
+  const { p, rows } = snapshot;
+  const personalEnd = party.loadout?.endsAt ?? r.ends_at;
   const expired =
     mode === 'live'
       ? live?.phase === 'finished' || live?.phase === 'cancelled'
@@ -110,16 +129,7 @@ async function state(req: Request, roomId: string, mode: string) {
         : spectator
           ? 'spectating'
           : 'playing';
-  const rows = await all(
-    `SELECT m.id,m.name,m.avatar,m.skin_id AS skin,m.account_id,cs.skin_id AS cardSkin,c.name_color,c.avatar_frame,m.last_seen,m.last_active,m.spectator,p.guesses,p.status,p.finished_at,EXISTS(SELECT 1 FROM hint_views hv WHERE hv.round_id=? AND hv.member_id=m.id) AS hint_used,et.title AS title,COALESCE(il.ends_at,?) AS personal_end,EXISTS(SELECT 1 FROM spectators sp WHERE sp.round_id=? AND sp.member_id=m.id) AS watched FROM members m LEFT JOIN equipped_card_skins cs ON cs.account_id=m.account_id LEFT JOIN account_cosmetics c ON c.account_id=m.account_id LEFT JOIN equipped_titles et ON et.owner=CASE WHEN m.account_id IS NOT NULL THEN 'account:'||m.account_id ELSE 'guest:'||m.token_hash END LEFT JOIN item_loadouts il ON il.round_id=? AND il.member_id=m.id LEFT JOIN plays p ON p.member_id=m.id AND p.round_id=? WHERE m.room_id=? AND m.blocked=0 ORDER BY m.rowid ASC`,
-    r.id,
-    r.ends_at,
-    r.id,
-    r.id,
-    r.id,
-    roomId,
-  );
-  const levels = await accountProgressions(rows.map((x) => x.account_id).filter(Boolean));
+  const levels = await accountProgressions(rows.map((x) => x.account_id).filter(Boolean), revision);
   const participants = (mode === 'practice' ? rows.filter((x) => x.id === m.id) : rows).filter(
     (x) => !x.spectator && !x.watched,
   );
@@ -151,7 +161,6 @@ async function state(req: Request, roomId: string, mode: string) {
   });
   const ranked = rankPlayers(players, mode);
   const activeCount = players.filter((p) => p.status === 'playing').length;
-  const revision = await dataRevision();
   const [reactions, history, weeklyRows] = await Promise.all([
     all(
       'SELECT r.id,r.emoji,r.member_id AS memberId,r.created_at AS createdAt,m.name FROM reactions r JOIN members m ON m.id=r.member_id WHERE r.room_id=? AND r.created_at>? ORDER BY r.created_at DESC LIMIT 160',
@@ -206,11 +215,6 @@ async function state(req: Request, roomId: string, mode: string) {
             guesses: JSON.parse(x.guesses || '[]'),
           }))
       : [];
-  const [chat, notice, invitations] = await Promise.all([
-    chatState(roomId, m),
-    announcementGet(req).then((r) => r.json() as Promise<{ announcement?: unknown }>),
-    invitationInbox(req),
-  ]);
   return {
     chat,
     invitations,
@@ -284,15 +288,22 @@ async function state(req: Request, roomId: string, mode: string) {
   };
 }
 async function chatState(roomId: string, m: any) {
-  const current = await one('SELECT current_round_id FROM rooms WHERE id=?', roomId);
-  const fresh = await one('SELECT * FROM members WHERE id=?', m.id);
-  const channel = (await isSpectator(fresh, current.current_round_id)) ? 'spectator' : 'player';
-  const messages = await all(
-    `SELECT c.id,c.member_id AS memberId,m.name,m.avatar,m.skin_id AS skin,CASE WHEN c.deleted=1 THEN '' ELSE c.body END AS body,c.created_at AS createdAt,c.deleted,c.system FROM chat_messages c JOIN members m ON m.id=c.member_id WHERE c.room_id=? AND c.channel=? ORDER BY c.id DESC LIMIT 60`,
-    roomId,
-    channel,
-  );
-  return { messages: messages.reverse(), serverNow: Date.now(), channel };
+  const db = database();
+  const channelSql = `SELECT CASE WHEN m.spectator=1 OR EXISTS(SELECT 1 FROM spectators s WHERE s.round_id=r.current_round_id AND s.member_id=m.id) THEN 'spectator' ELSE 'player' END AS channel FROM members m JOIN rooms r ON r.id=m.room_id WHERE m.id=? AND r.id=?`;
+  const results = await db.batch([
+    db.prepare(channelSql).bind(m.id, roomId),
+    db
+      .prepare(
+        `SELECT c.id,c.member_id AS memberId,m.name,m.avatar,m.skin_id AS skin,CASE WHEN c.deleted=1 THEN '' ELSE c.body END AS body,c.created_at AS createdAt,c.deleted,c.system FROM chat_messages c JOIN members m ON m.id=c.member_id WHERE c.room_id=? AND c.channel=(${channelSql}) ORDER BY c.id DESC LIMIT 60`,
+      )
+      .bind(roomId, m.id, roomId),
+  ]);
+  check(results[0].results[0], '이 방에 먼저 입장해 주세요.', 401);
+  return {
+    messages: results[1].results.reverse(),
+    serverNow: Date.now(),
+    channel: (results[0].results[0] as any).channel,
+  };
 }
 async function tryStart(roundId: string, now: number) {
   return run(
@@ -327,15 +338,16 @@ export async function GET(req: Request) {
     }
     const mode = url.searchParams.get('mode') || 'daily';
     check(['daily', 'practice', 'live'].includes(mode), '게임 모드를 확인해 주세요.');
-    let id = room;
+    let id = room,
+      verifiedMember;
     try {
-      await auth(req, id);
+      verifiedMember = await auth(req, id);
     } catch (e) {
       if (!(e instanceof UserError) || e.status === 403) throw e;
       const r = await resolveRoom(req, room);
       id = r.id;
     }
-    return reply(await state(req, id, mode));
+    return reply(await state(req, id, mode, verifiedMember));
   } catch (e) {
     return failure(e);
   }
@@ -348,8 +360,13 @@ export async function POST(req: Request) {
     const b: any = await req.json();
     check(b && typeof b === 'object' && !Array.isArray(b), '요청을 확인해 주세요.');
     const now = Date.now();
-    const entry = await handleRoomEntry(req, b, now);
+    const entry = await handleRoomEntry(req, b, now, state);
     if (entry) return entry;
+    if (b.action === 'guess') {
+      const context = await normalSubmissionContext(req, b);
+      if (context)
+        return await submitGuess(req, b, context.member, context.room, now, state, context);
+    }
     const m = await auth(req, b.room),
       room = await one('SELECT * FROM rooms WHERE id=?', b.room);
     check(room, '방을 찾을 수 없어요.', 404);

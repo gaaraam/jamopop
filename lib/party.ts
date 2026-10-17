@@ -64,46 +64,103 @@ export async function expirePlays(r: any, now: number) {
     now,
   );
 }
+// One read transaction for the unchanged panel, without cross-request state caching.
 export async function partyState(r: any, m: any) {
-  const spectator = await trackSpectator(m, r.id),
-    loadout = await ensureLoadout(r, m);
-  await awardTitles(r, m);
-  const [titles, equipped, hints, events, viewed] = await Promise.all([
-    all('SELECT title,earned_at AS earnedAt FROM earned_titles WHERE owner=?', memberOwner(m)),
-    one('SELECT title FROM equipped_titles WHERE owner=?', memberOwner(m)),
-    all(
-      'SELECT h.member_id AS memberId,m.name,h.updated_at AS updatedAt FROM drawing_hints h JOIN members m ON m.id=h.member_id WHERE h.round_id=? AND m.blocked=0',
-      r.id,
-    ),
-    r.variant === 'items'
-      ? all(
+  if (m.spectator) await trackSpectator(m, r.id);
+  const db = database();
+  const queries = [
+    db
+      .prepare(
+        `SELECT p.*,il.ends_at AS loadout_end,il.attack_used,il.support,il.support_used,il.defense,il.protected_until,il.damage,
+      EXISTS(SELECT 1 FROM spectators WHERE round_id=? AND member_id=?) AS watched,
+      EXISTS(SELECT 1 FROM hint_views WHERE round_id=? AND member_id=?) AS hint_used
+      FROM (SELECT 1) base LEFT JOIN plays p ON p.round_id=? AND p.member_id=?
+      LEFT JOIN item_loadouts il ON il.round_id=? AND il.member_id=?`,
+      )
+      .bind(r.id, m.id, r.id, m.id, r.id, m.id, r.id, m.id),
+    db
+      .prepare('SELECT title,earned_at AS earnedAt FROM earned_titles WHERE owner=?')
+      .bind(memberOwner(m)),
+    db.prepare('SELECT title FROM equipped_titles WHERE owner=?').bind(memberOwner(m)),
+    db
+      .prepare(
+        'SELECT h.member_id AS memberId,m.name,h.updated_at AS updatedAt FROM drawing_hints h JOIN members m ON m.id=h.member_id WHERE h.round_id=? AND m.blocked=0',
+      )
+      .bind(r.id),
+  ];
+  if (r.variant === 'items')
+    queries.push(
+      db
+        .prepare(
           'SELECT e.id,e.actor AS actorId,e.target AS targetId,e.effect,e.created_at AS createdAt,a.name AS actor,t.name AS target FROM item_events e JOIN members a ON a.id=e.actor JOIN members t ON t.id=e.target WHERE e.round_id=? AND e.applied=1 ORDER BY e.created_at DESC LIMIT 6',
-          r.id,
         )
-      : Promise.resolve([]),
-    one('SELECT 1 FROM hint_views WHERE round_id=? AND member_id=?', r.id, m.id),
-  ]);
+        .bind(r.id),
+    );
+  const results = await db.batch(queries);
+  const own = results[0].results[0] as any;
+  const titles = results[1].results as any[];
+  const spectator = !!m.spectator || !!own.watched;
+  let loadout: {
+    ends_at: number;
+    attack_used: number;
+    support: string;
+    support_used: number;
+    defense: string;
+    protected_until: number;
+    damage: number;
+  } | null = own.loadout_end
+    ? {
+        ends_at: own.loadout_end,
+        attack_used: own.attack_used,
+        support: own.support,
+        support_used: own.support_used,
+        defense: own.defense,
+        protected_until: own.protected_until,
+        damage: own.damage,
+      }
+    : null;
+  if (!spectator && !loadout && r.variant === 'items') loadout = await ensureLoadout(r, m);
+  if (own.status === 'won' && r.mode === 'daily') {
+    const end = loadout?.ends_at ?? r.ends_at;
+    const earned = [
+      ...(end && own.finished_at < end && end - own.finished_at <= 10000 ? ['last_second'] : []),
+      ...(JSON.parse(own.guesses).length === 5 ? ['last_chance'] : []),
+    ].filter((title) => !titles.some((t) => t.title === title));
+    if (earned.length) {
+      await db.batch(
+        earned.map((title) =>
+          db
+            .prepare(
+              'INSERT INTO earned_titles(owner,title,earned_at) VALUES(?,?,?) ON CONFLICT DO NOTHING',
+            )
+            .bind(memberOwner(m), title, own.finished_at),
+        ),
+      );
+      titles.push(...earned.map((title) => ({ title, earnedAt: own.finished_at })));
+    }
+  }
   return {
     hintPolicy: !!r.hint_policy,
-    hintUsed: !!viewed,
+    hintUsed: !!own.hint_used,
     spectator,
     nextParticipant: spectator && !m.spectator,
     variant: r.variant || 'normal',
-    loadout: loadout
-      ? {
-          endsAt: loadout.ends_at,
-          attackUsed: !!loadout.attack_used,
-          support: loadout.support,
-          supportUsed: !!loadout.support_used,
-          defense: loadout.defense,
-          protectedUntil: loadout.protected_until,
-          damage: loadout.damage,
-        }
-      : null,
+    loadout:
+      !spectator && loadout
+        ? {
+            endsAt: loadout.ends_at,
+            attackUsed: !!loadout.attack_used,
+            support: loadout.support,
+            supportUsed: !!loadout.support_used,
+            defense: loadout.defense,
+            protectedUntil: loadout.protected_until,
+            damage: loadout.damage,
+          }
+        : null,
     titles: titles.map((t) => ({ ...t, name: TITLE_NAMES[t.title] })),
-    equipped: equipped?.title || '',
-    hints,
-    events,
+    equipped: (results[2].results[0] as any)?.title || '',
+    hints: results[3].results,
+    events: results[4]?.results || [],
   };
 }
 export function validateStrokes(value: any) {
