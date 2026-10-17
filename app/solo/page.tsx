@@ -60,7 +60,12 @@ export default function Solo() {
     input = useRef<HTMLInputElement>(null),
     initial = useRef(true),
     runId = useRef<string | null>(null);
-  const accept = useCallback((d: View) => {
+  const catalog = useRef<Stage[] | null>(null);
+  const accept = useCallback((payload: Omit<View, 'stages'> & { stages?: Stage[] }) => {
+    const stages = payload.stages ?? catalog.current;
+    if (!stages) throw new Error('도전 목록을 다시 불러와 주세요.');
+    catalog.current = stages;
+    const d: View = { ...payload, stages };
     const previous = latestRun.current;
     latestRun.current = d.active;
     const r = d.active;
@@ -151,7 +156,10 @@ export default function Solo() {
       const response = await fetch('/api/solo', {
         method: 'POST',
         signal: AbortSignal.timeout(10000),
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(catalog.current ? { 'X-Solo-Catalog': 'omit' } : {}),
+        },
         body: JSON.stringify(body),
       });
       const d = (await response.json()) as View & { error?: string };
