@@ -1,10 +1,11 @@
+import {searchPolicy} from '../lib/search-policy.mjs';
 import {safetyBefore,safetyEndpoint,safetyAfter} from './safety.mjs';
 import handler from 'vinext/server/fetch-handler';
 import {stripUntrustedIdentity,migrationResponse} from './cloudflare-boundary.mjs';
 import {googleAuth} from './google-auth.mjs';
 import {authenticatedRequest} from './session.mjs';
 import {legacyLink,profileSwitch} from './legacy-link.mjs';
-export default {async fetch(request:Request,env:Cloudflare.Env,ctx:ExecutionContext){
+async function serve(request:Request,env:Cloudflare.Env,ctx:ExecutionContext){
  const sanitized=stripUntrustedIdentity(request),url=new URL(sanitized.url);
  if(url.pathname==='/auth/complete'&&sanitized.method==='GET'){const ticket=url.searchParams.get('ticket')||'';return new Response(null,{status:303,headers:{Location:url.origin+'/transfer#ticket='+encodeURIComponent(ticket),'Cache-Control':'no-store','Referrer-Policy':'no-referrer'}});}
  if(url.pathname==='/healthz')return Response.json({service:'jamopop',mode:(env as any).MIGRATION_LOCK==='open'?'open':'migration-locked'},{headers:{'Cache-Control':'no-store'}});
@@ -24,4 +25,10 @@ export default {async fetch(request:Request,env:Cloudflare.Env,ctx:ExecutionCont
  const headers=new Headers(response.headers);
  headers.set('Cache-Control','private, no-store');headers.set('Referrer-Policy','strict-origin-when-cross-origin');headers.set('X-Content-Type-Options','nosniff');
  return new Response(response.body,{status:response.status,headers});
+}
+export default {async fetch(request:Request,env:Cloudflare.Env,ctx:ExecutionContext){
+ const response=await serve(request,env,ctx);
+ const headers=new Headers(response.headers);
+ headers.set('X-Robots-Tag',searchPolicy(request.url,response.status));
+ return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
 }};

@@ -6,7 +6,14 @@ export const metadata: Metadata = {
   description:
     '매일 같은 한글 단어를 다섯 번 안에 맞혀 보세요. 로그인 없이 플레이하고 색깔 격자로 결과를 공유하세요.',
   alternates: { canonical: 'https://play.jamopop.workers.dev/daily' },
+  twitter: {
+    card: 'summary_large_image',
+    title: '오늘의 단어 · 자음모음팝',
+    description: '5칸, 5번의 기회. 로그인 없이 바로 플레이.',
+    images: ['/og/jamopop.png'],
+  },
   openGraph: {
+    images: [{ url: '/og/jamopop.png', width: 1200, height: 630, alt: '자음모음팝 오늘의 단어' }],
     title: '오늘의 단어 · 자음모음팝',
     description: '오늘은 몇 번 만에 맞힐까요? 5칸, 5번의 기회.',
     url: 'https://play.jamopop.workers.dev/daily',

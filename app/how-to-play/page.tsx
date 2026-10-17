@@ -5,6 +5,18 @@ import { splitWord, score } from '@/lib/game';
 import './rules.css';
 
 export const metadata: Metadata = {
+  openGraph: {
+    title: '게임 방법 · 자음모음팝',
+    description: '자모 분해와 중복 글자 판정을 예제로 알아보세요.',
+    url: 'https://play.jamopop.workers.dev/how-to-play',
+    type: 'website',
+    images: [{ url: '/og/jamopop.png', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '게임 방법 · 자음모음팝',
+    images: ['/og/jamopop.png'],
+  },
   title: '게임 방법 · 자음모음팝',
   description:
     '한글 자모 분해, 초록·노랑·회색 판정과 중복 자모 규칙을 실제 타일 예제로 알아보세요. 로그인 없이 오늘의 단어를 시작할 수 있습니다.',

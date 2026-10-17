@@ -7,6 +7,7 @@ import { WordBoard, WordKeyboard } from '@/components/game/word-controls';
 import { GameInput } from '@/components/game/mobile-controls';
 import { appendKey, blocksEnter, inputShape } from '@/lib/input';
 import { splitWord, type Color } from '@/lib/game';
+import { shareResult } from '@/lib/share-result.mjs';
 import { dailyShare, type DailyView } from '@/lib/daily';
 import { draftKey, readDraft, writeDraft } from '@/lib/recovery.mjs';
 
@@ -147,14 +148,22 @@ export function DailyGame() {
       setBusy(false);
     }
   }
-  async function share() {
-    if (!data) return;
+  const shareLock = useRef(false);
+  async function share(copyOnly = false) {
+    if (!data || data.status === 'playing' || shareLock.current) return;
+    shareLock.current = true;
+    setManualCopy(false);
+    setShareNote('');
     try {
-      await navigator.clipboard.writeText(dailyShare(data));
-      setShareNote('복사했어요!');
-    } catch {
-      setManualCopy(true);
-      setShareNote('아래 결과를 선택해 복사해 주세요.');
+      const outcome = await shareResult(dailyShare(data), navigator, copyOnly);
+      if (outcome === 'shared') setShareNote('공유했어요!');
+      if (outcome === 'copied') setShareNote('복사했어요!');
+      if (outcome === 'manual') {
+        setManualCopy(true);
+        setShareNote('아래 결과를 선택해 복사해 주세요.');
+      }
+    } finally {
+      shareLock.current = false;
     }
   }
   const letters = splitWord(draft),
@@ -302,6 +311,14 @@ export function DailyGame() {
                     {shareNote === '복사했어요!' ? '결과 복사 완료' : '결과 공유'}
                   </span>
                 </button>
+                <button className="daily-copy-button" onClick={() => void share(true)}>
+                  결과 복사
+                </button>
+                {!manualCopy && shareNote && (
+                  <p className="secondary-text" role="status">
+                    {shareNote}
+                  </p>
+                )}
                 {manualCopy && (
                   <div className="daily-copy-fallback">
                     <p role="status">{shareNote}</p>
