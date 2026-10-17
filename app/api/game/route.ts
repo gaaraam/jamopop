@@ -1,52 +1,35 @@
-import {
-  hashRoomPassword,
-  verifyRoomPassword,
-  validRoomPassword,
-  allowRoomPasswordAttempt,
-} from '@/lib/room-password';
-import { invitationInbox } from '@/lib/room-invitations';
-import { companions } from '@/lib/companions';
-import { speedPlayingSQL, settleSpeed } from '@/lib/competition';
-import { derivedCache, dataRevision } from '@/lib/derived-cache';
-import { PRESENCE_INTERVAL, PRESENCE_OFFLINE } from '@/lib/sync-policy.mjs';
-import { GET as lobbyChatGet } from '@/app/api/lobby-chat/route';
 import { GET as announcementGet } from '@/app/api/announcements/route';
 import {
-  partyState,
-  ensureLoadout,
-  expirePlays,
-  isSpectator,
-  trackSpectator,
-  memberOwner,
-} from '@/lib/party';
-import { inquiryCommand, inquiryOwner, createInquiry } from '@/lib/inquiries';
-import { ROOM_ROUND_MS } from '@/lib/round-timer';
-import { AVATARS, equippedAtLevel } from '@/lib/cosmetics';
-import {
   accountId,
-  findMember,
   accountProgressions,
   avatarAccess,
-  isSiteAdmin,
+  findMember,
   isAdminAccount,
+  isSiteAdmin,
 } from '@/lib/account';
-import { inputShape } from '@/lib/input';
+import { settleSpeed, speedPlayingSQL } from '@/lib/competition';
+import { AVATARS, equippedAtLevel } from '@/lib/cosmetics';
+import { dataRevision, derivedCache } from '@/lib/derived-cache';
+import { rankPlayers, score, splitWord, weekStart, type Guess } from '@/lib/game';
+import { check, failure, reply, UserError } from '@/lib/game-api/http';
+import { lobbyResponse } from '@/lib/game-api/lobby';
+import { publicProfile } from '@/lib/game-api/profile';
 import { acceptsGuess } from '@/lib/guess-dictionary';
-import { all, one, run, database } from '@/lib/store';
-import { splitWord, score, weekStart, rankPlayers, type Guess } from '@/lib/game';
+import { inputShape } from '@/lib/input';
+import { createInquiry, inquiryCommand, inquiryOwner } from '@/lib/inquiries';
+import { ensureLoadout, expirePlays, isSpectator, partyState, trackSpectator } from '@/lib/party';
+import { invitationInbox } from '@/lib/room-invitations';
+import {
+  allowRoomPasswordAttempt,
+  hashRoomPassword,
+  validRoomPassword,
+  verifyRoomPassword,
+} from '@/lib/room-password';
+import { ROOM_ROUND_MS } from '@/lib/round-timer';
+import { all, database, one, run } from '@/lib/store';
+import { PRESENCE_INTERVAL, PRESENCE_OFFLINE } from '@/lib/sync-policy.mjs';
 import { randomWord, WORD_COUNTS } from '@/lib/words';
 const avatars = AVATARS;
-class UserError extends Error {
-  constructor(
-    message: string,
-    public status = 400,
-  ) {
-    super(message);
-  }
-}
-function check(condition: any, message: string, status = 400): asserts condition {
-  if (!condition) throw new UserError(message, status);
-}
 const uuid = () => crypto.randomUUID(),
   key = () => uuid().replaceAll('-', '').slice(0, 24);
 function cookie(req: Request) {
@@ -66,21 +49,6 @@ async function hash(s: string) {
 }
 function date(n = Date.now()) {
   return new Date(n + 9 * 3600000).toISOString().slice(0, 10);
-}
-function reply(data: any, status = 200, token?: string, req?: Request) {
-  const headers: Record<string, string> = { 'Cache-Control': 'no-store' };
-  if (token)
-    headers['Set-Cookie'] =
-      `bw_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000${req?.url.startsWith('https:') ? '; Secure' : ''}`;
-  return Response.json(data, { status, headers });
-}
-function failure(e: unknown) {
-  if (e instanceof UserError) return reply({ error: e.message }, e.status);
-  console.error('game request failed', e);
-  return reply(
-    { error: '잠시 연결이 원활하지 않아요. 입력은 그대로 두고 다시 시도해 주세요.' },
-    503,
-  );
 }
 function widthOf(value: any, fallback = 5) {
   const n = value === undefined ? fallback : Number(value);
@@ -455,125 +423,15 @@ async function presenceNotice(m: any, now: number) {
     database().prepare('UPDATE members SET last_seen=? WHERE id=?').bind(now, m.id),
   ]);
 }
-async function publicProfile(req: Request, roomId: string, targetId: string) {
-  await auth(req, roomId);
-  const target = await one(
-    'SELECT * FROM members WHERE id=? AND room_id=? AND blocked=0',
-    targetId,
-    roomId,
-  );
-  check(target, '이 방의 참가자를 찾을 수 없어요.', 404);
-  const identity = target.account_id ? 'm.account_id=?' : 'm.account_id IS NULL AND m.token_hash=?';
-  const identityValue = target.account_id || target.token_hash;
-  const aggregate = async (inRoom: boolean) =>
-    await one(
-      `SELECT COUNT(*) completed,COALESCE(SUM(p.status='won'),0) wins,AVG(CASE WHEN p.status='won' THEN json_array_length(p.guesses)*1.0/CASE WHEN r.mode='speed' THEN 5 ELSE 1 END END) average FROM plays p JOIN members m ON m.id=p.member_id JOIN rounds r ON r.id=p.round_id WHERE ${identity} AND r.mode<>'practice' AND p.status IN('won','lost','forfeited') ${inRoom ? 'AND r.room_id=?' : ''}`,
-      ...(inRoom ? [identityValue, roomId] : [identityValue]),
-    );
-  const [overall, roomStats, levels, title] = await Promise.all([
-    aggregate(false),
-    aggregate(true),
-    accountProgressions(target.account_id ? [target.account_id] : []),
-    one('SELECT title FROM equipped_titles WHERE owner=?', memberOwner(target)),
-  ]);
-  return {
-    name: target.name,
-    avatar: target.avatar,
-    skin: target.skin_id,
-    linked: !!target.account_id,
-    level: target.account_id ? levels.get(target.account_id)?.level || 1 : null,
-    title: title?.title || '',
-    overall,
-    room: roomStats,
-  };
-}
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url),
       room = url.searchParams.get('room') || '';
-    if (url.searchParams.get('lobby') === '1') {
-      const now = Date.now(),
-        admin = isSiteAdmin(req),
-        archived = url.searchParams.get('archived') === '1';
-      check(!archived || admin, '관리자만 보관된 방을 볼 수 있어요.', 403);
-      const rooms = await all(
-        `SELECT r.id,r.name,(r.password_hash IS NOT NULL) AS locked,r.round_no AS roundNo,h.name AS hostName,COALESCE(q.width,5) AS width,
- COUNT(m.id) AS memberCount,COALESCE(SUM(CASE WHEN m.last_seen>? THEN 1 ELSE 0 END),0) AS onlineCount,
- COALESCE(MAX(m.last_seen),r.created_at) AS lastActive
- FROM rooms r LEFT JOIN members h ON h.id=r.host_id LEFT JOIN rounds q ON q.id=r.current_round_id
- LEFT JOIN members m ON m.room_id=r.id AND m.blocked=0
- WHERE (r.archived_at IS NOT NULL)=?
- GROUP BY r.id ORDER BY onlineCount>0 DESC,lastActive DESC,r.id LIMIT 101`,
-        now - PRESENCE_OFFLINE,
-        archived ? 1 : 0,
-      );
-      const shown = rooms.slice(0, 100);
-      const previews = shown.length
-        ? await all(
-            `SELECT m.room_id,m.id,m.name,m.avatar,m.skin_id AS skin,m.last_seen,m.spectator,
- CASE WHEN r.active_speed_id IS NOT NULL THEN 'speed' ELSE COALESCE(q.variant,'normal') END AS variant,
- CASE WHEN r.active_speed_id IS NOT NULL THEN sr.ends_at ELSE q.ends_at END AS endsAt,
- COALESCE(p.status,'waiting') AS status,COALESCE(json_array_length(p.guesses),0) AS attempts,
- (SELECT COUNT(*) FROM json_each(COALESCE(sp.state,'{"puzzles":[]}'),'$.puzzles') j WHERE json_extract(j.value,'$.status')='won') AS solved
- FROM members m JOIN rooms r ON r.id=m.room_id LEFT JOIN rounds q ON q.id=r.current_round_id
- LEFT JOIN speed_rounds sr ON sr.id=r.active_speed_id
- LEFT JOIN plays p ON p.member_id=m.id AND p.round_id=COALESCE(r.active_speed_id,r.current_round_id)
- LEFT JOIN speed_plays sp ON sp.member_id=m.id AND sp.round_id=r.active_speed_id
- WHERE m.blocked=0 AND m.room_id IN (${shown.map(() => '?').join(',')})
- ORDER BY m.last_seen>? DESC,m.rowid`,
-            ...shown.map((r) => r.id),
-            now - PRESENCE_OFFLINE,
-          )
-        : [];
-      for (const r of shown) {
-        const members = previews.filter((m) => m.room_id === r.id);
-        r.preview = members.slice(0, 6).map((m) => ({
-          id: m.id,
-          name: m.name,
-          avatar: m.avatar,
-          skin: m.skin,
-          online: m.last_seen > now - PRESENCE_OFFLINE,
-          spectator: !!m.spectator,
-          status: m.status === 'playing' && m.endsAt && m.endsAt <= now ? 'lost' : m.status,
-          progress: m.variant === 'speed' ? m.solved : Math.min(5, m.attempts),
-        }));
-        r.variant = members[0]?.variant || 'normal';
-        r.playing = members.filter(
-          (m) => !m.spectator && m.status === 'playing' && (!m.endsAt || m.endsAt > now),
-        ).length;
-        r.won = members.filter((m) => !m.spectator && m.status === 'won').length;
-      }
-      const owner = accountId(req);
-      const [chatResponse, notice, levels, people, invitations, profile] = await Promise.all([
-        lobbyChatGet(req),
-        announcementGet(req).then((r) => r.json() as Promise<{ announcement?: unknown }>),
-        accountProgressions(owner ? [owner] : []),
-        companions(req),
-        invitationInbox(req),
-        owner
-          ? one('SELECT avatar,skin_id AS skin FROM profiles WHERE id=?', owner)
-          : Promise.resolve(null),
-      ]);
-      const chat = await chatResponse.json();
-      if (!chatResponse.ok) throw Error('chat unavailable');
-      const response = reply({
-        profile,
-        rooms: rooms.slice(0, 100),
-        hasMore: rooms.length > 100,
-        serverNow: now,
-        isAdmin: admin,
-        chat,
-        people,
-        invitations,
-        progression: owner ? levels.get(owner) || null : null,
-        announcement: notice.announcement,
-      });
-      const guestCookie = chatResponse.headers.get('Set-Cookie');
-      if (guestCookie) response.headers.set('Set-Cookie', guestCookie);
-      return response;
+    if (url.searchParams.get('lobby') === '1') return await lobbyResponse(req, url);
+    if (url.searchParams.has('profile')) {
+      await auth(req, room);
+      return reply(await publicProfile(room, url.searchParams.get('profile') || ''));
     }
-    if (url.searchParams.has('profile'))
-      return reply(await publicProfile(req, room, url.searchParams.get('profile') || ''));
     if (url.searchParams.get('chat') === '1') {
       const m = await auth(req, room);
       return reply(await chatState(room, m));
