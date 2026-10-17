@@ -532,7 +532,7 @@ test('real Worker boundary authenticates before safety, preserves POST bodies an
   }).outputText;
   code = code
     .replace("'vinext/server/fetch-handler'", JSON.stringify(pathToFileURL(stub).href))
-    .replace(/'\.\/([^']+\.mjs)'/g, (_, name) =>
+    .replace(/'(\.\.?\/[^']+\.mjs)'/g, (_, name) =>
       JSON.stringify(pathToFileURL(resolve('build', name)).href),
     );
   writeFileSync(join(dir, 'worker.mjs'), code);

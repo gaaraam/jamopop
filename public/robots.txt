@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://play.jamopop.workers.dev/sitemap.xml
