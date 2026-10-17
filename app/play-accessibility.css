@@ -39,3 +39,41 @@
     transition: none !important;
   }
 }
+/* Preserve clue hues; small judgment marks and key labels must also reach 4.5:1. */
+html:root body :is(.main-board .tile.green, .keyboard .key.green, .solo-tile.green) {
+  color: #071e15 !important;
+}
+html:root:not([data-theme='dark'])
+  :is(.main-board .tile.gray, .keyboard .key.gray, .solo-tile.gray) {
+  color: #43516a !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(
+      .character-avatar,
+      .character-art,
+      .cheer-burst,
+      .game-fx-layer,
+      .card-skin-fx,
+      .home-resident
+    )
+    *,
+  .character-avatar,
+  .home-resident {
+    animation: none !important;
+    transition: none !important;
+  }
+  .cheer-burst,
+  .game-fx-layer {
+    display: none !important;
+  }
+}
+@media (max-width: 760px) and (pointer: coarse) {
+  html:root .game-panel .key,
+  html:root .solo-keyboard .key {
+    min-height: 44px;
+    height: 44px;
+  }
+  .game-chat[data-open='false'] {
+    max-width: calc(100% - 16px);
+  }
+}
