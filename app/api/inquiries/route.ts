@@ -1,5 +1,5 @@
 import { accountId, isSiteAdmin } from '@/lib/account';
-import { inquiryOwner, createInquiry } from '@/lib/inquiries';
+import { inquiryOwner, createInquiry, requestAccountDeletion } from '@/lib/inquiries';
 import { one, all, run } from '@/lib/store';
 const reply = (d: unknown, status = 200, cookie = '') =>
   Response.json(d, {
@@ -33,7 +33,7 @@ export async function GET(req: Request) {
     )
       return reply({ error: '조회 조건을 확인해 주세요.' }, 400);
     const rows = await all(
-      `SELECT ${fields} FROM inquiries WHERE (?=1 OR owner=?) AND (?='' OR status=?) ORDER BY updated_at DESC,id LIMIT 21 OFFSET ?`,
+      `SELECT ${fields}${admin ? ',owner AS accountReference' : ''} FROM inquiries WHERE (?=1 OR owner=?) AND (?='' OR status=?) ORDER BY updated_at DESC,id LIMIT 21 OFFSET ?`,
       admin ? 1 : 0,
       owner || '',
       status,
@@ -62,6 +62,13 @@ export async function POST(req: Request) {
       return reply({ error: '요청을 확인해 주세요.' }, 400);
     }
     if (!b || typeof b !== 'object') return reply({ error: '요청을 확인해 주세요.' }, 400);
+    if (b.action === 'request-deletion') {
+      const account = accountId(req);
+      if (!account) return reply({ error: '삭제할 계정으로 로그인해 주세요.' }, 401);
+      if (b.confirm !== '계정 삭제 요청')
+        return reply({ error: '삭제 요청 확인 문구를 입력해 주세요.' }, 400);
+      return reply({ id: await requestAccountDeletion('account:' + account) });
+    }
     if (b.action === 'respond') {
       if (!isSiteAdmin(req)) return reply({ error: '관리자만 답변할 수 있어요.' }, 403);
       if (
@@ -73,6 +80,15 @@ export async function POST(req: Request) {
         (b.status === 'answered' && !b.answer.trim())
       )
         return reply({ error: '처리 상태와 답변을 확인해 주세요.' }, 400);
+      const ticket = await one('SELECT category FROM inquiries WHERE id=?', b.id);
+      if (ticket?.category === '계정 삭제' && b.status === 'closed')
+        return reply(
+          {
+            error:
+              '문의 종료로 계정을 삭제할 수 없습니다. 삭제 실행 및 검증 절차가 마련될 때까지 확인 중 또는 답변 완료로 관리해 주세요.',
+          },
+          409,
+        );
       const saved = await run(
         'UPDATE inquiries SET status=?,answer=?,updated_at=?,revision=revision+1 WHERE id=? AND revision=?',
         b.status,

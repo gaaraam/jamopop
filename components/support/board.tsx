@@ -1,10 +1,12 @@
 'use client';
+import { DeletionRequest } from './deletion-request';
 import { SafetySettings } from '@/components/safety/settings';
 import { useEffect, useRef, useState } from 'react';
 import { ThemeSwitch } from '@/components/theme';
 import './support.css';
 type Ticket = {
   id: string;
+  accountReference?: string;
   name: string;
   category: string;
   title: string;
@@ -70,6 +72,12 @@ function Inquiry({ item, admin, onSaved }: { item: Ticket; admin: boolean; onSav
           {item.name} · 문의 번호 {item.id.slice(0, 8)}
         </p>
         <p className="support-body">{item.body}</p>
+        {admin && item.category === '계정 삭제' && (
+          <p className="support-meta">
+            확인할 계정: <code>{item.accountReference}</code>
+            <br />이 화면은 요청 접수·답변용입니다. 계정 삭제를 실행하지 않습니다.
+          </p>
+        )}
         {admin ? (
           <form
             onSubmit={(e) => {
@@ -80,11 +88,13 @@ function Inquiry({ item, admin, onSaved }: { item: Ticket; admin: boolean; onSav
             <label>
               처리 상태
               <select value={status} onChange={(e) => setStatus(e.target.value)} disabled={busy}>
-                {Object.entries(labels).map(([key, label]) => (
-                  <option key={key} value={key}>
-                    {label}
-                  </option>
-                ))}
+                {Object.entries(labels)
+                  .filter(([key]) => item.category !== '계정 삭제' || key !== 'closed')
+                  .map(([key, label]) => (
+                    <option key={key} value={key}>
+                      {label}
+                    </option>
+                  ))}
               </select>
             </label>
             <label>
@@ -236,6 +246,16 @@ export function SupportBoard({ admin = false }: { admin?: boolean }) {
       ) : (
         <>
           {!admin && <SafetySettings />}
+          {!admin && (
+            <DeletionRequest
+              signedIn={signedIn}
+              onSaved={() => {
+                setOffset(0);
+                setStatus('');
+                setRefresh((n) => n + 1);
+              }}
+            />
+          )}
           {!admin && (
             <form
               className="support-compose"

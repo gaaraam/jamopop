@@ -61,3 +61,30 @@ export async function createInquiry(
   }
   return id;
 }
+
+// Kept separate from ordinary inquiries: callers cannot choose the account or category.
+export async function requestAccountDeletion(owner: string) {
+  const id = crypto.randomUUID(),
+    now = Date.now();
+  await run(
+    `INSERT INTO inquiries(id,owner,request_id,name,category,title,body,created_at,updated_at)
+     SELECT ?,?,?,?,?,?,?,?,? WHERE NOT EXISTS
+     (SELECT 1 FROM inquiries WHERE owner=? AND category='계정 삭제' AND status!='closed')`,
+    id,
+    owner,
+    id,
+    '본인 계정',
+    '계정 삭제',
+    '계정 및 연결 기록 삭제 요청',
+    '로그인한 본인이 계정 및 연결된 기록의 삭제 검토를 요청했습니다. 연결된 프로필과 공유 기록의 처리 범위는 관리자 확인 후 안내합니다. 요청 접수만으로 데이터가 삭제되지 않습니다.',
+    now,
+    now,
+    owner,
+  );
+  const ticket = await one(
+    "SELECT id FROM inquiries WHERE owner=? AND category='계정 삭제' AND status!='closed' ORDER BY created_at,id LIMIT 1",
+    owner,
+  );
+  if (!ticket) throw Error('요청을 접수하지 못했어요. 다시 시도해 주세요.');
+  return ticket.id as string;
+}

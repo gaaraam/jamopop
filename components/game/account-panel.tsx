@@ -460,6 +460,9 @@ export function AccountPanel({
             <a href="/transfer?manage=1" className="secondary-btn">
               기록 가져오기 · 프로필 관리
             </a>
+            <a href="/support#account-deletion" className="text-btn">
+              계정 삭제 요청
+            </a>
             <form action="/auth/logout" method="post">
               <button className="text-btn">로그아웃</button>
             </form>
