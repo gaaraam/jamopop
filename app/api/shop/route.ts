@@ -48,8 +48,8 @@ export async function POST(req:Request){
  const skin=ALL_SKINS.find(x=>x.id===b.skin);
  if(!skin)return send({error:'없는 스킨이에요.'},400);
  const earned=skin.reward&&(await shopState(id)).owned.includes(skin.id);
- if(skin.reward&&!earned)return send({error:'개인 도전에서 보상 조건을 달성해 주세요.'},403);
- if(skin.reward&&b.action==='buy')return send({error:'개인 도전 보상은 구매할 수 없어요.'},400);
+ if(skin.reward&&!earned)return send({error:'아직 보상 조건을 달성하지 못했어요.'},403);
+ if(skin.reward&&b.action==='buy')return send({error:'활동 보상은 구매할 수 없어요.'},400);
  if(!earned&&!(await avatarAccess(req)).includes(skin.avatar))return send({error:'캐릭터를 먼저 해금해 주세요.'},403);
  if(b.action==='buy'){
  await db.prepare(`INSERT INTO skin_purchases(account_id,skin_id,price,purchased_at) SELECT ?,?,?,? WHERE (${BALANCE_SQL})>=? ON CONFLICT(account_id,skin_id) DO NOTHING`).bind(id,skin.id,skin.price,Date.now(),id,id,skin.price).run();

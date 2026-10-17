@@ -25,5 +25,6 @@
   "0023_skin_shop.sql": "af619ebcac2c1307ac0f26f7126c33a48ffebf9ac4b867a86c0e8f0914b9ca9f",
   "0024_card_skins.sql": "76f1c480fa32e689bc3d4c68e2e1c681e4dd50660c326cf75e1479df709eda88",
   "0025_room_passwords.sql": "987b6e7c41d5887c2aadb3ed7189d4c1fdebdf6d7b244d48afeb78f83d706974",
-  "0026_kongal_homes.sql": "8a1fcd66fa79575c2c30ccdb2492ecb3b213b6892701145e8db8c38a02730ebf"
+  "0026_kongal_homes.sql": "8a1fcd66fa79575c2c30ccdb2492ecb3b213b6892701145e8db8c38a02730ebf",
+  "0027_home_life.sql": "fb5ff5666a7419416fe9fe55a0acb2a85e274b11f4e69951b534b72b79ccbc5b"
 }

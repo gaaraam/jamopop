@@ -1,4 +1,5 @@
 'use client';
+import {ServiceHeader} from '@/components/game/service-header';
 import {GameInput} from '@/components/game/mobile-controls';
 import {draftKey,readDraft,writeDraft} from '@/lib/recovery.mjs';
 import {useCallback,useEffect,useRef,useState} from 'react';
@@ -38,7 +39,7 @@ export default function Solo(){
  const mapFirst=(mapChapter.id-1)*3+1;
  const mapComplete=[mapFirst,mapFirst+1,mapFirst+2].every(n=>data?.best[n]);
  const stars=Object.values(data?.best||{}).reduce((a,b)=>a+b,0);
- return <main className="solo-page glass" data-playing={!onMap}><header className="solo-nav"><a href="/?lobby=1">← 대기실</a><strong>개인 도전</strong><ThemeSwitch/></header>
+ return <main className="solo-page glass" data-playing={!onMap}><ServiceHeader active="solo"/>
  {!data?<section className="solo-loading"><p>{error||'도전 기록을 불러오는 중…'}</p><button onClick={()=>refresh()}>다시 불러오기</button></section>:<>
  <div className="solo-summary" aria-label="개인 도전 기록"><div className="solo-stat"><Star aria-hidden="true"/><div><span>획득 별</span><strong>{stars}<small>/ 45</small></strong></div></div><div className="solo-stat"><House aria-hidden="true"/><div><span>복구한 방</span><strong>{Object.keys(data.best).length}<small>/ 15</small></strong></div></div><div className="solo-stat"><Sparkles aria-hidden="true"/><div><span>경험치</span><strong>{data.xp.toLocaleString()}<small>XP</small></strong></div></div></div>
  <p className="solo-save-note">{data.signedIn?'계정에 진행과 보상이 저장됩니다.':'게스트 · 이 브라우저에서 이어할 수 있어요. 쿠키를 삭제하면 기록을 찾을 수 없습니다.'}</p>

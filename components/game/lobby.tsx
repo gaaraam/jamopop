@@ -1,4 +1,5 @@
 'use client';
+import {ServiceHeader} from './service-header';
 import {CharacterAvatar} from '@/components/game/character-avatar';
 
 import {useCallback,useEffect,useRef,useState,type ReactNode} from 'react';
@@ -46,7 +47,7 @@ export function Lobby({onSelect,onCreate,onRegister,signedIn,playerName,playerAv
  };
  const visible=rooms.filter(r=>(!activeOnly||r.onlineCount>0)&&`${r.name} ${r.hostName||''}`.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()));
  return <section className="room-lobby game-lounge" aria-label="방 대기실">
-  <header className="lounge-heading"><div className="lounge-title"><h1>{archived?'보관된 방':'대기실'}</h1><span className="lounge-room-total">{rooms.length}개 방</span></div><div className="lounge-entry-actions"><a href="/solo" className="lounge-solo"><span aria-hidden="true">🏢</span><strong>개인 도전</strong></a><button className="primary lounge-create" onClick={onCreate}><Plus size={20}/>방 만들기</button><div className="lounge-header-tools">{headerTools}</div></div></header>
+  <ServiceHeader active="lobby" title={archived?'보관된 방':'대기실'} tools={headerTools}><button className="primary lounge-create" onClick={onCreate}><Plus size={18}/>방 만들기</button></ServiceHeader>
   <div className="lounge-layout"><div className="lounge-play-area">
   {isAdmin&&<div className="lobby-archive-tabs"><button className={!archived?'lobby-filter selected':'lobby-filter'} aria-pressed={!archived} disabled={loading||!!busy} onClick={()=>{if(archived){setRooms([]);setArchived(false);}}}>열린 방</button><button className={archived?'lobby-filter selected':'lobby-filter'} aria-pressed={archived} disabled={loading||!!busy} onClick={()=>{if(!archived){setRooms([]);setArchived(true);}}}><Archive size={15}/>보관된 방</button><span>보관해도 게임과 기록은 유지됩니다.</span></div>}
   <div className="lobby-toolbar"><label className="lobby-search"><Search size={18}/><input aria-label="방 이름 또는 방장 검색" placeholder="방 이름 또는 방장 검색" value={search} onChange={e=>setSearch(e.target.value)}/></label><button className={activeOnly?'lobby-filter selected':'lobby-filter'} aria-pressed={activeOnly} onClick={()=>setActiveOnly(v=>!v)}>접속 중인 방</button><button className="icon-btn" aria-label="방 목록 새로고침" disabled={loading} onClick={()=>void refresh()}><RefreshCw size={18}/></button></div>
