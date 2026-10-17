@@ -1,5 +1,53 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {consoleUpdate} from '../lib/terminal.ts';
-function state(){return {serverNow:0,room:{name:'test',roundNo:1},round:{id:'r1',mode:'daily',width:5},me:{id:'me',name:'user'},play:{status:'playing',guesses:[]},players:[{id:'peer',name:'peer',attempts:0,status:'waiting',colors:[]}]};}
-test('unchanged polls never duplicate output',()=>{const d=state(),first=consoleUpdate(d,null);assert(first.lines.length>0);assert.deepEqual(consoleUpdate(d,first.snapshot).lines,[]);});
-test('append only new own guess; peer changes once',()=>{const d=state(),first=consoleUpdate(d,null);d.play.guesses.push({letters:['ㅅ','ㅏ','ㄱ','ㅗ','ㅏ'],colors:['gray','yellow','green','gray','gray']});d.players[0]={...d.players[0],attempts:1,status:'playing',colors:[['gray','gray','green','gray','gray']]};const next=consoleUpdate(d,first.snapshot);assert.equal(next.lines.length,2);assert(next.lines[0].includes('[1/5]'));assert(next.lines[1].includes('submitted'));assert.deepEqual(consoleUpdate(d,next.snapshot).lines,[]);});
-test('view reentry reconstructs records; round transition starts new section',()=>{const d=state();d.play.guesses=[{letters:['ㄱ'],colors:['green']}];d.play.status='won';d.play.answer='가';const first=consoleUpdate(d,null);assert(first.lines.some(s=>s.includes('user@bubblecon')));assert(first.lines.some(s=>s.includes('solved: 가')));d.round.id='r2';d.play={status:'playing',guesses:[]};d.room.roundNo=2;const next=consoleUpdate(d,first.snapshot);assert(next.lines[0].includes('round 2'));assert(!next.lines.some(s=>s.includes('solved:')));});
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { consoleUpdate } from '../lib/terminal.ts';
+function state() {
+  return {
+    serverNow: 0,
+    room: { name: 'test', roundNo: 1 },
+    round: { id: 'r1', mode: 'daily', width: 5 },
+    me: { id: 'me', name: 'user' },
+    play: { status: 'playing', guesses: [] },
+    players: [{ id: 'peer', name: 'peer', attempts: 0, status: 'waiting', colors: [] }],
+  };
+}
+test('unchanged polls never duplicate output', () => {
+  const d = state(),
+    first = consoleUpdate(d, null);
+  assert(first.lines.length > 0);
+  assert.deepEqual(consoleUpdate(d, first.snapshot).lines, []);
+});
+test('append only new own guess; peer changes once', () => {
+  const d = state(),
+    first = consoleUpdate(d, null);
+  d.play.guesses.push({
+    letters: ['ㅅ', 'ㅏ', 'ㄱ', 'ㅗ', 'ㅏ'],
+    colors: ['gray', 'yellow', 'green', 'gray', 'gray'],
+  });
+  d.players[0] = {
+    ...d.players[0],
+    attempts: 1,
+    status: 'playing',
+    colors: [['gray', 'gray', 'green', 'gray', 'gray']],
+  };
+  const next = consoleUpdate(d, first.snapshot);
+  assert.equal(next.lines.length, 2);
+  assert(next.lines[0].includes('[1/5]'));
+  assert(next.lines[1].includes('submitted'));
+  assert.deepEqual(consoleUpdate(d, next.snapshot).lines, []);
+});
+test('view reentry reconstructs records; round transition starts new section', () => {
+  const d = state();
+  d.play.guesses = [{ letters: ['ㄱ'], colors: ['green'] }];
+  d.play.status = 'won';
+  d.play.answer = '가';
+  const first = consoleUpdate(d, null);
+  assert(first.lines.some((s) => s.includes('user@bubblecon')));
+  assert(first.lines.some((s) => s.includes('solved: 가')));
+  d.round.id = 'r2';
+  d.play = { status: 'playing', guesses: [] };
+  d.room.roundNo = 2;
+  const next = consoleUpdate(d, first.snapshot);
+  assert(next.lines[0].includes('round 2'));
+  assert(!next.lines.some((s) => s.includes('solved:')));
+});

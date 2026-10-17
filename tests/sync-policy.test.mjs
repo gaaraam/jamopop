@@ -1,5 +1,57 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {DatabaseSync} from 'node:sqlite';import {readFileSync,readdirSync} from 'node:fs';
-import {pollDelay,createRevisionCache,PRESENCE_INTERVAL,PRESENCE_OFFLINE} from '../lib/sync-policy.mjs';
-test('adaptive request budget and presence remain compatible',()=>{assert.equal(pollDelay(),3000);assert.equal(pollDelay({finished:true}),10000);assert.equal(pollDelay({idleMs:90000}),15000);assert.equal(pollDelay({idleMs:90000,chatOpen:true}),3000);assert(PRESENCE_OFFLINE>pollDelay({idleMs:90000})+PRESENCE_INTERVAL);const before=3600/2.2+3600/3+3600/15;assert(3600/pollDelay()*1000<before*.4)});
-test('derived cache shares concurrent reads, invalidates by revision, retries failures',async()=>{const memo=createRevisionCache(2);let calls=0;const load=async()=>++calls;assert.deepEqual(await Promise.all([memo('room',1,load),memo('room',1,load)]),[1,1]);assert.equal(await memo('room',2,load),2);await assert.rejects(memo('error',1,()=>{throw Error('fail')}));assert.equal(await memo('error',1,load),3);await memo('third',1,load);assert.equal(await memo('room',2,load),5)});
-test('revision changes for game/account records but not presence or chat',()=>{const db=new DatabaseSync(':memory:');for(const f of readdirSync('drizzle').filter(f=>f.endsWith('.sql')).sort())db.exec(readFileSync('drizzle/'+f,'utf8'));const rev=()=>db.prepare('SELECT version FROM derived_revision').get().version;db.exec("INSERT INTO members(id,room_id,token_hash,name,avatar,last_seen) VALUES('m','r','t','name','x',0)");const n=rev();db.exec("UPDATE members SET last_seen=1,last_active=1 WHERE id='m'");assert.equal(rev(),n);db.exec("UPDATE members SET name='new' WHERE id='m'");assert.equal(rev(),n+1);db.exec("INSERT INTO plays(id,round_id,member_id,updated_at) VALUES('p','round','m',0)");assert.equal(rev(),n+2);db.exec("UPDATE plays SET status='won',updated_at=1 WHERE id='p'");assert.equal(rev(),n+3);db.exec("INSERT INTO solo_progress VALUES('owner','{}',0)");assert.equal(rev(),n+4);db.close()});
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { DatabaseSync } from 'node:sqlite';
+import { readFileSync, readdirSync } from 'node:fs';
+import {
+  pollDelay,
+  createRevisionCache,
+  PRESENCE_INTERVAL,
+  PRESENCE_OFFLINE,
+} from '../lib/sync-policy.mjs';
+test('adaptive request budget and presence remain compatible', () => {
+  assert.equal(pollDelay(), 3000);
+  assert.equal(pollDelay({ finished: true }), 10000);
+  assert.equal(pollDelay({ idleMs: 90000 }), 15000);
+  assert.equal(pollDelay({ idleMs: 90000, chatOpen: true }), 3000);
+  assert(PRESENCE_OFFLINE > pollDelay({ idleMs: 90000 }) + PRESENCE_INTERVAL);
+  const before = 3600 / 2.2 + 3600 / 3 + 3600 / 15;
+  assert((3600 / pollDelay()) * 1000 < before * 0.4);
+});
+test('derived cache shares concurrent reads, invalidates by revision, retries failures', async () => {
+  const memo = createRevisionCache(2);
+  let calls = 0;
+  const load = async () => ++calls;
+  assert.deepEqual(await Promise.all([memo('room', 1, load), memo('room', 1, load)]), [1, 1]);
+  assert.equal(await memo('room', 2, load), 2);
+  await assert.rejects(
+    memo('error', 1, () => {
+      throw Error('fail');
+    }),
+  );
+  assert.equal(await memo('error', 1, load), 3);
+  await memo('third', 1, load);
+  assert.equal(await memo('room', 2, load), 5);
+});
+test('revision changes for game/account records but not presence or chat', () => {
+  const db = new DatabaseSync(':memory:');
+  for (const f of readdirSync('drizzle')
+    .filter((f) => f.endsWith('.sql'))
+    .sort())
+    db.exec(readFileSync('drizzle/' + f, 'utf8'));
+  const rev = () => db.prepare('SELECT version FROM derived_revision').get().version;
+  db.exec(
+    "INSERT INTO members(id,room_id,token_hash,name,avatar,last_seen) VALUES('m','r','t','name','x',0)",
+  );
+  const n = rev();
+  db.exec("UPDATE members SET last_seen=1,last_active=1 WHERE id='m'");
+  assert.equal(rev(), n);
+  db.exec("UPDATE members SET name='new' WHERE id='m'");
+  assert.equal(rev(), n + 1);
+  db.exec("INSERT INTO plays(id,round_id,member_id,updated_at) VALUES('p','round','m',0)");
+  assert.equal(rev(), n + 2);
+  db.exec("UPDATE plays SET status='won',updated_at=1 WHERE id='p'");
+  assert.equal(rev(), n + 3);
+  db.exec("INSERT INTO solo_progress VALUES('owner','{}',0)");
+  assert.equal(rev(), n + 4);
+  db.close();
+});

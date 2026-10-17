@@ -1,2 +1,160 @@
-.service-header{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:4px 0 20px;margin:0 0 24px;border-bottom:1px solid var(--border,#dddfea);color:var(--foreground,#30394a)}.service-heading{display:flex;align-items:center;gap:22px;min-width:0}.service-heading h1{font-family:'Jamopop Nexon',sans-serif;font-size:27px;font-weight:800;margin:0;white-space:nowrap}.service-back{display:flex;align-items:center;gap:5px;color:var(--muted-foreground,#778199);font-size:12px;text-decoration:none;white-space:nowrap}.service-header-actions,.service-header nav,.service-header-tools{display:flex;align-items:center;gap:8px}.service-header nav a{display:flex;align-items:center;gap:7px;border:1px solid var(--border,#dddfea);border-radius:12px;background:var(--card,#fff);color:var(--foreground,#30394a);padding:11px 13px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap}.service-header-tools{padding-left:10px;border-left:1px solid var(--border,#dddfea)}.service-header .gold-wallet{font-size:13px}.service-header a:focus-visible{outline:2px solid #9278b7;outline-offset:3px}#service-notifications{position:relative}#service-notifications .friend-notifications{position:static;display:flex;gap:6px;padding:0;transform:none}#service-notifications .friend-notification-panel{position:absolute;right:0;top:calc(100% + 12px);bottom:auto;max-width:calc(100vw - 24px)}.service-header .friend-notification-trigger{min-height:40px;box-shadow:none}.service-header .friend-notification-trigger>span{display:none}.service-header .lounge-create{min-height:40px;margin:0;padding:10px 16px}.service-header-tools .account-trigger{display:none}.service-header-tools .lounge-header-tools{display:contents}.service-header .profile-toggle{border:1px solid #dcd6e6;border-radius:12px;background:var(--card,#fff);color:inherit;padding:11px 13px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700}
-@media(max-width:760px){.service-header{gap:8px;padding-bottom:14px;margin-bottom:16px;flex-wrap:wrap}.service-heading{gap:10px}.service-heading h1{font-size:22px}.service-back span{display:none}.service-header nav a{padding:10px}.service-header nav a span{display:none}.service-header-actions{gap:5px}.service-header-tools{padding-left:4px;gap:4px}.service-header .theme-switch{padding:6px}.service-header .profile-toggle{padding:10px}.service-header .profile-toggle span{display:none}.service-header .lounge-create{padding:10px;font-size:12px}.service-header .gold-wallet{padding:8px}.service-header .friend-notification-trigger{padding:9px}}
+.service-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 4px 0 20px;
+  margin: 0 0 24px;
+  border-bottom: 1px solid var(--border, #dddfea);
+  color: var(--foreground, #30394a);
+}
+.service-heading {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  min-width: 0;
+}
+.service-heading h1 {
+  font-family: 'Jamopop Nexon', sans-serif;
+  font-size: 27px;
+  font-weight: 800;
+  margin: 0;
+  white-space: nowrap;
+}
+.service-back {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted-foreground, #778199);
+  font-size: 12px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.service-header-actions,
+.service-header nav,
+.service-header-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.service-header nav a {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--border, #dddfea);
+  border-radius: 12px;
+  background: var(--card, #fff);
+  color: var(--foreground, #30394a);
+  padding: 11px 13px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.service-header-tools {
+  padding-left: 10px;
+  border-left: 1px solid var(--border, #dddfea);
+}
+.service-header .gold-wallet {
+  font-size: 13px;
+}
+.service-header a:focus-visible {
+  outline: 2px solid #9278b7;
+  outline-offset: 3px;
+}
+#service-notifications {
+  position: relative;
+}
+#service-notifications .friend-notifications {
+  position: static;
+  display: flex;
+  gap: 6px;
+  padding: 0;
+  transform: none;
+}
+#service-notifications .friend-notification-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 12px);
+  bottom: auto;
+  max-width: calc(100vw - 24px);
+}
+.service-header .friend-notification-trigger {
+  min-height: 40px;
+  box-shadow: none;
+}
+.service-header .friend-notification-trigger > span {
+  display: none;
+}
+.service-header .lounge-create {
+  min-height: 40px;
+  margin: 0;
+  padding: 10px 16px;
+}
+.service-header-tools .account-trigger {
+  display: none;
+}
+.service-header-tools .lounge-header-tools {
+  display: contents;
+}
+.service-header .profile-toggle {
+  border: 1px solid #dcd6e6;
+  border-radius: 12px;
+  background: var(--card, #fff);
+  color: inherit;
+  padding: 11px 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+@media (max-width: 760px) {
+  .service-header {
+    gap: 8px;
+    padding-bottom: 14px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .service-heading {
+    gap: 10px;
+  }
+  .service-heading h1 {
+    font-size: 22px;
+  }
+  .service-back span {
+    display: none;
+  }
+  .service-header nav a {
+    padding: 10px;
+  }
+  .service-header nav a span {
+    display: none;
+  }
+  .service-header-actions {
+    gap: 5px;
+  }
+  .service-header-tools {
+    padding-left: 4px;
+    gap: 4px;
+  }
+  .service-header .theme-switch {
+    padding: 6px;
+  }
+  .service-header .profile-toggle {
+    padding: 10px;
+  }
+  .service-header .profile-toggle span {
+    display: none;
+  }
+  .service-header .lounge-create {
+    padding: 10px;
+    font-size: 12px;
+  }
+  .service-header .gold-wallet {
+    padding: 8px;
+  }
+  .service-header .friend-notification-trigger {
+    padding: 9px;
+  }
+}

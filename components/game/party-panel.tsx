@@ -1,46 +1,700 @@
 'use client';
-import {SafetyActions} from '@/components/safety/actions';
-import {CharacterAvatar} from '@/components/game/character-avatar';
+import { SafetyActions } from '@/components/safety/actions';
+import { CharacterAvatar } from '@/components/game/character-avatar';
 
-import {useEffect,useRef,useState} from 'react';
-import {Hourglass,Shield,ShieldCheck,Undo2,BatteryCharging,Check,Crosshair,X,ArrowRight,Award,Lock} from 'lucide-react';
-import {Dialog,DialogContent,DialogTitle,DialogDescription} from '@/components/ui/dialog';
-import {Tooltip,TooltipTrigger,TooltipContent,TooltipProvider} from '@/components/ui/tooltip';
-import type {GameState,Guess} from '@/lib/game';
-export const titleNames:Record<string,string>={last_second:'벼락치기',last_chance:'벼랑 끝 생존자'};
-function ItemTip({kind,used,children}:{kind:string;used:boolean;children:React.ReactNode}){const info:Record<string,{name:string;category:string;value:string;body:string;note:string}>={attack:{name:'시간 도둑',category:'공격',value:'−15초',body:'선택한 상대의 남은 시간을 15초 줄입니다.',note:'누른 뒤 참가자 카드 선택 · 한 판 1회'},shield:{name:'방패',category:'방어',value:'1회 차단',body:'미리 사용하면 다음 시간 공격을 한 번 막습니다.',note:'사용 즉시 장착 · 이번 판 동안 유지'},reflect:{name:'반사',category:'방어',value:'되돌리기',body:'다음 시간 공격을 공격자에게 되돌립니다.',note:'사용 즉시 장착 · 반사 후 소모'},boost:{name:'시간 충전',category:'부스터',value:'+15초',body:'내 남은 시간을 15초 늘립니다.',note:'시간이 끝나기 전에 사용 · 한 판 1회'}};const t=info[kind];return <Tooltip><TooltipTrigger asChild><span className="item-wrap" tabIndex={used?0:undefined}>{children}</span></TooltipTrigger><TooltipContent className={`game-item-tooltip tip-${kind}`} side="top" sideOffset={12}><div className="item-tip-head"><span>{t.category}</span><small>{used?'사용 완료':'이번 판 전용'}</small></div><strong>{t.name}</strong><b className="item-tip-value">{t.value}</b><p>{t.body}</p><footer>{t.note}{kind==='attack'&&<div className="item-rule-chips"><span>보호 15초</span><span>피해 한도 45초</span></div>}</footer></TooltipContent></Tooltip>}
-function ItemSignal({data}:{data:GameState}){const e=data.party?.events[0];if(!e||data.serverNow-e.createdAt>10000||data.serverNow<e.createdAt)return null;const blocked=e.effect.includes('차단')||e.effect.includes('보호 중'),reflect=e.effect.includes('반사'),boost=e.effect.includes('+15'),prepared=e.effect.includes('준비'),kind=blocked?'blocked':boost?'boost':prepared?'ready':'attack';const Icon=blocked||prepared?ShieldCheck:reflect?Undo2:boost?BatteryCharging:Hourglass;const value=blocked?'방어':prepared?'장착':boost?'+15초':'−15초';const person=(name:string)=><span className="signal-person"><i><CharacterAvatar avatar={data.roster.find(m=>m.name===name)?.avatar||'👤'}/></i><span>{name}</span></span>;return <div key={e.id} className={`item-signal signal-${kind}`} role="status" aria-label={`${e.actor} → ${e.target}: ${e.effect}`}><div className="signal-people">{person(e.actor)}{e.actor!==e.target&&<><ArrowRight size={12}/>{person(e.target)}</>}</div><div className="signal-result"><span className="signal-item"><Icon size={17}/></span><strong>{value}</strong>{reflect&&<small>반사</small>}</div></div>}
-type Stroke={color:string;width:number;points:number[][]};
-const palette=['#273449','#ef6464','#4e9f78','#5a80d8','#e5b344'];
-function Paths({strokes}:{strokes:Stroke[]}){return <>{strokes.map((s,i)=><polyline key={i} points={s.points.map(p=>`${p[0]*600},${p[1]*360}`).join(' ')} fill="none" stroke={s.color} strokeWidth={s.width} strokeLinecap="round" strokeLinejoin="round"/>)}</>}
-export function PartyPanel({data,onRefresh,watchTarget,onWatch,attackMode,onAttackMode,attackTarget,onAttackTarget}:{attackMode:boolean;onAttackMode:(v:boolean)=>void;attackTarget:string|null;onAttackTarget:(v:string|null)=>void;data:GameState;onRefresh:()=>Promise<unknown>;watchTarget:string|null;onWatch:(id:string|null)=>void}){
- const party=data.party,[titleOpen,setTitleOpen]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),[open,setOpen]=useState<'draw'|'hints'|null>(null),[strokes,setStrokes]=useState<Stroke[]>([]),[color,setColor]=useState(palette[0]),[pen,setPen]=useState(6),[draftStroke,setDraftStroke]=useState<Stroke|null>(null),[hints,setHints]=useState<{memberId:string;name:string;strokes:Stroke[]}[]>([]),[watch,setWatch]=useState<{name:string;guesses:Guess[];status:string}|null>(null);
- const refreshedHint=useRef('');
- const lock=useRef(false),drawing=useRef<Stroke|null>(null),pendingItem=useRef<{key:string;id:string}|null>(null);
- const base=`room=${data.room.id}&roundId=${data.round.id}`;
- async function action(action:string,extra:Record<string,unknown>={}){if(lock.current)return false;lock.current=true;setBusy(true);setError('');try{const response=await fetch('/api/party',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,room:data.room.id,roundId:data.round.id,...extra}),signal:AbortSignal.timeout(10000)});const result=await response.json() as {error?:string};if(!response.ok)throw Error(result.error||'다시 시도해 주세요.');await onRefresh();return true}catch(e){setError((e as Error).message);return false}finally{lock.current=false;setBusy(false)}}
- async function item(kind:string,target=''){const key=kind+target;if(pendingItem.current?.key!==key)pendingItem.current={key,id:crypto.randomUUID()};if(await action('item',{kind,targetId:target,requestId:pendingItem.current.id})){pendingItem.current=null;onAttackMode(false);return true}return false;}
- useEffect(()=>{if(!attackTarget)return;void item('attack',attackTarget).finally(()=>onAttackTarget(null));},[attackTarget]);
- useEffect(()=>{if(data.play.status!=='playing'||data.round.expired||party?.spectator||party?.loadout?.attackUsed)onAttackMode(false)},[data.play.status,data.round.expired,party?.spectator,party?.loadout?.attackUsed]);
- useEffect(()=>{if(!watchTarget&&open!=='hints')return;let alive=true,inflight=false;async function load(){if(inflight)return;inflight=true;try{const response=await fetch(`/api/party?${base}${watchTarget?'&watch='+encodeURIComponent(watchTarget):''}`,{...(!watchTarget?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'view_hints',room:data.room.id,roundId:data.round.id})}:{}),signal:AbortSignal.timeout(10000)});const d=await response.json() as any;if(!response.ok)throw Error(d.error);if(alive){if(watchTarget)setWatch(d);else {setHints(d.hints);if(d.hints.length&&refreshedHint.current!==base){refreshedHint.current=base;void onRefresh();}}setError('')}}catch(e){if(alive)setError((e as Error).message)}finally{inflight=false}}void load();const timer=setInterval(()=>{if(!document.hidden)void load()},3000);return()=>{alive=false;clearInterval(timer)}},[base,watchTarget,open]);
- if(!party)return null;
- const finished=data.play.status!=='playing'||data.round.expired,loadout=party.loadout;
- function point(e:React.PointerEvent<SVGSVGElement>){const box=e.currentTarget.getBoundingClientRect();return [Math.max(0,Math.min(1,(e.clientX-box.left)/box.width)),Math.max(0,Math.min(1,(e.clientY-box.top)/box.height))]}
- return <section className="party-panel" onKeyDown={e=>e.stopPropagation()}>
- <div className="party-heading"><b>{party.spectator?'👀 관전 모드':party.variant==='items'?'⚔️ 아이템전':'🎯 일반전'}</b>{party.spectator?<button disabled={busy||party.nextParticipant} onClick={()=>void action('participate')}>{party.nextParticipant?'다음 판 참가 예정':'다음 판부터 참가'}</button>:!data.play.guesses.length&&<button disabled={busy} onClick={()=>{if(window.confirm('관전하면 이번 판에는 답을 제출할 수 없어요. 관전으로 전환할까요?'))void action('spectate')}}>관전으로 전환</button>}</div>
- {party.spectator&&<p className="party-note">참가자 카드의 ‘풀이 관전’을 누르세요. 관전자끼리만 채팅합니다.</p>}
- {loadout&&!party.spectator&&<TooltipProvider delayDuration={140}><div className="item-dock">
- <ItemTip kind="attack" used={loadout.attackUsed||finished}>
- <button className={`item-slot item-attack ${attackMode?'is-armed':''} ${loadout.attackUsed?'is-spent':''}`} aria-label={loadout.attackUsed?'시간 도둑 사용 완료':attackMode?'공격 대상 선택 취소':'시간 도둑 사용 · 상대 선택'} aria-pressed={attackMode} disabled={busy||finished||loadout.attackUsed} onClick={()=>{setError('');onAttackMode(!attackMode)}}><span className="item-icon"><Hourglass size={29} strokeWidth={1.8}/>{loadout.attackUsed?<i><Check size={12}/></i>:<i>1</i>}</span><span className="item-copy"><strong>시간 도둑</strong><small>{loadout.attackUsed?'사용 완료':attackMode?'대상 선택 중':'상대 −15초'}</small></span>{attackMode&&<Crosshair className="slot-hint" size={18}/>}</button></ItemTip>
- <ItemTip kind={loadout.support} used={loadout.supportUsed||finished}><button className={`item-slot item-${loadout.support} ${loadout.supportUsed?'is-spent':''} ${loadout.defense?'is-protected':''}`} aria-label={`${{shield:'방패',reflect:'반사',boost:'시간 충전'}[loadout.support]} ${loadout.supportUsed?'사용 완료':'사용'}`} disabled={busy||finished||loadout.supportUsed} onClick={()=>void item('support')}><span className="item-icon">{loadout.support==='boost'?<BatteryCharging size={29} strokeWidth={1.8}/>:loadout.support==='reflect'?<Undo2 size={29} strokeWidth={1.8}/>:loadout.defense?<ShieldCheck size={29} strokeWidth={1.8}/>:<Shield size={29} strokeWidth={1.8}/>}<i>{loadout.supportUsed?<Check size={12}/>:1}</i></span><span className="item-copy"><strong>{{shield:'방패',reflect:'반사',boost:'시간 충전'}[loadout.support]}</strong><small>{loadout.defense?'방어 중':loadout.supportUsed?'사용 완료':loadout.support==='boost'?'내 시간 +15초':loadout.support==='reflect'?'공격 되돌리기':'공격 1회 차단'}</small></span></button></ItemTip>
- <ItemSignal data={data}/>
- </div></TooltipProvider>}
- {attackMode&&<div className="attack-prompt" role="status"><Crosshair size={15}/><span>{busy?'아이템 사용 중…':'공격할 참가자 카드를 누르세요'}</span><button aria-label="공격 취소" disabled={busy} onClick={()=>onAttackMode(false)}><X size={15}/></button></div>}
- <div className="party-buttons">{party.hintUsed&&<span className="hint-used-badge">힌트 사용</span>}{data.play.status==='won'&&!party.spectator&&<button onClick={()=>setOpen('draw')}>🎨 그림 힌트 그리기</button>}<button disabled={!party.hints.length} onClick={()=>{if(party.hintPolicy&&!party.hintUsed&&!finished&&!party.spectator&&!window.confirm('그림을 보면 힌트 사용으로 기록됩니다. 같은 시도 횟수에서는 힌트 없이 푼 사람이 먼저 순위에 올라요. 볼까요?'))return;setHints([]);setOpen('hints')}}>그림 힌트 보기 {party.hints.length>0?`(${party.hints.length})`:''}</button>
- <button className="title-badge-entry" onClick={()=>setTitleOpen(true)}><Award size={15}/><span>{titleNames[party.equipped]||'칭호 보관함'}</span><span className="title-badge-count">{party.titles.length}/2</span></button></div>
- <Dialog open={titleOpen} onOpenChange={setTitleOpen}><DialogContent className="title-vault"><DialogTitle><Award size={22}/>칭호 보관함</DialogTitle><DialogDescription className="sr-only">획득한 칭호를 선택하면 닉네임 옆에 장착됩니다.</DialogDescription><TooltipProvider delayDuration={140}><div className="title-vault-grid">{Object.entries(titleNames).map(([id,name],index)=>{const earned=party.titles.some(t=>t.title===id),equipped=party.equipped===id;return <Tooltip key={id}><TooltipTrigger asChild><span className="title-vault-wrap" tabIndex={!earned?0:undefined}><button className={`title-reward title-reward-${index} ${earned?'is-earned':'is-locked'} ${equipped?'is-equipped':''}`} disabled={busy||!earned} onClick={()=>void action('title',{title:equipped?'':id})}><span className="title-medallion">{index===0?<Hourglass size={33}/>:<Shield size={33}/>}</span><strong>{name}</strong><span className="title-reward-state">{equipped?<><Check size={12}/>장착 중</>:earned?'장착하기':<><Lock size={11}/>미획득</>}</span></button></span></TooltipTrigger><TooltipContent className="game-item-tooltip" sideOffset={10}><strong>{name}</strong><p>{id==='last_second'?'남은 시간이 10초 이하일 때 정답 맞히기':'다섯 번째 시도에 정답 맞히기'}</p><footer>{earned?'획득 완료 · 모든 방에서 사용 가능':'방 문제에서 획득 가능'}</footer></TooltipContent></Tooltip>})}</div></TooltipProvider>{party.equipped&&<button className="title-unequip" disabled={busy} onClick={()=>void action('title',{title:''})}>장착 해제</button>}{error&&<p role="alert">{error}</p>}</DialogContent></Dialog>
- {error&&<p className="error" role="alert">{error}</p>}
- <Dialog open={!!open} onOpenChange={v=>{if(!v)setOpen(null)}}><DialogContent className="drawing-dialog" onKeyDown={e=>e.stopPropagation()}><DialogTitle>{open==='draw'?'그림 힌트 그리기':'그림 힌트'}</DialogTitle><DialogDescription>{open==='draw'?'같은 방 참가자가 원할 때 열어 볼 수 있어요.':'정답을 맞힌 참가자가 그린 힌트입니다.'}</DialogDescription>{open==='draw'?<><div className="drawing-tools">{palette.map(c=><button key={c} aria-label={`${c} 색상`} aria-pressed={color===c} style={{background:c}} onClick={()=>setColor(c)}/>)}<select aria-label="펜 굵기" value={pen} onChange={e=>setPen(Number(e.target.value))}>{[3,6,10].map(w=><option key={w}>{w}</option>)}</select><button onClick={()=>setStrokes(s=>s.slice(0,-1))}>되돌리기</button><button onClick={()=>setStrokes([])}>지우기</button></div><svg className="drawing-canvas" viewBox="0 0 600 360" aria-label="그림 그리는 영역" onPointerDown={e=>{if(busy||strokes.length>=100)return;e.currentTarget.setPointerCapture(e.pointerId);const p=point(e);drawing.current={color,width:pen,points:[p,p]};setDraftStroke(drawing.current)}} onPointerMove={e=>{if(!drawing.current||drawing.current.points.length>=300)return;drawing.current={...drawing.current,points:[...drawing.current.points,point(e)]};setDraftStroke(drawing.current)}} onPointerUp={()=>{const completed=drawing.current;if(completed)setStrokes(s=>[...s,completed]);drawing.current=null;setDraftStroke(null)}} onPointerCancel={()=>{drawing.current=null;setDraftStroke(null)}}><rect width="600" height="360" fill="white"/><Paths strokes={draftStroke?[...strokes,draftStroke]:strokes}/></svg><button className="primary" disabled={busy||!strokes.length} onClick={async()=>{if(await action('draw',{strokes}))setOpen(null)}}>그림 공유하기</button></>:hints.length?hints.map(h=><article key={h.memberId}><div className="safety-hint-heading"><strong>{h.name}</strong>{h.memberId!==data.me.id&&<SafetyActions name={h.name} target={{kind:'hint',id:h.memberId,room:data.room.id,round:data.round.id}} onChanged={()=>setHints(rows=>rows.filter(x=>x.memberId!==h.memberId))}/>}</div><svg className="drawing-canvas" viewBox="0 0 600 360" aria-label={`${h.name}의 그림 힌트`}><rect width="600" height="360" fill="white"/><Paths strokes={h.strokes}/></svg>{(h.memberId===data.me.id||data.room.isAdmin)&&<button disabled={busy} onClick={async()=>{if(await action('delete_hint',{memberId:h.memberId}))setHints(rows=>rows.filter(x=>x.memberId!==h.memberId))}}>그림 내리기</button>}</article>):<p>그림을 불러오는 중…</p>}{error&&<p role="alert">{error}</p>}</DialogContent></Dialog>
- <Dialog open={!!watchTarget} onOpenChange={v=>{if(!v){onWatch(null);setWatch(null)}}}><DialogContent className="drawing-dialog" onKeyDown={e=>e.stopPropagation()}><DialogTitle>{watch?.name||'참가자'} 풀이 관전</DialogTitle><DialogDescription>제출을 완료한 단어와 판정만 표시됩니다.</DialogDescription>{watch?.guesses.length?watch.guesses.map((g,i)=><div className="review-guess" key={i} style={{gridTemplateColumns:`repeat(${g.letters.length},1fr)`}}>{g.letters.map((c,j)=><span className={`tile ${g.colors[j]}`} key={j}>{c}</span>)}</div>):<p>아직 제출한 단어가 없어요.</p>}{error&&<p role="alert">{error}</p>}</DialogContent></Dialog>
- </section>
+import { useEffect, useRef, useState } from 'react';
+import {
+  Hourglass,
+  Shield,
+  ShieldCheck,
+  Undo2,
+  BatteryCharging,
+  Check,
+  Crosshair,
+  X,
+  ArrowRight,
+  Award,
+  Lock,
+} from 'lucide-react';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import type { GameState, Guess } from '@/lib/game';
+export const titleNames: Record<string, string> = {
+  last_second: '벼락치기',
+  last_chance: '벼랑 끝 생존자',
+};
+function ItemTip({
+  kind,
+  used,
+  children,
+}: {
+  kind: string;
+  used: boolean;
+  children: React.ReactNode;
+}) {
+  const info: Record<
+    string,
+    { name: string; category: string; value: string; body: string; note: string }
+  > = {
+    attack: {
+      name: '시간 도둑',
+      category: '공격',
+      value: '−15초',
+      body: '선택한 상대의 남은 시간을 15초 줄입니다.',
+      note: '누른 뒤 참가자 카드 선택 · 한 판 1회',
+    },
+    shield: {
+      name: '방패',
+      category: '방어',
+      value: '1회 차단',
+      body: '미리 사용하면 다음 시간 공격을 한 번 막습니다.',
+      note: '사용 즉시 장착 · 이번 판 동안 유지',
+    },
+    reflect: {
+      name: '반사',
+      category: '방어',
+      value: '되돌리기',
+      body: '다음 시간 공격을 공격자에게 되돌립니다.',
+      note: '사용 즉시 장착 · 반사 후 소모',
+    },
+    boost: {
+      name: '시간 충전',
+      category: '부스터',
+      value: '+15초',
+      body: '내 남은 시간을 15초 늘립니다.',
+      note: '시간이 끝나기 전에 사용 · 한 판 1회',
+    },
+  };
+  const t = info[kind];
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="item-wrap" tabIndex={used ? 0 : undefined}>
+          {children}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent className={`game-item-tooltip tip-${kind}`} side="top" sideOffset={12}>
+        <div className="item-tip-head">
+          <span>{t.category}</span>
+          <small>{used ? '사용 완료' : '이번 판 전용'}</small>
+        </div>
+        <strong>{t.name}</strong>
+        <b className="item-tip-value">{t.value}</b>
+        <p>{t.body}</p>
+        <footer>
+          {t.note}
+          {kind === 'attack' && (
+            <div className="item-rule-chips">
+              <span>보호 15초</span>
+              <span>피해 한도 45초</span>
+            </div>
+          )}
+        </footer>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+function ItemSignal({ data }: { data: GameState }) {
+  const e = data.party?.events[0];
+  if (!e || data.serverNow - e.createdAt > 10000 || data.serverNow < e.createdAt) return null;
+  const blocked = e.effect.includes('차단') || e.effect.includes('보호 중'),
+    reflect = e.effect.includes('반사'),
+    boost = e.effect.includes('+15'),
+    prepared = e.effect.includes('준비'),
+    kind = blocked ? 'blocked' : boost ? 'boost' : prepared ? 'ready' : 'attack';
+  const Icon =
+    blocked || prepared ? ShieldCheck : reflect ? Undo2 : boost ? BatteryCharging : Hourglass;
+  const value = blocked ? '방어' : prepared ? '장착' : boost ? '+15초' : '−15초';
+  const person = (name: string) => (
+    <span className="signal-person">
+      <i>
+        <CharacterAvatar avatar={data.roster.find((m) => m.name === name)?.avatar || '👤'} />
+      </i>
+      <span>{name}</span>
+    </span>
+  );
+  return (
+    <div
+      key={e.id}
+      className={`item-signal signal-${kind}`}
+      role="status"
+      aria-label={`${e.actor} → ${e.target}: ${e.effect}`}
+    >
+      <div className="signal-people">
+        {person(e.actor)}
+        {e.actor !== e.target && (
+          <>
+            <ArrowRight size={12} />
+            {person(e.target)}
+          </>
+        )}
+      </div>
+      <div className="signal-result">
+        <span className="signal-item">
+          <Icon size={17} />
+        </span>
+        <strong>{value}</strong>
+        {reflect && <small>반사</small>}
+      </div>
+    </div>
+  );
+}
+type Stroke = { color: string; width: number; points: number[][] };
+const palette = ['#273449', '#ef6464', '#4e9f78', '#5a80d8', '#e5b344'];
+function Paths({ strokes }: { strokes: Stroke[] }) {
+  return (
+    <>
+      {strokes.map((s, i) => (
+        <polyline
+          key={i}
+          points={s.points.map((p) => `${p[0] * 600},${p[1] * 360}`).join(' ')}
+          fill="none"
+          stroke={s.color}
+          strokeWidth={s.width}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      ))}
+    </>
+  );
+}
+export function PartyPanel({
+  data,
+  onRefresh,
+  watchTarget,
+  onWatch,
+  attackMode,
+  onAttackMode,
+  attackTarget,
+  onAttackTarget,
+}: {
+  attackMode: boolean;
+  onAttackMode: (v: boolean) => void;
+  attackTarget: string | null;
+  onAttackTarget: (v: string | null) => void;
+  data: GameState;
+  onRefresh: () => Promise<unknown>;
+  watchTarget: string | null;
+  onWatch: (id: string | null) => void;
+}) {
+  const party = data.party,
+    [titleOpen, setTitleOpen] = useState(false),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState(''),
+    [open, setOpen] = useState<'draw' | 'hints' | null>(null),
+    [strokes, setStrokes] = useState<Stroke[]>([]),
+    [color, setColor] = useState(palette[0]),
+    [pen, setPen] = useState(6),
+    [draftStroke, setDraftStroke] = useState<Stroke | null>(null),
+    [hints, setHints] = useState<{ memberId: string; name: string; strokes: Stroke[] }[]>([]),
+    [watch, setWatch] = useState<{ name: string; guesses: Guess[]; status: string } | null>(null);
+  const refreshedHint = useRef('');
+  const lock = useRef(false),
+    drawing = useRef<Stroke | null>(null),
+    pendingItem = useRef<{ key: string; id: string } | null>(null);
+  const base = `room=${data.room.id}&roundId=${data.round.id}`;
+  async function action(action: string, extra: Record<string, unknown> = {}) {
+    if (lock.current) return false;
+    lock.current = true;
+    setBusy(true);
+    setError('');
+    try {
+      const response = await fetch('/api/party', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, room: data.room.id, roundId: data.round.id, ...extra }),
+        signal: AbortSignal.timeout(10000),
+      });
+      const result = (await response.json()) as { error?: string };
+      if (!response.ok) throw Error(result.error || '다시 시도해 주세요.');
+      await onRefresh();
+      return true;
+    } catch (e) {
+      setError((e as Error).message);
+      return false;
+    } finally {
+      lock.current = false;
+      setBusy(false);
+    }
+  }
+  async function item(kind: string, target = '') {
+    const key = kind + target;
+    if (pendingItem.current?.key !== key) pendingItem.current = { key, id: crypto.randomUUID() };
+    if (await action('item', { kind, targetId: target, requestId: pendingItem.current.id })) {
+      pendingItem.current = null;
+      onAttackMode(false);
+      return true;
+    }
+    return false;
+  }
+  useEffect(() => {
+    if (!attackTarget) return;
+    void item('attack', attackTarget).finally(() => onAttackTarget(null));
+  }, [attackTarget]);
+  useEffect(() => {
+    if (
+      data.play.status !== 'playing' ||
+      data.round.expired ||
+      party?.spectator ||
+      party?.loadout?.attackUsed
+    )
+      onAttackMode(false);
+  }, [data.play.status, data.round.expired, party?.spectator, party?.loadout?.attackUsed]);
+  useEffect(() => {
+    if (!watchTarget && open !== 'hints') return;
+    let alive = true,
+      inflight = false;
+    async function load() {
+      if (inflight) return;
+      inflight = true;
+      try {
+        const response = await fetch(
+          `/api/party?${base}${watchTarget ? '&watch=' + encodeURIComponent(watchTarget) : ''}`,
+          {
+            ...(!watchTarget
+              ? {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    action: 'view_hints',
+                    room: data.room.id,
+                    roundId: data.round.id,
+                  }),
+                }
+              : {}),
+            signal: AbortSignal.timeout(10000),
+          },
+        );
+        const d = (await response.json()) as any;
+        if (!response.ok) throw Error(d.error);
+        if (alive) {
+          if (watchTarget) setWatch(d);
+          else {
+            setHints(d.hints);
+            if (d.hints.length && refreshedHint.current !== base) {
+              refreshedHint.current = base;
+              void onRefresh();
+            }
+          }
+          setError('');
+        }
+      } catch (e) {
+        if (alive) setError((e as Error).message);
+      } finally {
+        inflight = false;
+      }
+    }
+    void load();
+    const timer = setInterval(() => {
+      if (!document.hidden) void load();
+    }, 3000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, [base, watchTarget, open]);
+  if (!party) return null;
+  const finished = data.play.status !== 'playing' || data.round.expired,
+    loadout = party.loadout;
+  function point(e: React.PointerEvent<SVGSVGElement>) {
+    const box = e.currentTarget.getBoundingClientRect();
+    return [
+      Math.max(0, Math.min(1, (e.clientX - box.left) / box.width)),
+      Math.max(0, Math.min(1, (e.clientY - box.top) / box.height)),
+    ];
+  }
+  return (
+    <section className="party-panel" onKeyDown={(e) => e.stopPropagation()}>
+      <div className="party-heading">
+        <b>
+          {party.spectator
+            ? '👀 관전 모드'
+            : party.variant === 'items'
+              ? '⚔️ 아이템전'
+              : '🎯 일반전'}
+        </b>
+        {party.spectator ? (
+          <button
+            disabled={busy || party.nextParticipant}
+            onClick={() => void action('participate')}
+          >
+            {party.nextParticipant ? '다음 판 참가 예정' : '다음 판부터 참가'}
+          </button>
+        ) : (
+          !data.play.guesses.length && (
+            <button
+              disabled={busy}
+              onClick={() => {
+                if (
+                  window.confirm('관전하면 이번 판에는 답을 제출할 수 없어요. 관전으로 전환할까요?')
+                )
+                  void action('spectate');
+              }}
+            >
+              관전으로 전환
+            </button>
+          )
+        )}
+      </div>
+      {party.spectator && (
+        <p className="party-note">참가자 카드의 ‘풀이 관전’을 누르세요. 관전자끼리만 채팅합니다.</p>
+      )}
+      {loadout && !party.spectator && (
+        <TooltipProvider delayDuration={140}>
+          <div className="item-dock">
+            <ItemTip kind="attack" used={loadout.attackUsed || finished}>
+              <button
+                className={`item-slot item-attack ${attackMode ? 'is-armed' : ''} ${loadout.attackUsed ? 'is-spent' : ''}`}
+                aria-label={
+                  loadout.attackUsed
+                    ? '시간 도둑 사용 완료'
+                    : attackMode
+                      ? '공격 대상 선택 취소'
+                      : '시간 도둑 사용 · 상대 선택'
+                }
+                aria-pressed={attackMode}
+                disabled={busy || finished || loadout.attackUsed}
+                onClick={() => {
+                  setError('');
+                  onAttackMode(!attackMode);
+                }}
+              >
+                <span className="item-icon">
+                  <Hourglass size={29} strokeWidth={1.8} />
+                  {loadout.attackUsed ? (
+                    <i>
+                      <Check size={12} />
+                    </i>
+                  ) : (
+                    <i>1</i>
+                  )}
+                </span>
+                <span className="item-copy">
+                  <strong>시간 도둑</strong>
+                  <small>
+                    {loadout.attackUsed ? '사용 완료' : attackMode ? '대상 선택 중' : '상대 −15초'}
+                  </small>
+                </span>
+                {attackMode && <Crosshair className="slot-hint" size={18} />}
+              </button>
+            </ItemTip>
+            <ItemTip kind={loadout.support} used={loadout.supportUsed || finished}>
+              <button
+                className={`item-slot item-${loadout.support} ${loadout.supportUsed ? 'is-spent' : ''} ${loadout.defense ? 'is-protected' : ''}`}
+                aria-label={`${{ shield: '방패', reflect: '반사', boost: '시간 충전' }[loadout.support]} ${loadout.supportUsed ? '사용 완료' : '사용'}`}
+                disabled={busy || finished || loadout.supportUsed}
+                onClick={() => void item('support')}
+              >
+                <span className="item-icon">
+                  {loadout.support === 'boost' ? (
+                    <BatteryCharging size={29} strokeWidth={1.8} />
+                  ) : loadout.support === 'reflect' ? (
+                    <Undo2 size={29} strokeWidth={1.8} />
+                  ) : loadout.defense ? (
+                    <ShieldCheck size={29} strokeWidth={1.8} />
+                  ) : (
+                    <Shield size={29} strokeWidth={1.8} />
+                  )}
+                  <i>{loadout.supportUsed ? <Check size={12} /> : 1}</i>
+                </span>
+                <span className="item-copy">
+                  <strong>
+                    {{ shield: '방패', reflect: '반사', boost: '시간 충전' }[loadout.support]}
+                  </strong>
+                  <small>
+                    {loadout.defense
+                      ? '방어 중'
+                      : loadout.supportUsed
+                        ? '사용 완료'
+                        : loadout.support === 'boost'
+                          ? '내 시간 +15초'
+                          : loadout.support === 'reflect'
+                            ? '공격 되돌리기'
+                            : '공격 1회 차단'}
+                  </small>
+                </span>
+              </button>
+            </ItemTip>
+            <ItemSignal data={data} />
+          </div>
+        </TooltipProvider>
+      )}
+      {attackMode && (
+        <div className="attack-prompt" role="status">
+          <Crosshair size={15} />
+          <span>{busy ? '아이템 사용 중…' : '공격할 참가자 카드를 누르세요'}</span>
+          <button aria-label="공격 취소" disabled={busy} onClick={() => onAttackMode(false)}>
+            <X size={15} />
+          </button>
+        </div>
+      )}
+      <div className="party-buttons">
+        {party.hintUsed && <span className="hint-used-badge">힌트 사용</span>}
+        {data.play.status === 'won' && !party.spectator && (
+          <button onClick={() => setOpen('draw')}>🎨 그림 힌트 그리기</button>
+        )}
+        <button
+          disabled={!party.hints.length}
+          onClick={() => {
+            if (
+              party.hintPolicy &&
+              !party.hintUsed &&
+              !finished &&
+              !party.spectator &&
+              !window.confirm(
+                '그림을 보면 힌트 사용으로 기록됩니다. 같은 시도 횟수에서는 힌트 없이 푼 사람이 먼저 순위에 올라요. 볼까요?',
+              )
+            )
+              return;
+            setHints([]);
+            setOpen('hints');
+          }}
+        >
+          그림 힌트 보기 {party.hints.length > 0 ? `(${party.hints.length})` : ''}
+        </button>
+        <button className="title-badge-entry" onClick={() => setTitleOpen(true)}>
+          <Award size={15} />
+          <span>{titleNames[party.equipped] || '칭호 보관함'}</span>
+          <span className="title-badge-count">{party.titles.length}/2</span>
+        </button>
+      </div>
+      <Dialog open={titleOpen} onOpenChange={setTitleOpen}>
+        <DialogContent className="title-vault">
+          <DialogTitle>
+            <Award size={22} />
+            칭호 보관함
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            획득한 칭호를 선택하면 닉네임 옆에 장착됩니다.
+          </DialogDescription>
+          <TooltipProvider delayDuration={140}>
+            <div className="title-vault-grid">
+              {Object.entries(titleNames).map(([id, name], index) => {
+                const earned = party.titles.some((t) => t.title === id),
+                  equipped = party.equipped === id;
+                return (
+                  <Tooltip key={id}>
+                    <TooltipTrigger asChild>
+                      <span className="title-vault-wrap" tabIndex={!earned ? 0 : undefined}>
+                        <button
+                          className={`title-reward title-reward-${index} ${earned ? 'is-earned' : 'is-locked'} ${equipped ? 'is-equipped' : ''}`}
+                          disabled={busy || !earned}
+                          onClick={() => void action('title', { title: equipped ? '' : id })}
+                        >
+                          <span className="title-medallion">
+                            {index === 0 ? <Hourglass size={33} /> : <Shield size={33} />}
+                          </span>
+                          <strong>{name}</strong>
+                          <span className="title-reward-state">
+                            {equipped ? (
+                              <>
+                                <Check size={12} />
+                                장착 중
+                              </>
+                            ) : earned ? (
+                              '장착하기'
+                            ) : (
+                              <>
+                                <Lock size={11} />
+                                미획득
+                              </>
+                            )}
+                          </span>
+                        </button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent className="game-item-tooltip" sideOffset={10}>
+                      <strong>{name}</strong>
+                      <p>
+                        {id === 'last_second'
+                          ? '남은 시간이 10초 이하일 때 정답 맞히기'
+                          : '다섯 번째 시도에 정답 맞히기'}
+                      </p>
+                      <footer>
+                        {earned ? '획득 완료 · 모든 방에서 사용 가능' : '방 문제에서 획득 가능'}
+                      </footer>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </div>
+          </TooltipProvider>
+          {party.equipped && (
+            <button
+              className="title-unequip"
+              disabled={busy}
+              onClick={() => void action('title', { title: '' })}
+            >
+              장착 해제
+            </button>
+          )}
+          {error && <p role="alert">{error}</p>}
+        </DialogContent>
+      </Dialog>
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
+      <Dialog
+        open={!!open}
+        onOpenChange={(v) => {
+          if (!v) setOpen(null);
+        }}
+      >
+        <DialogContent className="drawing-dialog" onKeyDown={(e) => e.stopPropagation()}>
+          <DialogTitle>{open === 'draw' ? '그림 힌트 그리기' : '그림 힌트'}</DialogTitle>
+          <DialogDescription>
+            {open === 'draw'
+              ? '같은 방 참가자가 원할 때 열어 볼 수 있어요.'
+              : '정답을 맞힌 참가자가 그린 힌트입니다.'}
+          </DialogDescription>
+          {open === 'draw' ? (
+            <>
+              <div className="drawing-tools">
+                {palette.map((c) => (
+                  <button
+                    key={c}
+                    aria-label={`${c} 색상`}
+                    aria-pressed={color === c}
+                    style={{ background: c }}
+                    onClick={() => setColor(c)}
+                  />
+                ))}
+                <select
+                  aria-label="펜 굵기"
+                  value={pen}
+                  onChange={(e) => setPen(Number(e.target.value))}
+                >
+                  {[3, 6, 10].map((w) => (
+                    <option key={w}>{w}</option>
+                  ))}
+                </select>
+                <button onClick={() => setStrokes((s) => s.slice(0, -1))}>되돌리기</button>
+                <button onClick={() => setStrokes([])}>지우기</button>
+              </div>
+              <svg
+                className="drawing-canvas"
+                viewBox="0 0 600 360"
+                aria-label="그림 그리는 영역"
+                onPointerDown={(e) => {
+                  if (busy || strokes.length >= 100) return;
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  const p = point(e);
+                  drawing.current = { color, width: pen, points: [p, p] };
+                  setDraftStroke(drawing.current);
+                }}
+                onPointerMove={(e) => {
+                  if (!drawing.current || drawing.current.points.length >= 300) return;
+                  drawing.current = {
+                    ...drawing.current,
+                    points: [...drawing.current.points, point(e)],
+                  };
+                  setDraftStroke(drawing.current);
+                }}
+                onPointerUp={() => {
+                  const completed = drawing.current;
+                  if (completed) setStrokes((s) => [...s, completed]);
+                  drawing.current = null;
+                  setDraftStroke(null);
+                }}
+                onPointerCancel={() => {
+                  drawing.current = null;
+                  setDraftStroke(null);
+                }}
+              >
+                <rect width="600" height="360" fill="white" />
+                <Paths strokes={draftStroke ? [...strokes, draftStroke] : strokes} />
+              </svg>
+              <button
+                className="primary"
+                disabled={busy || !strokes.length}
+                onClick={async () => {
+                  if (await action('draw', { strokes })) setOpen(null);
+                }}
+              >
+                그림 공유하기
+              </button>
+            </>
+          ) : hints.length ? (
+            hints.map((h) => (
+              <article key={h.memberId}>
+                <div className="safety-hint-heading">
+                  <strong>{h.name}</strong>
+                  {h.memberId !== data.me.id && (
+                    <SafetyActions
+                      name={h.name}
+                      target={{
+                        kind: 'hint',
+                        id: h.memberId,
+                        room: data.room.id,
+                        round: data.round.id,
+                      }}
+                      onChanged={() =>
+                        setHints((rows) => rows.filter((x) => x.memberId !== h.memberId))
+                      }
+                    />
+                  )}
+                </div>
+                <svg
+                  className="drawing-canvas"
+                  viewBox="0 0 600 360"
+                  aria-label={`${h.name}의 그림 힌트`}
+                >
+                  <rect width="600" height="360" fill="white" />
+                  <Paths strokes={h.strokes} />
+                </svg>
+                {(h.memberId === data.me.id || data.room.isAdmin) && (
+                  <button
+                    disabled={busy}
+                    onClick={async () => {
+                      if (await action('delete_hint', { memberId: h.memberId }))
+                        setHints((rows) => rows.filter((x) => x.memberId !== h.memberId));
+                    }}
+                  >
+                    그림 내리기
+                  </button>
+                )}
+              </article>
+            ))
+          ) : (
+            <p>그림을 불러오는 중…</p>
+          )}
+          {error && <p role="alert">{error}</p>}
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={!!watchTarget}
+        onOpenChange={(v) => {
+          if (!v) {
+            onWatch(null);
+            setWatch(null);
+          }
+        }}
+      >
+        <DialogContent className="drawing-dialog" onKeyDown={(e) => e.stopPropagation()}>
+          <DialogTitle>{watch?.name || '참가자'} 풀이 관전</DialogTitle>
+          <DialogDescription>제출을 완료한 단어와 판정만 표시됩니다.</DialogDescription>
+          {watch?.guesses.length ? (
+            watch.guesses.map((g, i) => (
+              <div
+                className="review-guess"
+                key={i}
+                style={{ gridTemplateColumns: `repeat(${g.letters.length},1fr)` }}
+              >
+                {g.letters.map((c, j) => (
+                  <span className={`tile ${g.colors[j]}`} key={j}>
+                    {c}
+                  </span>
+                ))}
+              </div>
+            ))
+          ) : (
+            <p>아직 제출한 단어가 없어요.</p>
+          )}
+          {error && <p role="alert">{error}</p>}
+        </DialogContent>
+      </Dialog>
+    </section>
+  );
 }

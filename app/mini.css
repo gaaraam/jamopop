@@ -1,211 +1,1433 @@
 /* Desktop worksheet view. CSS only: existing game state and inputs remain mounted. */
-.sheet-chrome,.sheet-member-head,.sheet-ribbon,.sheet-axis,.sheet-gutter,.sheet-columns,.sheet-rows,.sheet-member-status,.sheet-bottom,.chat-sheet-label,.chat-sheet-head{display:none}
-@media (max-width:900px) and (hover:hover) and (pointer:fine){
-body:has(.app){background:#f6f7f6!important}
-html:root .app.app.app.app{--sheet-line:#e0e5e1;--sheet-green:#217346;--sheet-muted:#6c7770;--sheet-ink:#26352c;width:100%!important;max-width:none!important;min-height:100dvh!important;margin:0!important;padding:0 0 38px!important;background:#fff!important;color:var(--sheet-ink)!important;font-family:Arial,'Apple SD Gothic Neo',sans-serif!important;font-size:12px!important;border-radius:0!important}
-html:root .app.app.app.app *,html:root .app.app.app.app *::before,html:root .app.app.app.app *::after{box-sizing:border-box;animation:none!important;transition:none!important;backdrop-filter:none!important;text-shadow:none!important;box-shadow:none!important}
-html:root .app.app.app.app button,html:root .app.app.app.app select{font-family:inherit!important;letter-spacing:0!important;transform:none!important;box-shadow:none!important}
-html:root .app.app.app.app button:focus-visible,html:root .app.app.app.app select:focus-visible{outline:2px solid var(--sheet-green)!important;outline-offset:-2px!important}
-html:root .app.app.app.app button:disabled{opacity:.45!important}
-html:root .app.app.app.app .app-header.polished-nav{position:static!important;width:100%!important;max-width:none!important;height:32px!important;min-height:32px!important;padding:0 12px!important;margin:0!important;border:0!important;border-radius:0!important;background:#217346!important;gap:12px!important;color:white!important}
-html:root .app.app.app.app .nav-identity{min-width:0!important;flex:1!important}
-html:root .app.app.app.app .nav-room{padding:0!important;border:0!important;background:transparent!important;color:#fff!important;min-width:0!important;gap:8px!important}
-html:root .app.app.app.app .nav-room strong{font:600 12px Arial,sans-serif!important;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff!important}
-html:root .app.app.app.app .nav-actions,html:root .app.app.app.app .nav-tools{display:flex!important;gap:4px!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important}
-html:root .app.app.app.app .nav-actions button{width:28px!important;height:28px!important;min-height:28px!important;padding:6px!important;color:#e0eee4!important;background:transparent!important;border:0!important;border-radius:3px!important}
-html:root .app.app.app.app .nav-actions button:hover{background:#ffffff20!important}
-html:root .app.app.app.app .nav-actions svg{width:16px!important;height:16px!important}
-html:root .app.app.app.app .nav-divider,html:root .app.app.app.app .nav-room small,html:root .app.app.app.app .nav-room-icon,html:root .app.app.app.app .nav-invite,html:root .app.app.app.app .theme-switch,html:root .app.app.app.app .nav-tools button[title^='소리']{display:none!important}
-html:root .app.app.app.app .sheet-axis{display:grid!important;grid-template-columns:30px repeat(12,minmax(0,1fr));height:26px;background:#f3f3f3;border-bottom:1px solid #c6c6c6;color:#444;font-size:11px}
-html:root .app.app.app.app .sheet-axis>*{display:grid;place-items:center;border-right:1px solid #dbe2dd;font-style:normal}
-html:root .app.app.app.app .sheet-axis i:after{content:'';border-right:8px solid #aab8ae;border-top:8px solid transparent}
-html:root .app.app.app.app .sheet-gutter{display:flex!important;flex-direction:column!important;position:absolute!important;top:212px!important;bottom:34px!important;left:0!important;width:30px!important;background:#f3f3f3!important;border-right:1px solid #c6c6c6!important;overflow:hidden!important}
-html:root .app.app.app.app .game-layout{display:grid!important;grid-template-columns:repeat(12,minmax(0,1fr))!important;gap:0!important;padding:0!important;margin:0 0 0 30px!important;align-items:start!important;min-height:calc(100dvh - 246px)!important;background-color:white!important;background-image:linear-gradient(#e2e2e2 1px,transparent 1px),linear-gradient(90deg,#e2e2e2 1px,transparent 1px)!important;background-size:calc(100% / 12) 26px!important;background-position:0 0!important}
-html:root .app.app.app.app .game-panel,html:root .app.app.app.app .social-panel,html:root .app.app.app.app .room-members-card{width:100%!important;min-width:0!important;max-width:none!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;gap:0!important;grid-column:auto!important}
-html:root .app.app.app.app .game-panel{display:flex!important;flex-direction:column!important;padding:0!important;border-right:1px solid #c6c6c6!important;background:transparent!important;grid-column:1/var(--sheet-end)!important}
-html:root .app.app.app.app .social-panel{padding:0!important;grid-column:8/13!important}
-html:root .app.app.app.app .game-heading{display:flex!important;justify-content:space-between!important;align-items:center!important;height:26px!important;min-height:26px!important;padding:0 6px!important;margin:0!important;border:0!important;border-bottom:1px solid #d4d4d4!important;background:white!important}
-html:root .app.app.app.app .game-heading h1{font-size:13px!important;line-height:20px!important;color:#284c36!important;font-weight:700!important}
-html:root .app.app.app.app .day-stamp,html:root .app.app.app.app .member-count{padding:0!important;border:0!important;background:transparent!important;color:#77857b!important;font-size:10px!important;border-radius:0!important}
-html:root .app.app.app.app .round-timer{display:flex!important;justify-content:flex-start!important;align-items:center!important;height:26px!important;min-height:26px!important;gap:6px!important;padding:0 6px!important;margin:0!important;border:0!important;border-bottom:1px solid #d4d4d4!important;background:white!important;color:#444!important;border-radius:0!important;font-size:10px!important}
-html:root .app.app.app.app .round-timer strong{font-size:14px!important;font-variant-numeric:tabular-nums;color:#244f35!important}
-html:root .app.app.app.app .round-timer span{margin-left:auto;color:#7a887f!important;font-size:10px!important}
-html:root .app.app.app.app .round-timer.urgent strong{color:#b04438!important}
-html:root .app.app.app.app .game-tabs{display:none!important}
-html:root .app.app.app.app .round-options{margin:0!important;padding:0!important;border:0!important;background:white!important}
-html:root .app.app.app.app .round-options-toggle{display:none!important}
-html:root .app.app.app.app .round-options-body{display:block!important}
-html:root .app.app.app.app .round-controls{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:0!important;padding:0!important;margin:0!important;border:0!important;background:white!important}
-html:root .app.app.app.app .round-controls>span{flex-basis:100%;font-size:10px!important;height:26px!important;line-height:26px!important;min-width:0!important;padding:0 6px!important;color:#777!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-bottom:1px solid #ddd!important}
-html:root .app.app.app.app .round-controls>span:before{display:none!important}
-html:root .app.app.app.app .round-controls button,html:root .app.app.app.app .round-controls select{height:28px!important;min-height:28px!important;min-width:0!important;padding:3px 7px!important;border:1px solid #ccd7cf!important;border-radius:3px!important;background:#fff!important;color:#405747!important;font-size:11px!important;line-height:18px!important;flex:1 1 auto}
-html:root .app.app.app.app .round-controls svg{display:none!important}
-html:root .app.app.app.app .forfeit-btn{align-self:stretch;margin:0!important;padding:0 6px!important;font-size:10px!important;color:#777!important;height:26px!important;min-height:26px!important;background:white!important;border:0!important;border-bottom:1px solid #ddd!important}
-html:root .app.app.app.app .board-wrap{position:relative!important;width:100%!important;max-width:none!important;padding:0!important;margin:0!important}
-html:root .app.app.app.app .sheet-columns{display:none!important}
-html:root .app.app.app.app .sheet-columns span{display:grid;place-items:center;border-right:1px solid #c8d5cc;font-size:10px;color:#52735e}
-html:root .app.app.app.app .sheet-rows{display:none!important}
-html:root .app.app.app.app .sheet-rows span{display:grid;place-items:center;border-bottom:1px solid #d3ddd6;font-size:10px;color:#718278}
-html:root .app.app.app.app .main-board{width:100%!important;max-width:none!important;margin:0!important;gap:0!important;border:0!important}
-html:root .app.app.app.app .main-board .tile{height:26px!important;min-height:26px!important;aspect-ratio:auto!important;transform:none!important;border:0!important;border-right:1px solid #d4d4d4!important;border-bottom:1px solid #d4d4d4!important;border-radius:0!important;background:white!important;color:#222!important;font-size:15px!important;font-weight:400!important}
-html:root .app.app.app.app .main-board .tile.active-row{background:#f2f8f3!important;box-shadow:inset 0 -2px #338355!important}
-html:root .app.app.app.app .main-board .tile.green{background:#b8d9c2!important;color:#204b2d!important}
-html:root .app.app.app.app .main-board .tile.yellow{background:#f3dfa0!important;color:#695324!important}
-html:root .app.app.app.app .main-board .tile.gray{background:#dce2de!important;color:#627067!important}
-html:root .app.app.app.app .input-area{position:absolute!important;top:154px!important;left:143px!important;right:8px!important;width:auto!important;max-width:none!important;height:32px!important;margin:0!important;padding:3px 0!important;border:0!important;border-radius:0!important;background:#f6f6f6!important;z-index:2!important}
-html:root .app.app.app.app .input-area:before{display:none!important}
-html:root .app.app.app.app .game-input-control input{height:26px!important;min-height:26px!important;border:1px solid #bdbdbd!important;border-radius:0!important;background:white!important;color:#222!important;font-size:12px!important;padding:3px 7px!important;text-align:left!important;outline-offset:-2px!important}
-html:root .app.app.app.app .game-input-control input::placeholder{font-size:10px!important;color:#91a095!important}
-html:root .app.app.app.app .input-status{position:absolute!important;top:3px!important;right:0!important;display:block!important;width:155px!important;max-width:155px!important;height:26px!important;line-height:26px!important;overflow:hidden!important;white-space:nowrap!important;text-overflow:ellipsis!important;font-size:9px!important;color:#777!important;padding:0 5px!important;border:1px solid #bdbdbd!important;border-left:0!important;background:#fff!important}
-html:root .app.app.app.app .keyboard{display:flex!important;flex-direction:column!important;gap:0!important;padding:0!important;margin:26px 0 0!important;width:100%!important;max-width:none!important;background:white!important}
-html:root .app.app.app.app .key-row{display:flex!important;justify-content:center!important;gap:0!important;padding:0!important;margin:0!important;height:26px!important}
-html:root .app.app.app.app .keyboard .key{display:grid!important;place-items:center!important;flex:1 1 0!important;min-width:0!important;max-width:none!important;height:26px!important;min-height:26px!important;border:0!important;border-right:1px solid #d4d4d4!important;border-bottom:1px solid #d4d4d4!important;border-radius:0!important;padding:0!important;background:#f8f8f8!important;color:#333!important;font-size:12px!important;font-weight:400!important;transform:none!important;opacity:1!important}
-html:root .app.app.app.app .keyboard .key.green{background:#b8d9c2!important;color:#204b2d!important;border-color:#91bda0!important}
-html:root .app.app.app.app .keyboard .key.yellow{background:#f3dfa0!important;color:#695324!important;border-color:#d6c17f!important}
-html:root .app.app.app.app .keyboard .key.gray{background:#dce2de!important;color:#627067!important;border-color:#c9d2cc!important}
-html:root .app.app.app.app .keyboard .key:not(:disabled):hover{filter:brightness(.96)}
-html:root .app.app.app.app .keyboard .key:not(:disabled):active{outline:2px solid #217346!important;outline-offset:-2px!important}
-html:root .app.app.app.app .keyboard svg{width:14px!important;height:14px!important}
-html:root .app.app.app.app .submit{width:100%!important;height:26px!important;min-height:26px!important;margin:0!important;padding:3px!important;border:0!important;border-bottom:1px solid #d4d4d4!important;border-radius:0!important;background:#edf3ee!important;color:#217346!important;font-size:11px!important;font-weight:400!important}
-html:root .app.app.app.app .room-members-card>.card-heading{height:26px!important;min-height:26px!important;margin:0!important;padding:0 6px!important;border:0!important;border-bottom:1px solid #d4d4d4!important;gap:4px!important;background:white!important}
-html:root .app.app.app.app .room-members-card>.card-heading h2{font-size:12px!important;color:#345840!important;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-html:root .app.app.app.app .room-members-card>.card-heading>div{gap:7px!important;flex-wrap:nowrap!important;min-width:0}
-html:root .app.app.app.app .room-members-card>.card-heading button{display:none!important}
-html:root .app.app.app.app .room-members{display:block!important;border:1px solid #d2ddd6!important;margin:8px 0 0!important;padding:0!important;background:white!important}
-html:root .app.app.app.app .sheet-member-head{display:grid!important;grid-template-columns:minmax(0,1fr) 94px;margin-top:10px;border:1px solid #d2ddd6;background:#f0f5f1;font-size:10px;color:#6d8274}
-html:root .app.app.app.app .sheet-member-head span{padding:6px 8px}
-html:root .app.app.app.app .sheet-member-head span+span{border-left:1px solid #d2ddd6}
-html:root .app.app.app.app .room-members{margin-top:0!important;border-top:0!important}
-html:root .app.app.app.app .room-member{position:relative!important;display:grid!important;grid-template-columns:minmax(0,1fr) 94px!important;grid-template-rows:32px!important;gap:0!important;width:100%!important;height:32px!important;min-height:32px!important;margin:0!important;padding:0!important;border:0!important;border-bottom:1px solid #e1e7e3!important;border-radius:0!important;background:white!important;overflow:hidden!important;align-items:center!important;isolation:auto!important}
-html:root .app.app.app.app .room-member:last-child{border-bottom:0!important}
-html:root .app.app.app.app .room-member.is-winner{background:#eef7f0!important}
-html:root .app.app.app.app .room-member:before,html:root .app.app.app.app .room-member:after{display:none!important}
-html:root .app.app.app.app .room-member-heading{display:block!important;grid-column:1!important;grid-row:1!important;height:32px!important;min-height:0!important;width:100%!important;min-width:0!important;max-width:none!important;margin:0!important;padding:0 8px!important}
-html:root .app.app.app.app .room-member-name{display:block!important;width:100%!important;height:32px!important;min-height:0!important;padding:0!important;border:0!important;background:transparent!important;font-size:11px!important;line-height:32px!important;color:#354d3e!important;text-align:left!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
-html:root .app.app.app.app .room-member-name small{display:none!important}
-html:root .app.app.app.app .sheet-member-status{display:block!important;grid-column:2!important;grid-row:1!important;border-left:1px solid #e1e7e3!important;height:32px!important;line-height:32px!important;padding:0 6px!important;color:#6f8176!important;font-size:10px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
-html:root .app.app.app.app .party-panel{margin:0!important;padding:0!important;gap:4px!important;border:0!important;border-radius:0!important;background:transparent!important}
-html:root .app.app.app.app .party-heading{height:30px!important;padding:0!important;min-height:30px!important;font-size:10px!important;color:#7b8b80!important}
-html:root .app.app.app.app .party-heading button,html:root .app.app.app.app .party-buttons>button{padding:3px 6px!important;min-height:24px!important;height:24px!important;border:1px solid #d2ddd6!important;border-radius:2px!important;background:#fff!important;color:#617769!important;font-size:10px!important;gap:3px!important}
-html:root .app.app.app.app .item-dock{display:flex!important;gap:4px!important;padding:0!important;margin:0!important}
-html:root .app.app.app.app .item-wrap{flex:1;min-width:0}
-html:root .app.app.app.app .item-slot{display:flex!important;align-items:center!important;justify-content:center!important;gap:5px!important;width:100%!important;height:30px!important;min-height:30px!important;aspect-ratio:auto!important;padding:3px 5px!important;border:1px solid #d0dcd4!important;border-radius:2px!important;background:#f6f8f6!important}
-html:root .app.app.app.app .item-icon{width:18px!important;height:18px!important;font-size:15px!important;background:none!important}
-html:root .app.app.app.app .item-copy{font-size:10px!important;line-height:16px!important}
-html:root .app.app.app.app .item-copy small,html:root .app.app.app.app .slot-hint{display:none!important}
-html:root .app.app.app.app .party-buttons{display:flex!important;flex-wrap:wrap!important;gap:4px!important;padding:4px 0!important;margin:0!important}
-html:root .app.app.app.app .party-buttons svg{width:12px!important;height:12px!important}
-html:root .app.app.app.app .room-chat.game-chat{position:static!important;display:flex!important;flex-direction:column!important;width:100%!important;min-width:0!important;padding:0!important;margin:26px 0 0!important;border:0!important;border-radius:0!important;background:white!important;color:#333!important;pointer-events:auto!important}
-html:root .app.app.app.app .game-chat .chat-toggle{order:0!important;width:100%!important;height:26px!important;min-height:26px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:6px!important;padding:0 6px!important;border:0!important;border-bottom:1px solid #d4d4d4!important;border-radius:0!important;background:#f3f3f3!important;color:#333!important;font-size:11px!important}
-html:root .app.app.app.app .chat-sheet-label{display:inline!important}
-html:root .app.app.app.app .game-chat .chat-toggle strong{font-size:11px!important;font-weight:600!important}
-html:root .app.app.app.app .game-chat .chat-toggle-hint{font-size:10px!important;color:#7b8d80!important}
-html:root .app.app.app.app .game-chat .chat-panel{position:static!important;order:1!important;display:block!important;width:100%!important;height:auto!important;max-height:none!important;padding:0!important;border:0!important;border-radius:0!important;background:#fff!important;color:#344f3e!important}
-html:root .app.app.app.app .game-chat .chat-sheet-head{display:grid!important;grid-template-columns:42px 64px minmax(0,1fr) 20px!important;min-height:24px!important;background:#f6f8f6!important;font-size:9px!important;color:#839187!important}
-html:root .app.app.app.app .game-chat .chat-sheet-head span{padding:5px!important;border-right:1px solid #e2e8e4!important;border-bottom:1px solid #dce5df!important}
-html:root .app.app.app.app .game-chat .chat-messages{height:224px!important;min-height:80px!important;max-height:40vh!important;padding:0!important;overflow:auto!important;overscroll-behavior:contain;scrollbar-width:thin;background:white!important}
-html:root .app.app.app.app .game-chat .chat-message,html:root .app.app.app.app .game-chat .chat-message.own{display:grid!important;grid-template-columns:42px 64px minmax(0,1fr) 20px!important;gap:0!important;margin:0!important;padding:0!important;width:100%!important;min-width:0!important;border-bottom:1px solid #e6ebe7!important;background:#fff!important}
-html:root .app.app.app.app .game-chat .chat-meta{display:contents!important}
-html:root .app.app.app.app .game-chat .chat-meta time{grid-column:1!important;grid-row:1!important;font-size:9px!important;white-space:nowrap!important;color:#8c9a90!important}
-html:root .app.app.app.app .game-chat .chat-author{grid-column:2!important;grid-row:1!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;text-align:left!important;color:#40664c!important;font-weight:600!important}
-html:root .app.app.app.app .game-chat .chat-message>p{grid-column:3!important;grid-row:1!important;width:auto!important;max-width:none!important;min-width:0!important;justify-self:stretch!important;overflow-wrap:anywhere!important;color:#3d5144!important}
-html:root .app.app.app.app .game-chat .chat-meta button{grid-column:4!important;grid-row:1!important;align-self:start!important;width:20px!important;min-width:0!important;min-height:24px!important;padding:2px!important;background:transparent!important;border:0!important;color:#91a096!important}
-html:root .app.app.app.app .game-chat .chat-meta time,html:root .app.app.app.app .game-chat .chat-author,html:root .app.app.app.app .game-chat .chat-message>p{padding:5px 4px!important;margin:0!important;line-height:18px!important;font-size:10px!important;min-height:28px!important;border:0!important;border-right:1px solid #e6ebe7!important;border-radius:0!important;background:transparent!important}
-html:root .app.app.app.app .game-chat .chat-message.own{background:#f4f8f5!important}
-html:root .app.app.app.app .game-chat .chat-system,html:root .app.app.app.app .game-chat .chat-empty{padding:7px!important;margin:0!important;color:#819286!important;font-size:10px!important;line-height:16px!important;background:#fafcfb!important;border-bottom:1px solid #e6ebe7!important}
-html:root .app.app.app.app .game-chat .chat-fun-bar{display:flex!important;flex-wrap:wrap!important;gap:3px!important;padding:4px!important;margin:0!important;border-top:1px solid #dce5df!important;background:#f7faf8!important}
-html:root .app.app.app.app .game-chat .chat-fun-bar button{height:23px!important;min-height:23px!important;padding:2px 5px!important;background:white!important;border:1px solid #dce5df!important;border-radius:2px!important;color:#6b8172!important;font-size:10px!important}
-html:root .app.app.app.app .game-chat .chat-compose{display:grid!important;grid-template-columns:minmax(0,1fr) 38px!important;gap:0!important;padding:0!important;margin:0!important;border-top:1px solid #dce5df!important;background:#fff!important}
-html:root .app.app.app.app .game-chat .chat-compose textarea{height:34px!important;min-height:34px!important;min-width:0!important;width:100%!important;padding:8px!important;font-size:11px!important;line-height:18px!important;background:white!important;color:#354f3e!important;border:0!important;border-radius:0!important;resize:none!important}
-html:root .app.app.app.app .game-chat .chat-compose button{height:34px!important;min-height:34px!important;padding:4px!important;white-space:nowrap!important;justify-content:center!important;background:#eaf2ec!important;border:0!important;border-left:1px solid #dce5df!important;border-radius:0!important;color:#356b46!important;font-size:10px!important}
-html:root .app.app.app.app .game-chat .chat-compose button svg{display:none!important}
-html:root .app.app.app.app .game-chat .chat-compose>span{grid-column:1/-1!important;padding:2px 6px!important;font-size:9px!important;color:#8a9a8f!important;background:#f8faf9!important}
-html:root .app.app.app.app .game-chat .chat-emoji-tray{padding:4px!important;background:white!important;border:1px solid #dce5df!important;border-radius:2px!important}
-html:root .app.app.app.app .sheet-bottom{position:fixed;bottom:0;left:0;right:0;display:flex!important;height:34px;align-items:stretch;gap:0;border-top:1px solid #c8d5cc;background:#f5f7f5;z-index:50;color:#74877a}
-html:root .app.app.app.app .sheet-bottom-status{min-width:64px;display:grid;place-items:center;font-size:10px;border-right:1px solid #dbe3dd}
-html:root .app.app.app.app .sheet-bottom button{padding:0 16px!important;border:0!important;border-right:1px solid #e1e7e2!important;border-radius:0!important;background:transparent!important;color:#75877b!important;font-size:11px!important}
-html:root .app.app.app.app .sheet-bottom button.selected{background:white!important;border-top:2px solid #217346!important;color:#217346!important;font-weight:700!important}
-html:root .app.app.app.app .sheet-bottom-info{margin-left:auto;align-self:center;padding:0 12px;font-size:10px}
-html:root .app.app.app.app .result-box{margin:0 0 10px!important;padding:12px!important;border:1px solid #cbd9d0!important;border-radius:2px!important;background:#f6faf7!important;color:#3b5c46!important}
-html:root .app.app.app.app .result-box strong{font-size:13px!important}
-html:root .app.app.app.app .result-box p{font-size:11px!important}
-html:root .app.app.app.app .room-member-avatar,html:root .app.app.app.app .member-progress,html:root .app.app.app.app .presence,html:root .app.app.app.app .member-speech-slot,html:root .app.app.app.app .room-member-status,html:root .app.app.app.app .member-cheer-burst,html:root .app.app.app.app .podium-celebration,html:root .app.app.app.app .room-member-heading:before,html:root .app.app.app.app .room-member-heading:after,html:root .app.app.app.app .office-footer,html:root .app.app.app.app .room-reactions,html:root .app.app.app.app .social-panel>.ranking-card,html:root .app.app.app.app .legend,html:root .app.app.app.app .app-footer,html:root .app.app.app.app .chat-normal-label,html:root .app.app.app.app .chat-portrait,html:root .app.app.app.app .chat-avatar,html:root .app.app.app.app .chat-peek,html:root .app.app.app.app .chat-note,html:root .app.app.app.app .result-emoji{display:none!important}
-body:has(.app) .legal-links,body:has(.app) .cheer-canvas{display:none!important}
+.sheet-chrome,
+.sheet-member-head,
+.sheet-ribbon,
+.sheet-axis,
+.sheet-gutter,
+.sheet-columns,
+.sheet-rows,
+.sheet-member-status,
+.sheet-bottom,
+.chat-sheet-label,
+.chat-sheet-head {
+  display: none;
+}
+@media (max-width: 900px) and (hover: hover) and (pointer: fine) {
+  body:has(.app) {
+    background: #f6f7f6 !important;
+  }
+  html:root .app.app.app.app {
+    --sheet-line: #e0e5e1;
+    --sheet-green: #217346;
+    --sheet-muted: #6c7770;
+    --sheet-ink: #26352c;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 100dvh !important;
+    margin: 0 !important;
+    padding: 0 0 38px !important;
+    background: #fff !important;
+    color: var(--sheet-ink) !important;
+    font-family: Arial, 'Apple SD Gothic Neo', sans-serif !important;
+    font-size: 12px !important;
+    border-radius: 0 !important;
+  }
+  html:root .app.app.app.app *,
+  html:root .app.app.app.app *::before,
+  html:root .app.app.app.app *::after {
+    box-sizing: border-box;
+    animation: none !important;
+    transition: none !important;
+    backdrop-filter: none !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+  html:root .app.app.app.app button,
+  html:root .app.app.app.app select {
+    font-family: inherit !important;
+    letter-spacing: 0 !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  html:root .app.app.app.app button:focus-visible,
+  html:root .app.app.app.app select:focus-visible {
+    outline: 2px solid var(--sheet-green) !important;
+    outline-offset: -2px !important;
+  }
+  html:root .app.app.app.app button:disabled {
+    opacity: 0.45 !important;
+  }
+  html:root .app.app.app.app .app-header.polished-nav {
+    position: static !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 0 12px !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #217346 !important;
+    gap: 12px !important;
+    color: white !important;
+  }
+  html:root .app.app.app.app .nav-identity {
+    min-width: 0 !important;
+    flex: 1 !important;
+  }
+  html:root .app.app.app.app .nav-room {
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: #fff !important;
+    min-width: 0 !important;
+    gap: 8px !important;
+  }
+  html:root .app.app.app.app .nav-room strong {
+    font:
+      600 12px Arial,
+      sans-serif !important;
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #fff !important;
+  }
+  html:root .app.app.app.app .nav-actions,
+  html:root .app.app.app.app .nav-tools {
+    display: flex !important;
+    gap: 4px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+  }
+  html:root .app.app.app.app .nav-actions button {
+    width: 28px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    padding: 6px !important;
+    color: #e0eee4 !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 3px !important;
+  }
+  html:root .app.app.app.app .nav-actions button:hover {
+    background: #ffffff20 !important;
+  }
+  html:root .app.app.app.app .nav-actions svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+  html:root .app.app.app.app .nav-divider,
+  html:root .app.app.app.app .nav-room small,
+  html:root .app.app.app.app .nav-room-icon,
+  html:root .app.app.app.app .nav-invite,
+  html:root .app.app.app.app .theme-switch,
+  html:root .app.app.app.app .nav-tools button[title^='소리'] {
+    display: none !important;
+  }
+  html:root .app.app.app.app .sheet-axis {
+    display: grid !important;
+    grid-template-columns: 30px repeat(12, minmax(0, 1fr));
+    height: 26px;
+    background: #f3f3f3;
+    border-bottom: 1px solid #c6c6c6;
+    color: #444;
+    font-size: 11px;
+  }
+  html:root .app.app.app.app .sheet-axis > * {
+    display: grid;
+    place-items: center;
+    border-right: 1px solid #dbe2dd;
+    font-style: normal;
+  }
+  html:root .app.app.app.app .sheet-axis i:after {
+    content: '';
+    border-right: 8px solid #aab8ae;
+    border-top: 8px solid transparent;
+  }
+  html:root .app.app.app.app .sheet-gutter {
+    display: flex !important;
+    flex-direction: column !important;
+    position: absolute !important;
+    top: 212px !important;
+    bottom: 34px !important;
+    left: 0 !important;
+    width: 30px !important;
+    background: #f3f3f3 !important;
+    border-right: 1px solid #c6c6c6 !important;
+    overflow: hidden !important;
+  }
+  html:root .app.app.app.app .game-layout {
+    display: grid !important;
+    grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+    gap: 0 !important;
+    padding: 0 !important;
+    margin: 0 0 0 30px !important;
+    align-items: start !important;
+    min-height: calc(100dvh - 246px) !important;
+    background-color: white !important;
+    background-image:
+      linear-gradient(#e2e2e2 1px, transparent 1px),
+      linear-gradient(90deg, #e2e2e2 1px, transparent 1px) !important;
+    background-size: calc(100% / 12) 26px !important;
+    background-position: 0 0 !important;
+  }
+  html:root .app.app.app.app .game-panel,
+  html:root .app.app.app.app .social-panel,
+  html:root .app.app.app.app .room-members-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    gap: 0 !important;
+    grid-column: auto !important;
+  }
+  html:root .app.app.app.app .game-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0 !important;
+    border-right: 1px solid #c6c6c6 !important;
+    background: transparent !important;
+    grid-column: 1 / var(--sheet-end) !important;
+  }
+  html:root .app.app.app.app .social-panel {
+    padding: 0 !important;
+    grid-column: 8/13 !important;
+  }
+  html:root .app.app.app.app .game-heading {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    padding: 0 6px !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-bottom: 1px solid #d4d4d4 !important;
+    background: white !important;
+  }
+  html:root .app.app.app.app .game-heading h1 {
+    font-size: 13px !important;
+    line-height: 20px !important;
+    color: #284c36 !important;
+    font-weight: 700 !important;
+  }
+  html:root .app.app.app.app .day-stamp,
+  html:root .app.app.app.app .member-count {
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: #77857b !important;
+    font-size: 10px !important;
+    border-radius: 0 !important;
+  }
+  html:root .app.app.app.app .round-timer {
+    display: flex !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    gap: 6px !important;
+    padding: 0 6px !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-bottom: 1px solid #d4d4d4 !important;
+    background: white !important;
+    color: #444 !important;
+    border-radius: 0 !important;
+    font-size: 10px !important;
+  }
+  html:root .app.app.app.app .round-timer strong {
+    font-size: 14px !important;
+    font-variant-numeric: tabular-nums;
+    color: #244f35 !important;
+  }
+  html:root .app.app.app.app .round-timer span {
+    margin-left: auto;
+    color: #7a887f !important;
+    font-size: 10px !important;
+  }
+  html:root .app.app.app.app .round-timer.urgent strong {
+    color: #b04438 !important;
+  }
+  html:root .app.app.app.app .game-tabs {
+    display: none !important;
+  }
+  html:root .app.app.app.app .round-options {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: white !important;
+  }
+  html:root .app.app.app.app .round-options-toggle {
+    display: none !important;
+  }
+  html:root .app.app.app.app .round-options-body {
+    display: block !important;
+  }
+  html:root .app.app.app.app .round-controls {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    background: white !important;
+  }
+  html:root .app.app.app.app .round-controls > span {
+    flex-basis: 100%;
+    font-size: 10px !important;
+    height: 26px !important;
+    line-height: 26px !important;
+    min-width: 0 !important;
+    padding: 0 6px !important;
+    color: #777 !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border-bottom: 1px solid #ddd !important;
+  }
+  html:root .app.app.app.app .round-controls > span:before {
+    display: none !important;
+  }
+  html:root .app.app.app.app .round-controls button,
+  html:root .app.app.app.app .round-controls select {
+    height: 28px !important;
+    min-height: 28px !important;
+    min-width: 0 !important;
+    padding: 3px 7px !important;
+    border: 1px solid #ccd7cf !important;
+    border-radius: 3px !important;
+    background: #fff !important;
+    color: #405747 !important;
+    font-size: 11px !important;
+    line-height: 18px !important;
+    flex: 1 1 auto;
+  }
+  html:root .app.app.app.app .round-controls svg {
+    display: none !important;
+  }
+  html:root .app.app.app.app .forfeit-btn {
+    align-self: stretch;
+    margin: 0 !important;
+    padding: 0 6px !important;
+    font-size: 10px !important;
+    color: #777 !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    background: white !important;
+    border: 0 !important;
+    border-bottom: 1px solid #ddd !important;
+  }
+  html:root .app.app.app.app .board-wrap {
+    position: relative !important;
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  html:root .app.app.app.app .sheet-columns {
+    display: none !important;
+  }
+  html:root .app.app.app.app .sheet-columns span {
+    display: grid;
+    place-items: center;
+    border-right: 1px solid #c8d5cc;
+    font-size: 10px;
+    color: #52735e;
+  }
+  html:root .app.app.app.app .sheet-rows {
+    display: none !important;
+  }
+  html:root .app.app.app.app .sheet-rows span {
+    display: grid;
+    place-items: center;
+    border-bottom: 1px solid #d3ddd6;
+    font-size: 10px;
+    color: #718278;
+  }
+  html:root .app.app.app.app .main-board {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    gap: 0 !important;
+    border: 0 !important;
+  }
+  html:root .app.app.app.app .main-board .tile {
+    height: 26px !important;
+    min-height: 26px !important;
+    aspect-ratio: auto !important;
+    transform: none !important;
+    border: 0 !important;
+    border-right: 1px solid #d4d4d4 !important;
+    border-bottom: 1px solid #d4d4d4 !important;
+    border-radius: 0 !important;
+    background: white !important;
+    color: #222 !important;
+    font-size: 15px !important;
+    font-weight: 400 !important;
+  }
+  html:root .app.app.app.app .main-board .tile.active-row {
+    background: #f2f8f3 !important;
+    box-shadow: inset 0 -2px #338355 !important;
+  }
+  html:root .app.app.app.app .main-board .tile.green {
+    background: #b8d9c2 !important;
+    color: #204b2d !important;
+  }
+  html:root .app.app.app.app .main-board .tile.yellow {
+    background: #f3dfa0 !important;
+    color: #695324 !important;
+  }
+  html:root .app.app.app.app .main-board .tile.gray {
+    background: #dce2de !important;
+    color: #627067 !important;
+  }
+  html:root .app.app.app.app .input-area {
+    position: absolute !important;
+    top: 154px !important;
+    left: 143px !important;
+    right: 8px !important;
+    width: auto !important;
+    max-width: none !important;
+    height: 32px !important;
+    margin: 0 !important;
+    padding: 3px 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #f6f6f6 !important;
+    z-index: 2 !important;
+  }
+  html:root .app.app.app.app .input-area:before {
+    display: none !important;
+  }
+  html:root .app.app.app.app .game-input-control input {
+    height: 26px !important;
+    min-height: 26px !important;
+    border: 1px solid #bdbdbd !important;
+    border-radius: 0 !important;
+    background: white !important;
+    color: #222 !important;
+    font-size: 12px !important;
+    padding: 3px 7px !important;
+    text-align: left !important;
+    outline-offset: -2px !important;
+  }
+  html:root .app.app.app.app .game-input-control input::placeholder {
+    font-size: 10px !important;
+    color: #91a095 !important;
+  }
+  html:root .app.app.app.app .input-status {
+    position: absolute !important;
+    top: 3px !important;
+    right: 0 !important;
+    display: block !important;
+    width: 155px !important;
+    max-width: 155px !important;
+    height: 26px !important;
+    line-height: 26px !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    font-size: 9px !important;
+    color: #777 !important;
+    padding: 0 5px !important;
+    border: 1px solid #bdbdbd !important;
+    border-left: 0 !important;
+    background: #fff !important;
+  }
+  html:root .app.app.app.app .keyboard {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    padding: 0 !important;
+    margin: 26px 0 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    background: white !important;
+  }
+  html:root .app.app.app.app .key-row {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    height: 26px !important;
+  }
+  html:root .app.app.app.app .keyboard .key {
+    display: grid !important;
+    place-items: center !important;
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    border: 0 !important;
+    border-right: 1px solid #d4d4d4 !important;
+    border-bottom: 1px solid #d4d4d4 !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    background: #f8f8f8 !important;
+    color: #333 !important;
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+  html:root .app.app.app.app .keyboard .key.green {
+    background: #b8d9c2 !important;
+    color: #204b2d !important;
+    border-color: #91bda0 !important;
+  }
+  html:root .app.app.app.app .keyboard .key.yellow {
+    background: #f3dfa0 !important;
+    color: #695324 !important;
+    border-color: #d6c17f !important;
+  }
+  html:root .app.app.app.app .keyboard .key.gray {
+    background: #dce2de !important;
+    color: #627067 !important;
+    border-color: #c9d2cc !important;
+  }
+  html:root .app.app.app.app .keyboard .key:not(:disabled):hover {
+    filter: brightness(0.96);
+  }
+  html:root .app.app.app.app .keyboard .key:not(:disabled):active {
+    outline: 2px solid #217346 !important;
+    outline-offset: -2px !important;
+  }
+  html:root .app.app.app.app .keyboard svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+  html:root .app.app.app.app .submit {
+    width: 100% !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    margin: 0 !important;
+    padding: 3px !important;
+    border: 0 !important;
+    border-bottom: 1px solid #d4d4d4 !important;
+    border-radius: 0 !important;
+    background: #edf3ee !important;
+    color: #217346 !important;
+    font-size: 11px !important;
+    font-weight: 400 !important;
+  }
+  html:root .app.app.app.app .room-members-card > .card-heading {
+    height: 26px !important;
+    min-height: 26px !important;
+    margin: 0 !important;
+    padding: 0 6px !important;
+    border: 0 !important;
+    border-bottom: 1px solid #d4d4d4 !important;
+    gap: 4px !important;
+    background: white !important;
+  }
+  html:root .app.app.app.app .room-members-card > .card-heading h2 {
+    font-size: 12px !important;
+    color: #345840 !important;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  html:root .app.app.app.app .room-members-card > .card-heading > div {
+    gap: 7px !important;
+    flex-wrap: nowrap !important;
+    min-width: 0;
+  }
+  html:root .app.app.app.app .room-members-card > .card-heading button {
+    display: none !important;
+  }
+  html:root .app.app.app.app .room-members {
+    display: block !important;
+    border: 1px solid #d2ddd6 !important;
+    margin: 8px 0 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+  html:root .app.app.app.app .sheet-member-head {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 94px;
+    margin-top: 10px;
+    border: 1px solid #d2ddd6;
+    background: #f0f5f1;
+    font-size: 10px;
+    color: #6d8274;
+  }
+  html:root .app.app.app.app .sheet-member-head span {
+    padding: 6px 8px;
+  }
+  html:root .app.app.app.app .sheet-member-head span + span {
+    border-left: 1px solid #d2ddd6;
+  }
+  html:root .app.app.app.app .room-members {
+    margin-top: 0 !important;
+    border-top: 0 !important;
+  }
+  html:root .app.app.app.app .room-member {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 94px !important;
+    grid-template-rows: 32px !important;
+    gap: 0 !important;
+    width: 100% !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-bottom: 1px solid #e1e7e3 !important;
+    border-radius: 0 !important;
+    background: white !important;
+    overflow: hidden !important;
+    align-items: center !important;
+    isolation: auto !important;
+  }
+  html:root .app.app.app.app .room-member:last-child {
+    border-bottom: 0 !important;
+  }
+  html:root .app.app.app.app .room-member.is-winner {
+    background: #eef7f0 !important;
+  }
+  html:root .app.app.app.app .room-member:before,
+  html:root .app.app.app.app .room-member:after {
+    display: none !important;
+  }
+  html:root .app.app.app.app .room-member-heading {
+    display: block !important;
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    height: 32px !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 8px !important;
+  }
+  html:root .app.app.app.app .room-member-name {
+    display: block !important;
+    width: 100% !important;
+    height: 32px !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    font-size: 11px !important;
+    line-height: 32px !important;
+    color: #354d3e !important;
+    text-align: left !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  html:root .app.app.app.app .room-member-name small {
+    display: none !important;
+  }
+  html:root .app.app.app.app .sheet-member-status {
+    display: block !important;
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    border-left: 1px solid #e1e7e3 !important;
+    height: 32px !important;
+    line-height: 32px !important;
+    padding: 0 6px !important;
+    color: #6f8176 !important;
+    font-size: 10px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  html:root .app.app.app.app .party-panel {
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 4px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+  }
+  html:root .app.app.app.app .party-heading {
+    height: 30px !important;
+    padding: 0 !important;
+    min-height: 30px !important;
+    font-size: 10px !important;
+    color: #7b8b80 !important;
+  }
+  html:root .app.app.app.app .party-heading button,
+  html:root .app.app.app.app .party-buttons > button {
+    padding: 3px 6px !important;
+    min-height: 24px !important;
+    height: 24px !important;
+    border: 1px solid #d2ddd6 !important;
+    border-radius: 2px !important;
+    background: #fff !important;
+    color: #617769 !important;
+    font-size: 10px !important;
+    gap: 3px !important;
+  }
+  html:root .app.app.app.app .item-dock {
+    display: flex !important;
+    gap: 4px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  html:root .app.app.app.app .item-wrap {
+    flex: 1;
+    min-width: 0;
+  }
+  html:root .app.app.app.app .item-slot {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    width: 100% !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    aspect-ratio: auto !important;
+    padding: 3px 5px !important;
+    border: 1px solid #d0dcd4 !important;
+    border-radius: 2px !important;
+    background: #f6f8f6 !important;
+  }
+  html:root .app.app.app.app .item-icon {
+    width: 18px !important;
+    height: 18px !important;
+    font-size: 15px !important;
+    background: none !important;
+  }
+  html:root .app.app.app.app .item-copy {
+    font-size: 10px !important;
+    line-height: 16px !important;
+  }
+  html:root .app.app.app.app .item-copy small,
+  html:root .app.app.app.app .slot-hint {
+    display: none !important;
+  }
+  html:root .app.app.app.app .party-buttons {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    padding: 4px 0 !important;
+    margin: 0 !important;
+  }
+  html:root .app.app.app.app .party-buttons svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+  html:root .app.app.app.app .room-chat.game-chat {
+    position: static !important;
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    margin: 26px 0 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: white !important;
+    color: #333 !important;
+    pointer-events: auto !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-toggle {
+    order: 0 !important;
+    width: 100% !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+    padding: 0 6px !important;
+    border: 0 !important;
+    border-bottom: 1px solid #d4d4d4 !important;
+    border-radius: 0 !important;
+    background: #f3f3f3 !important;
+    color: #333 !important;
+    font-size: 11px !important;
+  }
+  html:root .app.app.app.app .chat-sheet-label {
+    display: inline !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-toggle strong {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-toggle-hint {
+    font-size: 10px !important;
+    color: #7b8d80 !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-panel {
+    position: static !important;
+    order: 1 !important;
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    color: #344f3e !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-sheet-head {
+    display: grid !important;
+    grid-template-columns: 42px 64px minmax(0, 1fr) 20px !important;
+    min-height: 24px !important;
+    background: #f6f8f6 !important;
+    font-size: 9px !important;
+    color: #839187 !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-sheet-head span {
+    padding: 5px !important;
+    border-right: 1px solid #e2e8e4 !important;
+    border-bottom: 1px solid #dce5df !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-messages {
+    height: 224px !important;
+    min-height: 80px !important;
+    max-height: 40vh !important;
+    padding: 0 !important;
+    overflow: auto !important;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    background: white !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-message,
+  html:root .app.app.app.app .game-chat .chat-message.own {
+    display: grid !important;
+    grid-template-columns: 42px 64px minmax(0, 1fr) 20px !important;
+    gap: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    border-bottom: 1px solid #e6ebe7 !important;
+    background: #fff !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-meta {
+    display: contents !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-meta time {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    font-size: 9px !important;
+    white-space: nowrap !important;
+    color: #8c9a90 !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-author {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    text-align: left !important;
+    color: #40664c !important;
+    font-weight: 600 !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-message > p {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    justify-self: stretch !important;
+    overflow-wrap: anywhere !important;
+    color: #3d5144 !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-meta button {
+    grid-column: 4 !important;
+    grid-row: 1 !important;
+    align-self: start !important;
+    width: 20px !important;
+    min-width: 0 !important;
+    min-height: 24px !important;
+    padding: 2px !important;
+    background: transparent !important;
+    border: 0 !important;
+    color: #91a096 !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-meta time,
+  html:root .app.app.app.app .game-chat .chat-author,
+  html:root .app.app.app.app .game-chat .chat-message > p {
+    padding: 5px 4px !important;
+    margin: 0 !important;
+    line-height: 18px !important;
+    font-size: 10px !important;
+    min-height: 28px !important;
+    border: 0 !important;
+    border-right: 1px solid #e6ebe7 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-message.own {
+    background: #f4f8f5 !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-system,
+  html:root .app.app.app.app .game-chat .chat-empty {
+    padding: 7px !important;
+    margin: 0 !important;
+    color: #819286 !important;
+    font-size: 10px !important;
+    line-height: 16px !important;
+    background: #fafcfb !important;
+    border-bottom: 1px solid #e6ebe7 !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-fun-bar {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 3px !important;
+    padding: 4px !important;
+    margin: 0 !important;
+    border-top: 1px solid #dce5df !important;
+    background: #f7faf8 !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-fun-bar button {
+    height: 23px !important;
+    min-height: 23px !important;
+    padding: 2px 5px !important;
+    background: white !important;
+    border: 1px solid #dce5df !important;
+    border-radius: 2px !important;
+    color: #6b8172 !important;
+    font-size: 10px !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-compose {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 38px !important;
+    gap: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-top: 1px solid #dce5df !important;
+    background: #fff !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-compose textarea {
+    height: 34px !important;
+    min-height: 34px !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    padding: 8px !important;
+    font-size: 11px !important;
+    line-height: 18px !important;
+    background: white !important;
+    color: #354f3e !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    resize: none !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-compose button {
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 4px !important;
+    white-space: nowrap !important;
+    justify-content: center !important;
+    background: #eaf2ec !important;
+    border: 0 !important;
+    border-left: 1px solid #dce5df !important;
+    border-radius: 0 !important;
+    color: #356b46 !important;
+    font-size: 10px !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-compose button svg {
+    display: none !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-compose > span {
+    grid-column: 1/-1 !important;
+    padding: 2px 6px !important;
+    font-size: 9px !important;
+    color: #8a9a8f !important;
+    background: #f8faf9 !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-emoji-tray {
+    padding: 4px !important;
+    background: white !important;
+    border: 1px solid #dce5df !important;
+    border-radius: 2px !important;
+  }
+  html:root .app.app.app.app .sheet-bottom {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex !important;
+    height: 34px;
+    align-items: stretch;
+    gap: 0;
+    border-top: 1px solid #c8d5cc;
+    background: #f5f7f5;
+    z-index: 50;
+    color: #74877a;
+  }
+  html:root .app.app.app.app .sheet-bottom-status {
+    min-width: 64px;
+    display: grid;
+    place-items: center;
+    font-size: 10px;
+    border-right: 1px solid #dbe3dd;
+  }
+  html:root .app.app.app.app .sheet-bottom button {
+    padding: 0 16px !important;
+    border: 0 !important;
+    border-right: 1px solid #e1e7e2 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: #75877b !important;
+    font-size: 11px !important;
+  }
+  html:root .app.app.app.app .sheet-bottom button.selected {
+    background: white !important;
+    border-top: 2px solid #217346 !important;
+    color: #217346 !important;
+    font-weight: 700 !important;
+  }
+  html:root .app.app.app.app .sheet-bottom-info {
+    margin-left: auto;
+    align-self: center;
+    padding: 0 12px;
+    font-size: 10px;
+  }
+  html:root .app.app.app.app .result-box {
+    margin: 0 0 10px !important;
+    padding: 12px !important;
+    border: 1px solid #cbd9d0 !important;
+    border-radius: 2px !important;
+    background: #f6faf7 !important;
+    color: #3b5c46 !important;
+  }
+  html:root .app.app.app.app .result-box strong {
+    font-size: 13px !important;
+  }
+  html:root .app.app.app.app .result-box p {
+    font-size: 11px !important;
+  }
+  html:root .app.app.app.app .room-member-avatar,
+  html:root .app.app.app.app .member-progress,
+  html:root .app.app.app.app .presence,
+  html:root .app.app.app.app .member-speech-slot,
+  html:root .app.app.app.app .room-member-status,
+  html:root .app.app.app.app .member-cheer-burst,
+  html:root .app.app.app.app .podium-celebration,
+  html:root .app.app.app.app .room-member-heading:before,
+  html:root .app.app.app.app .room-member-heading:after,
+  html:root .app.app.app.app .office-footer,
+  html:root .app.app.app.app .room-reactions,
+  html:root .app.app.app.app .social-panel > .ranking-card,
+  html:root .app.app.app.app .legend,
+  html:root .app.app.app.app .app-footer,
+  html:root .app.app.app.app .chat-normal-label,
+  html:root .app.app.app.app .chat-portrait,
+  html:root .app.app.app.app .chat-avatar,
+  html:root .app.app.app.app .chat-peek,
+  html:root .app.app.app.app .chat-note,
+  html:root .app.app.app.app .result-emoji {
+    display: none !important;
+  }
+  body:has(.app) .legal-links,
+  body:has(.app) .cheer-canvas {
+    display: none !important;
+  }
 }
 
-@media (max-width:900px) and (hover:hover) and (pointer:fine){
- html:root .app.app.app.app .item-slot{flex-direction:row!important}
- html:root .app.app.app.app .item-icon>svg{width:16px!important;height:16px!important;filter:none!important}
- html:root .app.app.app.app .item-icon i{position:static!important;display:none!important}
- html:root .app.app.app.app .item-copy strong{font-size:10px!important;color:#557160!important}
- html:root .app.app.app.app .round-reward{padding:12px!important;margin:0 0 10px!important;border:1px solid #cedbd2!important;border-radius:2px!important;background:#f6faf7!important;color:#37583f!important}
- html:root .app.app.app.app .reward-avatar{display:none!important}
- html:root .app.app.app.app .reward-heading{gap:8px!important;margin:0!important}
- html:root .app.app.app.app .reward-heading strong{font-size:15px!important;color:#31553d!important}
- html:root .app.app.app.app .reward-heading small{font-size:10px!important;color:#87978c!important}
- html:root .app.app.app.app .reward-xp{font-size:18px!important;color:#568363!important}
- html:root .app.app.app.app .reward-answer{margin:8px 0!important;padding:8px 0!important;font-size:11px!important;border-color:#dde7e0!important}
- html:root .app.app.app.app .reward-answer b{font-size:13px!important}
- html:root .app.app.app.app .reward-place,html:root .app.app.app.app .reward-guest,html:root .app.app.app.app .reward-waiting{font-size:10px!important;color:#6b8273!important}
- html:root .app.app.app.app .reward-next{margin:8px 0 0!important;height:30px!important;min-height:30px!important;padding:4px 8px!important;border:1px solid #bbcebf!important;border-radius:2px!important;background:#e4efe7!important;color:#326142!important;font-size:11px!important}
+@media (max-width: 900px) and (hover: hover) and (pointer: fine) {
+  html:root .app.app.app.app .item-slot {
+    flex-direction: row !important;
+  }
+  html:root .app.app.app.app .item-icon > svg {
+    width: 16px !important;
+    height: 16px !important;
+    filter: none !important;
+  }
+  html:root .app.app.app.app .item-icon i {
+    position: static !important;
+    display: none !important;
+  }
+  html:root .app.app.app.app .item-copy strong {
+    font-size: 10px !important;
+    color: #557160 !important;
+  }
+  html:root .app.app.app.app .round-reward {
+    padding: 12px !important;
+    margin: 0 0 10px !important;
+    border: 1px solid #cedbd2 !important;
+    border-radius: 2px !important;
+    background: #f6faf7 !important;
+    color: #37583f !important;
+  }
+  html:root .app.app.app.app .reward-avatar {
+    display: none !important;
+  }
+  html:root .app.app.app.app .reward-heading {
+    gap: 8px !important;
+    margin: 0 !important;
+  }
+  html:root .app.app.app.app .reward-heading strong {
+    font-size: 15px !important;
+    color: #31553d !important;
+  }
+  html:root .app.app.app.app .reward-heading small {
+    font-size: 10px !important;
+    color: #87978c !important;
+  }
+  html:root .app.app.app.app .reward-xp {
+    font-size: 18px !important;
+    color: #568363 !important;
+  }
+  html:root .app.app.app.app .reward-answer {
+    margin: 8px 0 !important;
+    padding: 8px 0 !important;
+    font-size: 11px !important;
+    border-color: #dde7e0 !important;
+  }
+  html:root .app.app.app.app .reward-answer b {
+    font-size: 13px !important;
+  }
+  html:root .app.app.app.app .reward-place,
+  html:root .app.app.app.app .reward-guest,
+  html:root .app.app.app.app .reward-waiting {
+    font-size: 10px !important;
+    color: #6b8273 !important;
+  }
+  html:root .app.app.app.app .reward-next {
+    margin: 8px 0 0 !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    padding: 4px 8px !important;
+    border: 1px solid #bbcebf !important;
+    border-radius: 2px !important;
+    background: #e4efe7 !important;
+    color: #326142 !important;
+    font-size: 11px !important;
+  }
 }
-@media (max-width:900px) and (hover:hover) and (pointer:fine){
- html:root .app.app.app.app{position:relative!important;font-family:Arial,'Malgun Gothic','Apple SD Gothic Neo',sans-serif!important}
- html:root .app.app.app.app .sheet-chrome{display:block!important;height:154px!important;background:#f6f6f6!important;border-bottom:1px solid #bfbfbf!important}
- html:root .app.app.app.app .sheet-menu{display:flex;height:30px;gap:0;align-items:stretch;overflow:hidden;white-space:nowrap;border-bottom:1px solid #ddd}
- html:root .app.app.app.app .sheet-menu>*{font:11px Arial,sans-serif!important;display:flex;align-items:center;padding:0 14px!important;color:#444!important;border:0!important;border-radius:0!important;background:transparent!important;flex-shrink:0}
- html:root .app.app.app.app .sheet-menu .active{background:white!important;border:1px solid #d5d5d5!important;border-bottom:0!important;color:#217346!important}
- html:root .app.app.app.app .sheet-tools{display:flex;height:92px;padding:6px 8px 0;background:#fafafa;border-bottom:1px solid #ccc;overflow:hidden;gap:0}
- html:root .app.app.app.app .sheet-tool-group{display:flex;flex-direction:column;justify-content:space-between;flex-shrink:0;height:80px;padding:0 10px;border-right:1px solid #ddd}
- html:root .app.app.app.app .sheet-tool-group>small{text-align:center;color:#888;font-size:9px;height:18px;line-height:18px}
- html:root .app.app.app.app .sheet-tools button{display:flex;align-items:center;gap:5px;padding:3px!important;border:1px solid transparent!important;border-radius:0!important;background:transparent!important;font:10px Arial,sans-serif!important;color:#444!important}
- html:root .app.app.app.app .sheet-tools button:hover{background:#e5efe8!important;border-color:#a6c4b0!important}
- html:root .app.app.app.app .sheet-clipboard{display:flex;gap:8px}
- html:root .app.app.app.app .sheet-large-tool{flex-direction:column;justify-content:center}
- html:root .app.app.app.app .sheet-large-tool>svg{color:#9e854e}
- html:root .app.app.app.app .sheet-large-tool span{display:flex;align-items:center;gap:2px}
- html:root .app.app.app.app .sheet-font-fields{display:flex;gap:3px;margin:3px 0 8px}
- html:root .app.app.app.app .sheet-font-fields span{display:flex;justify-content:space-between;align-items:center;width:102px;height:23px;padding:2px 5px;background:white;border:1px solid #bdbdbd;color:#333;font-size:11px}
- html:root .app.app.app.app .sheet-font-fields span+span{width:40px}
- html:root .app.app.app.app .sheet-format-icons{display:flex;align-items:center;gap:11px;color:#444;height:24px}
- html:root .app.app.app.app .sheet-format-icons i{height:16px;width:1px;background:#ddd}
- html:root .app.app.app.app .sheet-wrap-label{display:flex;align-items:center;gap:4px;font-size:10px;color:#444;white-space:nowrap}
- html:root .app.app.app.app .sheet-room-tools>div{display:flex;height:55px;align-items:center}
- html:root .app.app.app.app .sheet-room-tools button{flex-direction:column;gap:6px;padding:4px 8px!important}
- html:root .app.app.app.app .sheet-formula-shell{height:32px;display:flex;align-items:center;padding:3px 8px;background:#f6f6f6;font-size:11px}
- html:root .app.app.app.app .sheet-name-box{height:26px;width:74px;border:1px solid #bbb;display:flex;align-items:center;justify-content:space-between;background:white;padding:0 7px;color:#333;flex-shrink:0}
- html:root .app.app.app.app .sheet-formula-tools{display:flex;align-items:center;justify-content:space-evenly;width:60px;color:#aaa;font-size:17px}
- html:root .app.app.app.app .sheet-formula-tools b{font-size:14px;font-weight:400}
- html:root .app.app.app.app .sheet-formula-tools i{font:italic 16px Georgia;color:#777}
- html:root .app.app.app.app .sheet-formula-idle{display:flex;align-items:center;flex:1;height:26px;border:1px solid #bbb;background:white;color:#aaa;padding-left:8px}
- html:root .app.app.app.app .sheet-gutter span{height:26px!important;min-height:26px!important;display:grid!important;place-items:center!important;border-bottom:1px solid #d4d4d4!important;font-size:10px!important;color:#555!important}
- html:root .app.app.app.app .round-controls button,html:root .app.app.app.app .round-controls select{height:26px!important;min-height:26px!important;padding:2px 4px!important;border:0!important;border-right:1px solid #d4d4d4!important;border-bottom:1px solid #d4d4d4!important;border-radius:0!important;background:#fafafa!important;font-size:10px!important}
- html:root .app.app.app.app .party-panel{background:white!important}
- html:root .app.app.app.app .party-heading{height:26px!important;min-height:26px!important;border-bottom:1px solid #ddd!important;padding:0 5px!important}
- html:root .app.app.app.app .item-dock{gap:0!important}
- html:root .app.app.app.app .item-slot{height:26px!important;min-height:26px!important;border:0!important;border-right:1px solid #ddd!important;border-bottom:1px solid #ddd!important;border-radius:0!important}
- html:root .app.app.app.app .party-buttons{padding:0!important;gap:0!important}
- html:root .app.app.app.app .party-buttons>button{height:26px!important;min-height:26px!important;border:0!important;border-right:1px solid #ddd!important;border-bottom:1px solid #ddd!important;border-radius:0!important}
- html:root .app.app.app.app .sheet-member-head{height:26px!important;margin:0!important;background:#f3f3f3!important;border:0!important;border-bottom:1px solid #ccc!important}
- html:root .app.app.app.app .room-members{border:0!important;background:white!important}
- html:root .app.app.app.app .room-member{height:26px!important;min-height:26px!important;grid-template-rows:26px!important}
- html:root .app.app.app.app .room-member-heading,html:root .app.app.app.app .room-member-name,html:root .app.app.app.app .sheet-member-status{height:26px!important;line-height:26px!important}
- html:root .app.app.app.app .round-reward{border:0!important;border-bottom:1px solid #ddd!important;border-radius:0!important;background:white!important;margin:0!important;padding:6px!important}
- html:root .app.app.app.app .game-chat .chat-message,html:root .app.app.app.app .game-chat .chat-message.own,html:root .app.app.app.app .game-chat .chat-sheet-head{grid-template-columns:62px 60px minmax(0,1fr) 18px!important}
- html:root .app.app.app.app .game-chat .chat-fun-bar{padding:2px!important;gap:2px!important}
- html:root .app.app.app.app .game-chat .chat-fun-bar button{font-size:9px!important}
+@media (max-width: 900px) and (hover: hover) and (pointer: fine) {
+  html:root .app.app.app.app {
+    position: relative !important;
+    font-family: Arial, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif !important;
+  }
+  html:root .app.app.app.app .sheet-chrome {
+    display: block !important;
+    height: 154px !important;
+    background: #f6f6f6 !important;
+    border-bottom: 1px solid #bfbfbf !important;
+  }
+  html:root .app.app.app.app .sheet-menu {
+    display: flex;
+    height: 30px;
+    gap: 0;
+    align-items: stretch;
+    overflow: hidden;
+    white-space: nowrap;
+    border-bottom: 1px solid #ddd;
+  }
+  html:root .app.app.app.app .sheet-menu > * {
+    font:
+      11px Arial,
+      sans-serif !important;
+    display: flex;
+    align-items: center;
+    padding: 0 14px !important;
+    color: #444 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    flex-shrink: 0;
+  }
+  html:root .app.app.app.app .sheet-menu .active {
+    background: white !important;
+    border: 1px solid #d5d5d5 !important;
+    border-bottom: 0 !important;
+    color: #217346 !important;
+  }
+  html:root .app.app.app.app .sheet-tools {
+    display: flex;
+    height: 92px;
+    padding: 6px 8px 0;
+    background: #fafafa;
+    border-bottom: 1px solid #ccc;
+    overflow: hidden;
+    gap: 0;
+  }
+  html:root .app.app.app.app .sheet-tool-group {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-shrink: 0;
+    height: 80px;
+    padding: 0 10px;
+    border-right: 1px solid #ddd;
+  }
+  html:root .app.app.app.app .sheet-tool-group > small {
+    text-align: center;
+    color: #888;
+    font-size: 9px;
+    height: 18px;
+    line-height: 18px;
+  }
+  html:root .app.app.app.app .sheet-tools button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px !important;
+    border: 1px solid transparent !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    font:
+      10px Arial,
+      sans-serif !important;
+    color: #444 !important;
+  }
+  html:root .app.app.app.app .sheet-tools button:hover {
+    background: #e5efe8 !important;
+    border-color: #a6c4b0 !important;
+  }
+  html:root .app.app.app.app .sheet-clipboard {
+    display: flex;
+    gap: 8px;
+  }
+  html:root .app.app.app.app .sheet-large-tool {
+    flex-direction: column;
+    justify-content: center;
+  }
+  html:root .app.app.app.app .sheet-large-tool > svg {
+    color: #9e854e;
+  }
+  html:root .app.app.app.app .sheet-large-tool span {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  html:root .app.app.app.app .sheet-font-fields {
+    display: flex;
+    gap: 3px;
+    margin: 3px 0 8px;
+  }
+  html:root .app.app.app.app .sheet-font-fields span {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 102px;
+    height: 23px;
+    padding: 2px 5px;
+    background: white;
+    border: 1px solid #bdbdbd;
+    color: #333;
+    font-size: 11px;
+  }
+  html:root .app.app.app.app .sheet-font-fields span + span {
+    width: 40px;
+  }
+  html:root .app.app.app.app .sheet-format-icons {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    color: #444;
+    height: 24px;
+  }
+  html:root .app.app.app.app .sheet-format-icons i {
+    height: 16px;
+    width: 1px;
+    background: #ddd;
+  }
+  html:root .app.app.app.app .sheet-wrap-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: #444;
+    white-space: nowrap;
+  }
+  html:root .app.app.app.app .sheet-room-tools > div {
+    display: flex;
+    height: 55px;
+    align-items: center;
+  }
+  html:root .app.app.app.app .sheet-room-tools button {
+    flex-direction: column;
+    gap: 6px;
+    padding: 4px 8px !important;
+  }
+  html:root .app.app.app.app .sheet-formula-shell {
+    height: 32px;
+    display: flex;
+    align-items: center;
+    padding: 3px 8px;
+    background: #f6f6f6;
+    font-size: 11px;
+  }
+  html:root .app.app.app.app .sheet-name-box {
+    height: 26px;
+    width: 74px;
+    border: 1px solid #bbb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: white;
+    padding: 0 7px;
+    color: #333;
+    flex-shrink: 0;
+  }
+  html:root .app.app.app.app .sheet-formula-tools {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    width: 60px;
+    color: #aaa;
+    font-size: 17px;
+  }
+  html:root .app.app.app.app .sheet-formula-tools b {
+    font-size: 14px;
+    font-weight: 400;
+  }
+  html:root .app.app.app.app .sheet-formula-tools i {
+    font: italic 16px Georgia;
+    color: #777;
+  }
+  html:root .app.app.app.app .sheet-formula-idle {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    height: 26px;
+    border: 1px solid #bbb;
+    background: white;
+    color: #aaa;
+    padding-left: 8px;
+  }
+  html:root .app.app.app.app .sheet-gutter span {
+    height: 26px !important;
+    min-height: 26px !important;
+    display: grid !important;
+    place-items: center !important;
+    border-bottom: 1px solid #d4d4d4 !important;
+    font-size: 10px !important;
+    color: #555 !important;
+  }
+  html:root .app.app.app.app .round-controls button,
+  html:root .app.app.app.app .round-controls select {
+    height: 26px !important;
+    min-height: 26px !important;
+    padding: 2px 4px !important;
+    border: 0 !important;
+    border-right: 1px solid #d4d4d4 !important;
+    border-bottom: 1px solid #d4d4d4 !important;
+    border-radius: 0 !important;
+    background: #fafafa !important;
+    font-size: 10px !important;
+  }
+  html:root .app.app.app.app .party-panel {
+    background: white !important;
+  }
+  html:root .app.app.app.app .party-heading {
+    height: 26px !important;
+    min-height: 26px !important;
+    border-bottom: 1px solid #ddd !important;
+    padding: 0 5px !important;
+  }
+  html:root .app.app.app.app .item-dock {
+    gap: 0 !important;
+  }
+  html:root .app.app.app.app .item-slot {
+    height: 26px !important;
+    min-height: 26px !important;
+    border: 0 !important;
+    border-right: 1px solid #ddd !important;
+    border-bottom: 1px solid #ddd !important;
+    border-radius: 0 !important;
+  }
+  html:root .app.app.app.app .party-buttons {
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+  html:root .app.app.app.app .party-buttons > button {
+    height: 26px !important;
+    min-height: 26px !important;
+    border: 0 !important;
+    border-right: 1px solid #ddd !important;
+    border-bottom: 1px solid #ddd !important;
+    border-radius: 0 !important;
+  }
+  html:root .app.app.app.app .sheet-member-head {
+    height: 26px !important;
+    margin: 0 !important;
+    background: #f3f3f3 !important;
+    border: 0 !important;
+    border-bottom: 1px solid #ccc !important;
+  }
+  html:root .app.app.app.app .room-members {
+    border: 0 !important;
+    background: white !important;
+  }
+  html:root .app.app.app.app .room-member {
+    height: 26px !important;
+    min-height: 26px !important;
+    grid-template-rows: 26px !important;
+  }
+  html:root .app.app.app.app .room-member-heading,
+  html:root .app.app.app.app .room-member-name,
+  html:root .app.app.app.app .sheet-member-status {
+    height: 26px !important;
+    line-height: 26px !important;
+  }
+  html:root .app.app.app.app .round-reward {
+    border: 0 !important;
+    border-bottom: 1px solid #ddd !important;
+    border-radius: 0 !important;
+    background: white !important;
+    margin: 0 !important;
+    padding: 6px !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-message,
+  html:root .app.app.app.app .game-chat .chat-message.own,
+  html:root .app.app.app.app .game-chat .chat-sheet-head {
+    grid-template-columns: 62px 60px minmax(0, 1fr) 18px !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-fun-bar {
+    padding: 2px !important;
+    gap: 2px !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-fun-bar button {
+    font-size: 9px !important;
+  }
 }
 
-@media (max-width:620px) and (hover:hover) and (pointer:fine){
- html:root .app.app.app.app .game-layout{min-width:590px!important}
- html:root .app.app.app.app .sheet-axis{min-width:620px!important}
- html:root .app.app.app.app .sheet-tools{overflow-x:auto!important}
- html:root .app.app.app.app .sheet-bottom-info{display:none!important}
+@media (max-width: 620px) and (hover: hover) and (pointer: fine) {
+  html:root .app.app.app.app .game-layout {
+    min-width: 590px !important;
+  }
+  html:root .app.app.app.app .sheet-axis {
+    min-width: 620px !important;
+  }
+  html:root .app.app.app.app .sheet-tools {
+    overflow-x: auto !important;
+  }
+  html:root .app.app.app.app .sheet-bottom-info {
+    display: none !important;
+  }
 }
 
-@media (max-width:900px) and (hover:hover) and (pointer:fine){
- html:root .app.app.app.app .input-area .game-input-control{width:100%!important;padding-right:155px!important}
- html:root .app.app.app.app .game-input-control input:focus{outline:2px solid #217346!important;outline-offset:-2px!important}
- html:root .app.app.app.app .input-status.invalid{color:#b13a30!important;background:#fff4f2!important}
- html:root .app.app.app.app .game-chat .chat-compose textarea:focus{outline:2px solid #217346!important;outline-offset:-2px!important}
+@media (max-width: 900px) and (hover: hover) and (pointer: fine) {
+  html:root .app.app.app.app .input-area .game-input-control {
+    width: 100% !important;
+    padding-right: 155px !important;
+  }
+  html:root .app.app.app.app .game-input-control input:focus {
+    outline: 2px solid #217346 !important;
+    outline-offset: -2px !important;
+  }
+  html:root .app.app.app.app .input-status.invalid {
+    color: #b13a30 !important;
+    background: #fff4f2 !important;
+  }
+  html:root .app.app.app.app .game-chat .chat-compose textarea:focus {
+    outline: 2px solid #217346 !important;
+    outline-offset: -2px !important;
+  }
 }

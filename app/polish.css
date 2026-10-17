@@ -1,16 +1,75 @@
 /* Independent frontend: preserve Sites layout, materials and game colors. */
-:where(button,a,input,select,textarea):focus-visible{outline:2px solid #729fbc;outline-offset:3px}
-.signature-nav{gap:12px;align-items:center}
-.signature-nav button{min-height:40px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
-.signature-console{font-variant-numeric:tabular-nums}
-.signature-console button{min-height:36px;flex-shrink:0}
-.signature-legend{row-gap:8px;flex-wrap:wrap}
-.glass .lobby-actions>button{height:48px;min-height:48px;line-height:1.2;box-sizing:border-box;gap:8px}
-.card-heading{gap:12px;align-items:center}
-.card-heading h2{min-width:0;line-height:1.4}
-.rank-row,.round-timer{font-variant-numeric:tabular-nums}
-.member-info{min-width:0}
-.dialog-title{line-height:1.35;text-wrap:balance}
-.launch-actions{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;padding:0 20px 24px;font-size:13px;color:#687888}
-.launch-actions a{text-decoration:underline;text-underline-offset:4px}
-@media(prefers-reduced-motion:reduce){.signature-tile{animation:none!important}.signature-start{transition:none!important}}
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid #729fbc;
+  outline-offset: 3px;
+}
+.signature-nav {
+  gap: 12px;
+  align-items: center;
+}
+.signature-nav button {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.signature-console {
+  font-variant-numeric: tabular-nums;
+}
+.signature-console button {
+  min-height: 36px;
+  flex-shrink: 0;
+}
+.signature-legend {
+  row-gap: 8px;
+  flex-wrap: wrap;
+}
+.glass .lobby-actions > button {
+  height: 48px;
+  min-height: 48px;
+  line-height: 1.2;
+  box-sizing: border-box;
+  gap: 8px;
+}
+.card-heading {
+  gap: 12px;
+  align-items: center;
+}
+.card-heading h2 {
+  min-width: 0;
+  line-height: 1.4;
+}
+.rank-row,
+.round-timer {
+  font-variant-numeric: tabular-nums;
+}
+.member-info {
+  min-width: 0;
+}
+.dialog-title {
+  line-height: 1.35;
+  text-wrap: balance;
+}
+.launch-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 0 20px 24px;
+  font-size: 13px;
+  color: #687888;
+}
+.launch-actions a {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .signature-tile {
+    animation: none !important;
+  }
+  .signature-start {
+    transition: none !important;
+  }
+}

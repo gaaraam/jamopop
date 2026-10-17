@@ -1,45 +1,134 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {DatabaseSync} from 'node:sqlite';
-import {readFileSync,readdirSync,mkdtempSync,writeFileSync,rmSync} from 'node:fs';
-import {tmpdir} from 'node:os';
-import {join} from 'node:path';
-import {pathToFileURL} from 'node:url';
+import { DatabaseSync } from 'node:sqlite';
+import { readFileSync, readdirSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import ts from 'typescript';
-test('home care: authenticated ownership, daily cap, friendship privacy, stamps and reward entitlement',async()=>{
- const db=new DatabaseSync(':memory:'),dir=mkdtempSync(join(tmpdir(),'home-life-test-'));
- try{
- for(const f of readdirSync('drizzle').filter(x=>x.endsWith('.sql')).sort())db.exec(readFileSync('drizzle/'+f,'utf8'));
- const prepare=sql=>({bind(...args){return {run:()=>({meta:{changes:db.prepare(sql).run(...args).changes}})}}});
- globalThis.__homeStore={run:async(sql,...args)=>({meta:{changes:db.prepare(sql).run(...args).changes}}),one:async(sql,...args)=>db.prepare(sql).get(...args)||null,all:async(sql,...args)=>db.prepare(sql).all(...args),database:()=>({prepare,batch:async qs=>{db.exec('BEGIN');try{const r=qs.map(q=>q.run());db.exec('COMMIT');return r}catch(e){db.exec('ROLLBACK');throw e}}})};
- const save=(name,code)=>{const p=join(dir,name+'.mjs');writeFileSync(p,code);return pathToFileURL(p).href};
- const store=save('store','export const {one,all,run,database}=globalThis.__homeStore;'),account=save('account',"export const accountId=r=>r.headers.get('test-user');");
- const compile=(file,name,maps={})=>{let s=ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;for(const [key,url]of Object.entries(maps))s=s.replaceAll("'"+key+"'",JSON.stringify(url));return save(name,s)};
- const life=compile('lib/home-life.ts','life'),furniture=compile('lib/furniture.ts','furniture');
- const {GET,POST}=await import(compile('app/api/home/life/route.ts','route',{'@/lib/account':account,'@/lib/store':store,'@/lib/home-life':life,'@/lib/furniture':furniture}));
- const {careDay,residentTarget}=await import(life);
- assert.equal(careDay(Date.UTC(2026,9,17,14,59)), '2026-10-17');assert.equal(careDay(Date.UTC(2026,9,17,15,0)), '2026-10-18');
- for(const n of [-1,0,.5,1,2])assert.ok(residentTarget(n)>=20&&residentTarget(n)<=80);
- db.exec("INSERT INTO profiles(id,name,avatar,created_at) VALUES('A','A','🐱',1),('B','B','🐰',1),('C','C','🐻',1); INSERT INTO friendships(id,requester,recipient,status,created_at,updated_at) VALUES('ab','A','B','accepted',1,1),('ac','A','C','pending',1,1)");
- const req=(owner,body,query='',origin='https://test.local')=>new Request('https://test.local/api/home/life'+query,{method:body?'POST':'GET',headers:{...(owner?{'test-user':owner}:{}),origin,'content-type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
- assert.equal((await GET(req(null))).status,401);
- assert.equal((await POST(req('A',{action:'pet'},'','https://bad.test'))).status,403);
- assert.equal((await POST(req('A',{action:'invalid'}))).status,400);
- await Promise.all(Array.from({length:12},()=>POST(req('A',{action:'pet'}))));
- let state=await (await GET(req('A'))).json();assert.equal(state.care.points,1);assert.deepEqual(state.care.done,['pet']);
- await POST(req('A',{action:'snack'}));await POST(req('A',{action:'play'}));
- assert.equal((await GET(req('A',null,'?friend=ac'))).status,403);
- assert.equal((await GET(req('C',null,'?friend=ab'))).status,403);
- assert.equal((await POST(req('A',{action:'snack',friend:'ab'}))).status,403);
- assert.equal((await POST(req('A',{action:'visit',friend:'ab',stamp:'bad'}))).status,400);
- await Promise.all(Array.from({length:5},()=>POST(req('A',{action:'visit',friend:'ab',stamp:'heart'}))));
- state=await (await GET(req('A'))).json();assert.equal(state.care.points,4);assert.equal(db.prepare('SELECT COUNT(*) n FROM home_visits').get().n,1);
- const viewed=await (await GET(req('A',null,'?friend=ab'))).json();assert.equal(viewed.visiting.profile.name,'B');assert.equal(viewed.visiting.stamp,'heart');assert.equal(JSON.stringify(viewed).includes('account_id'),false);
- const host=await (await GET(req('B'))).json();assert.equal(host.visits[0].name,'A');assert.equal(host.care.points,0,'visiting does not award the owner');
- db.exec("UPDATE friendships SET status='declined' WHERE id='ab'");assert.equal((await GET(req('A',null,'?friend=ab'))).status,403);assert.equal((await (await GET(req('B'))).json()).visits.length,0);
- const skins=compile('lib/skins.ts','skins');const {shopState}=await import(compile('lib/shop.ts','shop',{'./store':store,'./skins':skins}));
- assert.equal((await shopState('A')).owned.includes('home-nap-rabbit'),false);
- for(let i=0;i<8;i++)db.prepare("INSERT INTO home_care(account_id,day,action,created_at) VALUES('A',?,'pet',1)").run('old-'+i);
- assert.equal((await shopState('A')).owned.includes('home-nap-rabbit'),true);assert.equal((await shopState('A')).balance,0);
- }finally{db.close();rmSync(dir,{recursive:true,force:true});delete globalThis.__homeStore;}
+test('home care: authenticated ownership, daily cap, friendship privacy, stamps and reward entitlement', async () => {
+  const db = new DatabaseSync(':memory:'),
+    dir = mkdtempSync(join(tmpdir(), 'home-life-test-'));
+  try {
+    for (const f of readdirSync('drizzle')
+      .filter((x) => x.endsWith('.sql'))
+      .sort())
+      db.exec(readFileSync('drizzle/' + f, 'utf8'));
+    const prepare = (sql) => ({
+      bind(...args) {
+        return { run: () => ({ meta: { changes: db.prepare(sql).run(...args).changes } }) };
+      },
+    });
+    globalThis.__homeStore = {
+      run: async (sql, ...args) => ({ meta: { changes: db.prepare(sql).run(...args).changes } }),
+      one: async (sql, ...args) => db.prepare(sql).get(...args) || null,
+      all: async (sql, ...args) => db.prepare(sql).all(...args),
+      database: () => ({
+        prepare,
+        batch: async (qs) => {
+          db.exec('BEGIN');
+          try {
+            const r = qs.map((q) => q.run());
+            db.exec('COMMIT');
+            return r;
+          } catch (e) {
+            db.exec('ROLLBACK');
+            throw e;
+          }
+        },
+      }),
+    };
+    const save = (name, code) => {
+      const p = join(dir, name + '.mjs');
+      writeFileSync(p, code);
+      return pathToFileURL(p).href;
+    };
+    const store = save('store', 'export const {one,all,run,database}=globalThis.__homeStore;'),
+      account = save('account', "export const accountId=r=>r.headers.get('test-user');");
+    const compile = (file, name, maps = {}) => {
+      let s = ts.transpileModule(readFileSync(file, 'utf8'), {
+        compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
+      }).outputText;
+      for (const [key, url] of Object.entries(maps))
+        s = s.replaceAll("'" + key + "'", JSON.stringify(url));
+      return save(name, s);
+    };
+    const life = compile('lib/home-life.ts', 'life'),
+      furniture = compile('lib/furniture.ts', 'furniture');
+    const { GET, POST } = await import(
+      compile('app/api/home/life/route.ts', 'route', {
+        '@/lib/account': account,
+        '@/lib/store': store,
+        '@/lib/home-life': life,
+        '@/lib/furniture': furniture,
+      })
+    );
+    const { careDay, residentTarget } = await import(life);
+    assert.equal(careDay(Date.UTC(2026, 9, 17, 14, 59)), '2026-10-17');
+    assert.equal(careDay(Date.UTC(2026, 9, 17, 15, 0)), '2026-10-18');
+    for (const n of [-1, 0, 0.5, 1, 2])
+      assert.ok(residentTarget(n) >= 20 && residentTarget(n) <= 80);
+    db.exec(
+      "INSERT INTO profiles(id,name,avatar,created_at) VALUES('A','A','🐱',1),('B','B','🐰',1),('C','C','🐻',1); INSERT INTO friendships(id,requester,recipient,status,created_at,updated_at) VALUES('ab','A','B','accepted',1,1),('ac','A','C','pending',1,1)",
+    );
+    const req = (owner, body, query = '', origin = 'https://test.local') =>
+      new Request('https://test.local/api/home/life' + query, {
+        method: body ? 'POST' : 'GET',
+        headers: {
+          ...(owner ? { 'test-user': owner } : {}),
+          origin,
+          'content-type': 'application/json',
+        },
+        ...(body ? { body: JSON.stringify(body) } : {}),
+      });
+    assert.equal((await GET(req(null))).status, 401);
+    assert.equal((await POST(req('A', { action: 'pet' }, '', 'https://bad.test'))).status, 403);
+    assert.equal((await POST(req('A', { action: 'invalid' }))).status, 400);
+    await Promise.all(Array.from({ length: 12 }, () => POST(req('A', { action: 'pet' }))));
+    let state = await (await GET(req('A'))).json();
+    assert.equal(state.care.points, 1);
+    assert.deepEqual(state.care.done, ['pet']);
+    await POST(req('A', { action: 'snack' }));
+    await POST(req('A', { action: 'play' }));
+    assert.equal((await GET(req('A', null, '?friend=ac'))).status, 403);
+    assert.equal((await GET(req('C', null, '?friend=ab'))).status, 403);
+    assert.equal((await POST(req('A', { action: 'snack', friend: 'ab' }))).status, 403);
+    assert.equal(
+      (await POST(req('A', { action: 'visit', friend: 'ab', stamp: 'bad' }))).status,
+      400,
+    );
+    await Promise.all(
+      Array.from({ length: 5 }, () =>
+        POST(req('A', { action: 'visit', friend: 'ab', stamp: 'heart' })),
+      ),
+    );
+    state = await (await GET(req('A'))).json();
+    assert.equal(state.care.points, 4);
+    assert.equal(db.prepare('SELECT COUNT(*) n FROM home_visits').get().n, 1);
+    const viewed = await (await GET(req('A', null, '?friend=ab'))).json();
+    assert.equal(viewed.visiting.profile.name, 'B');
+    assert.equal(viewed.visiting.stamp, 'heart');
+    assert.equal(JSON.stringify(viewed).includes('account_id'), false);
+    const host = await (await GET(req('B'))).json();
+    assert.equal(host.visits[0].name, 'A');
+    assert.equal(host.care.points, 0, 'visiting does not award the owner');
+    db.exec("UPDATE friendships SET status='declined' WHERE id='ab'");
+    assert.equal((await GET(req('A', null, '?friend=ab'))).status, 403);
+    assert.equal((await (await GET(req('B'))).json()).visits.length, 0);
+    const skins = compile('lib/skins.ts', 'skins');
+    const { shopState } = await import(
+      compile('lib/shop.ts', 'shop', { './store': store, './skins': skins })
+    );
+    assert.equal((await shopState('A')).owned.includes('home-nap-rabbit'), false);
+    for (let i = 0; i < 8; i++)
+      db.prepare(
+        "INSERT INTO home_care(account_id,day,action,created_at) VALUES('A',?,'pet',1)",
+      ).run('old-' + i);
+    assert.equal((await shopState('A')).owned.includes('home-nap-rabbit'), true);
+    assert.equal((await shopState('A')).balance, 0);
+  } finally {
+    db.close();
+    rmSync(dir, { recursive: true, force: true });
+    delete globalThis.__homeStore;
+  }
 });

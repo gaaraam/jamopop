@@ -1,86 +1,688 @@
 /* Appearance is independent from game/session state. Semantic clue colors remain distinct. */
-.theme-switch{display:inline-flex!important;align-items:center;justify-content:center;gap:6px!important;flex:0 0 64px;width:64px;min-width:64px;height:36px;padding:0 8px!important;border:1px solid #ffffffb0;border-radius:11px;background:#ffffff65;color:#64758b;cursor:pointer}
-.theme-switch:focus-visible{outline:2px solid #8f9fe1;outline-offset:3px}
-.theme-switch-track{width:25px;height:15px;flex-shrink:0;border-radius:10px;background:#9da9bb66;position:relative;box-shadow:inset 0 1px 2px #0001}
-.theme-switch-track>span{position:absolute;top:3px;left:3px;width:9px;height:9px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0002;transition:transform .18s}
-.theme-switch[aria-checked=true] .theme-switch-track{background:#7eae99}
-.theme-switch[aria-checked=true] .theme-switch-track>span{transform:translateX(10px)}
-.signature-nav,.legal-nav-actions{display:flex;align-items:center;gap:10px}
-.entry-page>header>.theme-switch{margin-left:auto;margin-right:8px}
-.entry-page>header>.theme-switch+.account-trigger{margin-left:0}
-@media(max-width:730px){.nav-actions .theme-switch{width:46px;min-width:46px;height:30px;flex-basis:46px;padding:0 5px!important;gap:3px!important;border-radius:8px}.nav-actions .theme-switch>svg{width:12px;height:12px}.nav-actions .theme-switch-track{width:20px;height:13px}.nav-actions .theme-switch-track>span{width:7px;height:7px}.nav-actions .theme-switch[aria-checked=true] .theme-switch-track>span{transform:translateX(7px)}.polished-nav .nav-room{min-width:75px;max-width:110px}}
-@media(prefers-reduced-motion:reduce){.theme-switch-track>span{transition:none}}
+.theme-switch {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 6px !important;
+  flex: 0 0 64px;
+  width: 64px;
+  min-width: 64px;
+  height: 36px;
+  padding: 0 8px !important;
+  border: 1px solid #ffffffb0;
+  border-radius: 11px;
+  background: #ffffff65;
+  color: #64758b;
+  cursor: pointer;
+}
+.theme-switch:focus-visible {
+  outline: 2px solid #8f9fe1;
+  outline-offset: 3px;
+}
+.theme-switch-track {
+  width: 25px;
+  height: 15px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: #9da9bb66;
+  position: relative;
+  box-shadow: inset 0 1px 2px #0001;
+}
+.theme-switch-track > span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px #0002;
+  transition: transform 0.18s;
+}
+.theme-switch[aria-checked='true'] .theme-switch-track {
+  background: #7eae99;
+}
+.theme-switch[aria-checked='true'] .theme-switch-track > span {
+  transform: translateX(10px);
+}
+.signature-nav,
+.legal-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.entry-page > header > .theme-switch {
+  margin-left: auto;
+  margin-right: 8px;
+}
+.entry-page > header > .theme-switch + .account-trigger {
+  margin-left: 0;
+}
+@media (max-width: 730px) {
+  .nav-actions .theme-switch {
+    width: 46px;
+    min-width: 46px;
+    height: 30px;
+    flex-basis: 46px;
+    padding: 0 5px !important;
+    gap: 3px !important;
+    border-radius: 8px;
+  }
+  .nav-actions .theme-switch > svg {
+    width: 12px;
+    height: 12px;
+  }
+  .nav-actions .theme-switch-track {
+    width: 20px;
+    height: 13px;
+  }
+  .nav-actions .theme-switch-track > span {
+    width: 7px;
+    height: 7px;
+  }
+  .nav-actions .theme-switch[aria-checked='true'] .theme-switch-track > span {
+    transform: translateX(7px);
+  }
+  .polished-nav .nav-room {
+    min-width: 75px;
+    max-width: 110px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .theme-switch-track > span {
+    transition: none;
+  }
+}
 
-html:root[data-theme=dark]{color-scheme:dark;--background:#111722;--foreground:#e1e8f4;--card:#1c2635;--card-foreground:#e1e8f4;--popover:#1c2635;--popover-foreground:#e1e8f4;--primary:#e8c56a;--primary-foreground:#282519;--secondary:#273344;--secondary-foreground:#d8e3f4;--muted:#263243;--muted-foreground:#a2b2c9;--accent:#3a465b;--accent-foreground:#e1e8f4;--destructive:#ef9999;--border:#ffffff20;--input:#ffffff29;--ring:#a6b6ec;--good:#478f76;--near:#d3af50;--night-panel:linear-gradient(135deg,#233043db,#192332cf);--night-inner:linear-gradient(145deg,#ffffff09,#ffffff03);--night-line:#ffffff1c;--night-shadow:inset 0 1px 0 #ffffff0b,0 12px 36px #0000001c;--night-text:#e1e8f4;--night-muted:#a2b2c9}
-html:root[data-theme=dark] body{background:#111722;background-image:radial-gradient(ellipse at 8% 22%,#23435a55,transparent 47%),radial-gradient(ellipse at 90% 42%,#45335c44,transparent 48%);background-attachment:fixed;color:var(--night-text)}
-html:root[data-theme=dark] :is(.signature-page,.legal-page,.intro-loading){background:radial-gradient(ellipse at 20% 25%,#21463755,transparent 55%),radial-gradient(ellipse at 85% 65%,#44375c44,transparent 55%),#111722;color:var(--night-text)}
-html:root[data-theme=dark] :is(.game-panel,.room-members-card,.ranking-card,.lobby-room,.join-panel,.legal-document,.app-header.polished-nav,.entry-page>header,.room-chat){background:var(--night-panel);border-color:var(--night-line);box-shadow:var(--night-shadow);color:var(--night-text)}
-html:root[data-theme=dark] :is(.account-dialog,.settings-dialog,.rule-dialog,.review-dialog,.podium-dialog){background:linear-gradient(135deg,#243144f7,#192332f7)!important;border-color:var(--night-line)!important;box-shadow:inset 0 1px 0 #ffffff10,0 24px 80px #0006!important;color:var(--night-text)}
-html:root[data-theme=dark] :is([data-slot=dialog-overlay],[data-slot=alert-dialog-overlay]){background:#04091280}
-html:root[data-theme=dark] :is(.room-member,.room-member.is-winner,.round-controls,.lobby-toolbar,.lobby-empty,.account-profile,.account-stats>div,.account-empty,.my-room,.my-record,.settings-dialog form,.settings-roster,.rule-sample,.rules,.review-list article,.podium>div,.cosmetics-panel,.cosmetics-preview,.cosmetics-options button){background:var(--night-inner);border-color:var(--night-line);box-shadow:inset 0 1px 0 #ffffff08;color:var(--night-text)}
-html:root[data-theme=dark] :is(h1,h2,h3,[data-slot=dialog-title],[data-slot=alert-dialog-title],.lobby-room h2,.room-member.is-winner .room-member-name,.signature-console b,.account-stats b,.account-level strong){color:var(--night-text)}
-html:root[data-theme=dark] :is(.section-label,.text-btn,.icon-btn,.day-stamp,.member-count,.card-heading>span,.room-member-status,.room-member.is-winner .room-member-status.won,.room-member-name small,.membership-badge,.lobby-nav-label,.lobby-host,.lobby-note,.lobby-title p,.lobby-room-top>span:last-child,.lobby-presence,.presence,.panel-note,.empty-rank,.rank-number,.history-row small,.legend,.round-controls>span,.office-footer>span,.app-footer,.input-status,.chat-empty,.chat-meta,.chat-meta time,.chat-note,.chat-toggle-hint,.chat-compose>span,.chat-message>p.chat-deleted,.signature-console>span,.signature-legend,.signature-note,.legal-links,.legal-links>span,.legal-nav a,.legal-document header>span,.legal-document header p,.legal-document p,.legal-document li,.legal-document footer,.account-dialog p,.account-dialog small,.account-level span,.account-stats span,.settings-dialog form label,.rule-dialog p,.rules,.review-list article h3,[data-slot=dialog-description],[data-slot=alert-dialog-description]){color:var(--night-muted)}
-html:root[data-theme=dark] :is(.secondary-btn,.forfeit-btn,.difficulty button,.difficulty-select button,.account-trigger,.lobby-register,.lobby-filter,.office-footer button,.signature-nav button,.signature-console button,.theme-switch,[data-slot=dialog-close],[data-slot=alert-dialog-cancel],.settings-roster .text-btn,.chat-new){background:linear-gradient(140deg,#ffffff0d,#ffffff05);border-color:#ffffff24;box-shadow:inset 0 1px 0 #ffffff09;color:#c3d0e3}
-html:root[data-theme=dark] :is(.secondary-btn,.icon-btn,.theme-switch,.account-trigger,.lobby-filter,.signature-nav button,.signature-console button):hover{background:#ffffff14}
-html:root[data-theme=dark] :is(.nav-room,.nav-tools,.nav-room-icon,.nav-invite,.nav-exit){background:#ffffff08;border-color:var(--night-line);box-shadow:none;color:#c3d0e3}
-html:root[data-theme=dark] :is(.nav-room strong,.nav-room small,.nav-chevron,.nav-room-icon){color:#c3d0e3}
-html:root[data-theme=dark] :is(.day-stamp,.member-count,.card-heading>span,.room-member-status,.room-member-name small,.membership-badge,.lobby-title p,.lobby-room-top>span:last-child,.lobby-presence){background:#ffffff07;border-color:var(--night-line)}
-html:root[data-theme=dark] :is(.card-heading,.office-footer,.lobby-room-bottom,.join-existing,.legend,.rank-row,.settings-roster>div,.legal-document header,.legal-document footer){border-color:var(--night-line)}
-html:root[data-theme=dark] :is(.office-footer,.chat-toggle,.chat-note,.chat-compose){background:#ffffff04;border-color:var(--night-line);color:var(--night-muted)}
-html:root[data-theme=dark] :is(input,textarea,[data-slot=select-trigger],.lobby-search){background:#101924b8;border-color:#ffffff26;box-shadow:inset 0 1px 3px #0002;color:var(--night-text);caret-color:#f1d489}
-html:root[data-theme=dark] :is(input,textarea)::placeholder{color:#8c9cb2}
-html:root[data-theme=dark] .lobby-search input{background:transparent;border:0;box-shadow:none}
-html:root[data-theme=dark] :is(.primary,[data-slot=alert-dialog-action]){background:linear-gradient(125deg,#efd68a,#d7b455);color:#30291b;border-color:#f8e5a95c;box-shadow:inset 0 1px 0 #ffffff36,0 4px 12px #0002}
-html:root[data-theme=dark] .game-tabs{background:#10192480!important;border-color:var(--night-line)}
-html:root[data-theme=dark] .game-tabs button[data-state=active]{background:#354359!important;border-color:#ffffff26;color:var(--night-text);box-shadow:0 2px 7px #0002}
-html:root[data-theme=dark] .tile:not(.green):not(.yellow):not(.gray){background:linear-gradient(145deg,#354359a6,#2430449c);border-color:#ffffff29;box-shadow:inset 0 1px 0 #ffffff0d;color:var(--night-text)}
-html:root[data-theme=dark] .tile.filled:not(.green):not(.yellow):not(.gray){background:#344359!important;border-color:#94a8ca!important;box-shadow:0 0 0 3px #94a8ca12!important}
-html:root[data-theme=dark] .key{background:linear-gradient(145deg,#3a495f,#2a374b);border-color:#ffffff17;box-shadow:inset 0 1px 0 #ffffff0a,0 2px 3px #0002;color:#e0e9f6}
-html:root[data-theme=dark] :is(.tile.green,.keyboard .key.green,.mini-board i.green,.rule-sample .green,.review-guess .green,.account-guess .green){background:#478f76;border-color:#62aa90;color:#fff}
-html:root[data-theme=dark] :is(.tile.yellow,.keyboard .key.yellow,.mini-board i.yellow,.rule-sample .yellow,.review-guess .yellow,.account-guess .yellow){background:#d3af50;border-color:#e3c56f;color:#292519}
-html:root[data-theme=dark] :is(.tile.gray,.keyboard .key.gray,.mini-board i.gray,.rule-sample .gray,.review-guess .gray,.account-guess .gray){background:#465264;border-color:#536175;color:#d5deeb}
-html:root[data-theme=dark] .mini-board i:not(.green):not(.yellow):not(.gray){background:#ffffff0e}
-html:root[data-theme=dark] :is(.room-member-status.won,.membership-badge.linked,.lobby-presence.online,.lobby-filter.selected,.rank-row>span:last-child,.account-identity){background:#365b514f;border-color:#74b69c33;color:#a0d6bf}
-html:root[data-theme=dark] .account-identity b{color:#a0d6bf}
-html:root[data-theme=dark] :is(.member-chat-bubble,.account-link){background:#63553266;border-color:#a48e4f55;color:#ecda9d;box-shadow:none}
-html:root[data-theme=dark] .room-member.podium-card{--medal-light:#6b542333;--medal-text:#f0d386;background:radial-gradient(ellipse at 100% 0%,var(--medal-light),transparent 80%),var(--night-inner);border-color:#ffffff24;box-shadow:inset 0 1px 0 #ffffff0e}
-html:root[data-theme=dark] .room-member.podium-2{--medal-light:#53678444;--medal-text:#c7d7ee}
-html:root[data-theme=dark] .room-member.podium-3{--medal-light:#7a4e3a44;--medal-text:#e6b89c}
-html:root[data-theme=dark] .podium-badge{background:var(--medal-light);color:var(--medal-text);border-color:#ffffff29;box-shadow:none}
-html:root[data-theme=dark] .podium>div:first-child{background:#63553255}
-html:root[data-theme=dark] .chat-message>p{background:#34425899;border-color:#ffffff1c;color:#dce5f3;box-shadow:none}
-html:root[data-theme=dark] .chat-message.own>p{background:#334b6699;border-color:#ffffff20;color:#e2ecf9}
-html:root[data-theme=dark] .chat-message>p.chat-deleted{background:#ffffff04;border-color:#ffffff12}
-html:root[data-theme=dark] :is(.error,.danger,.chat-error){color:#f2aaaa}
-html:root[data-theme=dark] :is(.settings-roster .danger,.round-controls .danger,.chat-error){background:#61333344;border-color:#bb737344;color:#f2aaaa}
-html:root[data-theme=dark] .account-level{background:linear-gradient(130deg,#594b7a55,#31557855);border-color:var(--night-line);box-shadow:inset 0 1px 0 #ffffff0d}
-html:root[data-theme=dark] .account-level progress,html:root[data-theme=dark] .account-level progress::-webkit-progress-bar{background:#ffffff15}
-html:root[data-theme=dark] .avatar-picker button{background:#ffffff08;border-color:#ffffff16}
-html:root[data-theme=dark] :is(.avatar-picker button.selected,.cosmetics-options button.selected,.difficulty button.selected,.difficulty-select button.selected){background:#53678355;border-color:#9badd0;box-shadow:none}
-html:root[data-theme=dark] .account-signin>svg{background:#ffffff08;border-color:var(--night-line);color:#a5b8d3}
-html:root[data-theme=dark] .signature-halo{background:radial-gradient(ellipse,#7eae8a15,transparent 68%)}
-html:root[data-theme=dark] .signature-tile:not(.green):not(.yellow):not(.gray){background:linear-gradient(145deg,#3c514a99,#28363f66);border-color:#a2c4b52b;box-shadow:inset 0 1px 0 #ffffff17,0 4px 0 #080f174d;color:#dce9e1}
-html:root[data-theme=dark] .signature-tile.empty{background:linear-gradient(145deg,#354a412b,#27304333)}
-html:root[data-theme=dark] .signature-tile.green{background:linear-gradient(140deg,#65a98d,#387b62);border-color:#8ac4a866;box-shadow:inset 0 1px 0 #ffffff20,0 4px 0 #080f174d}
-html:root[data-theme=dark] .signature-tile.yellow{background:linear-gradient(140deg,#e5c574,#b5933d);border-color:#e3c87966;box-shadow:inset 0 1px 0 #ffffff20,0 4px 0 #080f174d;color:#302818}
-html:root[data-theme=dark] .signature-tile.gray{background:linear-gradient(140deg,#536171,#344151);border-color:#8795a344;box-shadow:inset 0 1px 0 #ffffff12,0 4px 0 #080f174d;color:#d2dce8}
-html:root[data-theme=dark] .signature-console{background:#ffffff08;border-color:var(--night-line);box-shadow:var(--night-shadow)}
-html:root[data-theme=dark] .signature-start{background:linear-gradient(135deg,#7ab99b,#569b7b);color:#101f19;border-color:#a5d7bd66;box-shadow:inset 0 1px 0 #ffffff30,0 10px 20px #0002}
-html:root[data-theme=dark] :is(.legal-document a,.legal-links a:first-child){color:#a0d6bf}
-html:root[data-theme=dark] :is(.legal-table th,.legal-table td){border-color:var(--night-line)}
-html:root[data-theme=dark] .legal-table th{background:#ffffff07}
-html:root[data-theme=dark] [data-sonner-toast]{background:#253246!important;color:#e1e8f4!important;border-color:#ffffff26!important}
-@media(prefers-reduced-transparency:reduce){html:root[data-theme=dark] :is(.game-panel,.room-members-card,.ranking-card,.lobby-room,.join-panel,.legal-document,.app-header.polished-nav,.entry-page>header,.room-chat,.account-dialog,.settings-dialog,.rule-dialog,.review-dialog,.podium-dialog){background:#1c2737!important;backdrop-filter:none}}
+html:root[data-theme='dark'] {
+  color-scheme: dark;
+  --background: #111722;
+  --foreground: #e1e8f4;
+  --card: #1c2635;
+  --card-foreground: #e1e8f4;
+  --popover: #1c2635;
+  --popover-foreground: #e1e8f4;
+  --primary: #e8c56a;
+  --primary-foreground: #282519;
+  --secondary: #273344;
+  --secondary-foreground: #d8e3f4;
+  --muted: #263243;
+  --muted-foreground: #a2b2c9;
+  --accent: #3a465b;
+  --accent-foreground: #e1e8f4;
+  --destructive: #ef9999;
+  --border: #ffffff20;
+  --input: #ffffff29;
+  --ring: #a6b6ec;
+  --good: #478f76;
+  --near: #d3af50;
+  --night-panel: linear-gradient(135deg, #233043db, #192332cf);
+  --night-inner: linear-gradient(145deg, #ffffff09, #ffffff03);
+  --night-line: #ffffff1c;
+  --night-shadow: inset 0 1px 0 #ffffff0b, 0 12px 36px #0000001c;
+  --night-text: #e1e8f4;
+  --night-muted: #a2b2c9;
+}
+html:root[data-theme='dark'] body {
+  background: #111722;
+  background-image:
+    radial-gradient(ellipse at 8% 22%, #23435a55, transparent 47%),
+    radial-gradient(ellipse at 90% 42%, #45335c44, transparent 48%);
+  background-attachment: fixed;
+  color: var(--night-text);
+}
+html:root[data-theme='dark'] :is(.signature-page, .legal-page, .intro-loading) {
+  background:
+    radial-gradient(ellipse at 20% 25%, #21463755, transparent 55%),
+    radial-gradient(ellipse at 85% 65%, #44375c44, transparent 55%), #111722;
+  color: var(--night-text);
+}
+html:root[data-theme='dark']
+  :is(
+    .game-panel,
+    .room-members-card,
+    .ranking-card,
+    .lobby-room,
+    .join-panel,
+    .legal-document,
+    .app-header.polished-nav,
+    .entry-page > header,
+    .room-chat
+  ) {
+  background: var(--night-panel);
+  border-color: var(--night-line);
+  box-shadow: var(--night-shadow);
+  color: var(--night-text);
+}
+html:root[data-theme='dark']
+  :is(.account-dialog, .settings-dialog, .rule-dialog, .review-dialog, .podium-dialog) {
+  background: linear-gradient(135deg, #243144f7, #192332f7) !important;
+  border-color: var(--night-line) !important;
+  box-shadow:
+    inset 0 1px 0 #ffffff10,
+    0 24px 80px #0006 !important;
+  color: var(--night-text);
+}
+html:root[data-theme='dark'] :is([data-slot='dialog-overlay'], [data-slot='alert-dialog-overlay']) {
+  background: #04091280;
+}
+html:root[data-theme='dark']
+  :is(
+    .room-member,
+    .room-member.is-winner,
+    .round-controls,
+    .lobby-toolbar,
+    .lobby-empty,
+    .account-profile,
+    .account-stats > div,
+    .account-empty,
+    .my-room,
+    .my-record,
+    .settings-dialog form,
+    .settings-roster,
+    .rule-sample,
+    .rules,
+    .review-list article,
+    .podium > div,
+    .cosmetics-panel,
+    .cosmetics-preview,
+    .cosmetics-options button
+  ) {
+  background: var(--night-inner);
+  border-color: var(--night-line);
+  box-shadow: inset 0 1px 0 #ffffff08;
+  color: var(--night-text);
+}
+html:root[data-theme='dark']
+  :is(
+    h1,
+    h2,
+    h3,
+    [data-slot='dialog-title'],
+    [data-slot='alert-dialog-title'],
+    .lobby-room h2,
+    .room-member.is-winner .room-member-name,
+    .signature-console b,
+    .account-stats b,
+    .account-level strong
+  ) {
+  color: var(--night-text);
+}
+html:root[data-theme='dark']
+  :is(
+    .section-label,
+    .text-btn,
+    .icon-btn,
+    .day-stamp,
+    .member-count,
+    .card-heading > span,
+    .room-member-status,
+    .room-member.is-winner .room-member-status.won,
+    .room-member-name small,
+    .membership-badge,
+    .lobby-nav-label,
+    .lobby-host,
+    .lobby-note,
+    .lobby-title p,
+    .lobby-room-top > span:last-child,
+    .lobby-presence,
+    .presence,
+    .panel-note,
+    .empty-rank,
+    .rank-number,
+    .history-row small,
+    .legend,
+    .round-controls > span,
+    .office-footer > span,
+    .app-footer,
+    .input-status,
+    .chat-empty,
+    .chat-meta,
+    .chat-meta time,
+    .chat-note,
+    .chat-toggle-hint,
+    .chat-compose > span,
+    .chat-message > p.chat-deleted,
+    .signature-console > span,
+    .signature-legend,
+    .signature-note,
+    .legal-links,
+    .legal-links > span,
+    .legal-nav a,
+    .legal-document header > span,
+    .legal-document header p,
+    .legal-document p,
+    .legal-document li,
+    .legal-document footer,
+    .account-dialog p,
+    .account-dialog small,
+    .account-level span,
+    .account-stats span,
+    .settings-dialog form label,
+    .rule-dialog p,
+    .rules,
+    .review-list article h3,
+    [data-slot='dialog-description'],
+    [data-slot='alert-dialog-description']
+  ) {
+  color: var(--night-muted);
+}
+html:root[data-theme='dark']
+  :is(
+    .secondary-btn,
+    .forfeit-btn,
+    .difficulty button,
+    .difficulty-select button,
+    .account-trigger,
+    .lobby-register,
+    .lobby-filter,
+    .office-footer button,
+    .signature-nav button,
+    .signature-console button,
+    .theme-switch,
+    [data-slot='dialog-close'],
+    [data-slot='alert-dialog-cancel'],
+    .settings-roster .text-btn,
+    .chat-new
+  ) {
+  background: linear-gradient(140deg, #ffffff0d, #ffffff05);
+  border-color: #ffffff24;
+  box-shadow: inset 0 1px 0 #ffffff09;
+  color: #c3d0e3;
+}
+html:root[data-theme='dark']
+  :is(
+    .secondary-btn,
+    .icon-btn,
+    .theme-switch,
+    .account-trigger,
+    .lobby-filter,
+    .signature-nav button,
+    .signature-console button
+  ):hover {
+  background: #ffffff14;
+}
+html:root[data-theme='dark'] :is(.nav-room, .nav-tools, .nav-room-icon, .nav-invite, .nav-exit) {
+  background: #ffffff08;
+  border-color: var(--night-line);
+  box-shadow: none;
+  color: #c3d0e3;
+}
+html:root[data-theme='dark'] :is(.nav-room strong, .nav-room small, .nav-chevron, .nav-room-icon) {
+  color: #c3d0e3;
+}
+html:root[data-theme='dark']
+  :is(
+    .day-stamp,
+    .member-count,
+    .card-heading > span,
+    .room-member-status,
+    .room-member-name small,
+    .membership-badge,
+    .lobby-title p,
+    .lobby-room-top > span:last-child,
+    .lobby-presence
+  ) {
+  background: #ffffff07;
+  border-color: var(--night-line);
+}
+html:root[data-theme='dark']
+  :is(
+    .card-heading,
+    .office-footer,
+    .lobby-room-bottom,
+    .join-existing,
+    .legend,
+    .rank-row,
+    .settings-roster > div,
+    .legal-document header,
+    .legal-document footer
+  ) {
+  border-color: var(--night-line);
+}
+html:root[data-theme='dark'] :is(.office-footer, .chat-toggle, .chat-note, .chat-compose) {
+  background: #ffffff04;
+  border-color: var(--night-line);
+  color: var(--night-muted);
+}
+html:root[data-theme='dark'] :is(input, textarea, [data-slot='select-trigger'], .lobby-search) {
+  background: #101924b8;
+  border-color: #ffffff26;
+  box-shadow: inset 0 1px 3px #0002;
+  color: var(--night-text);
+  caret-color: #f1d489;
+}
+html:root[data-theme='dark'] :is(input, textarea)::placeholder {
+  color: #8c9cb2;
+}
+html:root[data-theme='dark'] .lobby-search input {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+html:root[data-theme='dark'] :is(.primary, [data-slot='alert-dialog-action']) {
+  background: linear-gradient(125deg, #efd68a, #d7b455);
+  color: #30291b;
+  border-color: #f8e5a95c;
+  box-shadow:
+    inset 0 1px 0 #ffffff36,
+    0 4px 12px #0002;
+}
+html:root[data-theme='dark'] .game-tabs {
+  background: #10192480 !important;
+  border-color: var(--night-line);
+}
+html:root[data-theme='dark'] .game-tabs button[data-state='active'] {
+  background: #354359 !important;
+  border-color: #ffffff26;
+  color: var(--night-text);
+  box-shadow: 0 2px 7px #0002;
+}
+html:root[data-theme='dark'] .tile:not(.green):not(.yellow):not(.gray) {
+  background: linear-gradient(145deg, #354359a6, #2430449c);
+  border-color: #ffffff29;
+  box-shadow: inset 0 1px 0 #ffffff0d;
+  color: var(--night-text);
+}
+html:root[data-theme='dark'] .tile.filled:not(.green):not(.yellow):not(.gray) {
+  background: #344359 !important;
+  border-color: #94a8ca !important;
+  box-shadow: 0 0 0 3px #94a8ca12 !important;
+}
+html:root[data-theme='dark'] .key {
+  background: linear-gradient(145deg, #3a495f, #2a374b);
+  border-color: #ffffff17;
+  box-shadow:
+    inset 0 1px 0 #ffffff0a,
+    0 2px 3px #0002;
+  color: #e0e9f6;
+}
+html:root[data-theme='dark']
+  :is(
+    .tile.green,
+    .keyboard .key.green,
+    .mini-board i.green,
+    .rule-sample .green,
+    .review-guess .green,
+    .account-guess .green
+  ) {
+  background: #478f76;
+  border-color: #62aa90;
+  color: #fff;
+}
+html:root[data-theme='dark']
+  :is(
+    .tile.yellow,
+    .keyboard .key.yellow,
+    .mini-board i.yellow,
+    .rule-sample .yellow,
+    .review-guess .yellow,
+    .account-guess .yellow
+  ) {
+  background: #d3af50;
+  border-color: #e3c56f;
+  color: #292519;
+}
+html:root[data-theme='dark']
+  :is(
+    .tile.gray,
+    .keyboard .key.gray,
+    .mini-board i.gray,
+    .rule-sample .gray,
+    .review-guess .gray,
+    .account-guess .gray
+  ) {
+  background: #465264;
+  border-color: #536175;
+  color: #d5deeb;
+}
+html:root[data-theme='dark'] .mini-board i:not(.green):not(.yellow):not(.gray) {
+  background: #ffffff0e;
+}
+html:root[data-theme='dark']
+  :is(
+    .room-member-status.won,
+    .membership-badge.linked,
+    .lobby-presence.online,
+    .lobby-filter.selected,
+    .rank-row > span:last-child,
+    .account-identity
+  ) {
+  background: #365b514f;
+  border-color: #74b69c33;
+  color: #a0d6bf;
+}
+html:root[data-theme='dark'] .account-identity b {
+  color: #a0d6bf;
+}
+html:root[data-theme='dark'] :is(.member-chat-bubble, .account-link) {
+  background: #63553266;
+  border-color: #a48e4f55;
+  color: #ecda9d;
+  box-shadow: none;
+}
+html:root[data-theme='dark'] .room-member.podium-card {
+  --medal-light: #6b542333;
+  --medal-text: #f0d386;
+  background:
+    radial-gradient(ellipse at 100% 0%, var(--medal-light), transparent 80%), var(--night-inner);
+  border-color: #ffffff24;
+  box-shadow: inset 0 1px 0 #ffffff0e;
+}
+html:root[data-theme='dark'] .room-member.podium-2 {
+  --medal-light: #53678444;
+  --medal-text: #c7d7ee;
+}
+html:root[data-theme='dark'] .room-member.podium-3 {
+  --medal-light: #7a4e3a44;
+  --medal-text: #e6b89c;
+}
+html:root[data-theme='dark'] .podium-badge {
+  background: var(--medal-light);
+  color: var(--medal-text);
+  border-color: #ffffff29;
+  box-shadow: none;
+}
+html:root[data-theme='dark'] .podium > div:first-child {
+  background: #63553255;
+}
+html:root[data-theme='dark'] .chat-message > p {
+  background: #34425899;
+  border-color: #ffffff1c;
+  color: #dce5f3;
+  box-shadow: none;
+}
+html:root[data-theme='dark'] .chat-message.own > p {
+  background: #334b6699;
+  border-color: #ffffff20;
+  color: #e2ecf9;
+}
+html:root[data-theme='dark'] .chat-message > p.chat-deleted {
+  background: #ffffff04;
+  border-color: #ffffff12;
+}
+html:root[data-theme='dark'] :is(.error, .danger, .chat-error) {
+  color: #f2aaaa;
+}
+html:root[data-theme='dark'] :is(.settings-roster .danger, .round-controls .danger, .chat-error) {
+  background: #61333344;
+  border-color: #bb737344;
+  color: #f2aaaa;
+}
+html:root[data-theme='dark'] .account-level {
+  background: linear-gradient(130deg, #594b7a55, #31557855);
+  border-color: var(--night-line);
+  box-shadow: inset 0 1px 0 #ffffff0d;
+}
+html:root[data-theme='dark'] .account-level progress,
+html:root[data-theme='dark'] .account-level progress::-webkit-progress-bar {
+  background: #ffffff15;
+}
+html:root[data-theme='dark'] .avatar-picker button {
+  background: #ffffff08;
+  border-color: #ffffff16;
+}
+html:root[data-theme='dark']
+  :is(
+    .avatar-picker button.selected,
+    .cosmetics-options button.selected,
+    .difficulty button.selected,
+    .difficulty-select button.selected
+  ) {
+  background: #53678355;
+  border-color: #9badd0;
+  box-shadow: none;
+}
+html:root[data-theme='dark'] .account-signin > svg {
+  background: #ffffff08;
+  border-color: var(--night-line);
+  color: #a5b8d3;
+}
+html:root[data-theme='dark'] .signature-halo {
+  background: radial-gradient(ellipse, #7eae8a15, transparent 68%);
+}
+html:root[data-theme='dark'] .signature-tile:not(.green):not(.yellow):not(.gray) {
+  background: linear-gradient(145deg, #3c514a99, #28363f66);
+  border-color: #a2c4b52b;
+  box-shadow:
+    inset 0 1px 0 #ffffff17,
+    0 4px 0 #080f174d;
+  color: #dce9e1;
+}
+html:root[data-theme='dark'] .signature-tile.empty {
+  background: linear-gradient(145deg, #354a412b, #27304333);
+}
+html:root[data-theme='dark'] .signature-tile.green {
+  background: linear-gradient(140deg, #65a98d, #387b62);
+  border-color: #8ac4a866;
+  box-shadow:
+    inset 0 1px 0 #ffffff20,
+    0 4px 0 #080f174d;
+}
+html:root[data-theme='dark'] .signature-tile.yellow {
+  background: linear-gradient(140deg, #e5c574, #b5933d);
+  border-color: #e3c87966;
+  box-shadow:
+    inset 0 1px 0 #ffffff20,
+    0 4px 0 #080f174d;
+  color: #302818;
+}
+html:root[data-theme='dark'] .signature-tile.gray {
+  background: linear-gradient(140deg, #536171, #344151);
+  border-color: #8795a344;
+  box-shadow:
+    inset 0 1px 0 #ffffff12,
+    0 4px 0 #080f174d;
+  color: #d2dce8;
+}
+html:root[data-theme='dark'] .signature-console {
+  background: #ffffff08;
+  border-color: var(--night-line);
+  box-shadow: var(--night-shadow);
+}
+html:root[data-theme='dark'] .signature-start {
+  background: linear-gradient(135deg, #7ab99b, #569b7b);
+  color: #101f19;
+  border-color: #a5d7bd66;
+  box-shadow:
+    inset 0 1px 0 #ffffff30,
+    0 10px 20px #0002;
+}
+html:root[data-theme='dark'] :is(.legal-document a, .legal-links a:first-child) {
+  color: #a0d6bf;
+}
+html:root[data-theme='dark'] :is(.legal-table th, .legal-table td) {
+  border-color: var(--night-line);
+}
+html:root[data-theme='dark'] .legal-table th {
+  background: #ffffff07;
+}
+html:root[data-theme='dark'] [data-sonner-toast] {
+  background: #253246 !important;
+  color: #e1e8f4 !important;
+  border-color: #ffffff26 !important;
+}
+@media (prefers-reduced-transparency: reduce) {
+  html:root[data-theme='dark']
+    :is(
+      .game-panel,
+      .room-members-card,
+      .ranking-card,
+      .lobby-room,
+      .join-panel,
+      .legal-document,
+      .app-header.polished-nav,
+      .entry-page > header,
+      .room-chat,
+      .account-dialog,
+      .settings-dialog,
+      .rule-dialog,
+      .review-dialog,
+      .podium-dialog
+    ) {
+    background: #1c2737 !important;
+    backdrop-filter: none;
+  }
+}
 
-html:root[data-theme=dark] .lobby-error{background:#61333344;border-color:#bb737344;color:#f2aaaa}
+html:root[data-theme='dark'] .lobby-error {
+  background: #61333344;
+  border-color: #bb737344;
+  color: #f2aaaa;
+}
 /* Keep earned nickname colors readable on dark glass, including podium cards. */
-html:root[data-theme=dark] :is(.glass .room-member .room-member-name.name-color-default,.name-color-default){color:#e1e8f4}
-html:root[data-theme=dark] :is(.glass .room-member .room-member-name.name-color-blue,.name-color-blue){color:#90bdf0}
-html:root[data-theme=dark] :is(.glass .room-member .room-member-name.name-color-mint,.name-color-mint){color:#80d3ba}
-html:root[data-theme=dark] :is(.glass .room-member .room-member-name.name-color-rose,.name-color-rose){color:#efa1be}
-html:root[data-theme=dark] :is(.glass .room-member .room-member-name.name-color-violet,.name-color-violet){color:#c4a4ef}
-html:root[data-theme=dark] :is(.glass .room-member .room-member-name.name-color-gold,.name-color-gold){color:#efd183}
-html:root[data-theme=dark] .chat-meta strong{color:#c3d0e3}
-html:root[data-theme=dark] .cosmetics-options button[aria-pressed=true]{background:#53678355;border-color:#9badd0}
-html:root[data-theme=dark] :is(.gray,.signature-legend .miss){background:#465264}
-@media(max-width:730px){.app-header.polished-nav .nav-room{min-width:0;max-width:100%;width:100%;gap:3px;padding:7px}.polished-nav .nav-room>span:nth-child(2){min-width:0}.polished-nav .nav-room strong{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.polished-nav .nav-chevron{display:none}}
+html:root[data-theme='dark']
+  :is(.glass .room-member .room-member-name.name-color-default, .name-color-default) {
+  color: #e1e8f4;
+}
+html:root[data-theme='dark']
+  :is(.glass .room-member .room-member-name.name-color-blue, .name-color-blue) {
+  color: #90bdf0;
+}
+html:root[data-theme='dark']
+  :is(.glass .room-member .room-member-name.name-color-mint, .name-color-mint) {
+  color: #80d3ba;
+}
+html:root[data-theme='dark']
+  :is(.glass .room-member .room-member-name.name-color-rose, .name-color-rose) {
+  color: #efa1be;
+}
+html:root[data-theme='dark']
+  :is(.glass .room-member .room-member-name.name-color-violet, .name-color-violet) {
+  color: #c4a4ef;
+}
+html:root[data-theme='dark']
+  :is(.glass .room-member .room-member-name.name-color-gold, .name-color-gold) {
+  color: #efd183;
+}
+html:root[data-theme='dark'] .chat-meta strong {
+  color: #c3d0e3;
+}
+html:root[data-theme='dark'] .cosmetics-options button[aria-pressed='true'] {
+  background: #53678355;
+  border-color: #9badd0;
+}
+html:root[data-theme='dark'] :is(.gray, .signature-legend .miss) {
+  background: #465264;
+}
+@media (max-width: 730px) {
+  .app-header.polished-nav .nav-room {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    gap: 3px;
+    padding: 7px;
+  }
+  .polished-nav .nav-room > span:nth-child(2) {
+    min-width: 0;
+  }
+  .polished-nav .nav-room strong {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .polished-nav .nav-chevron {
+    display: none;
+  }
+}

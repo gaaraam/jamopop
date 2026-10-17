@@ -1,34 +1,249 @@
 /* Overlay speech without changing the card or pushing neighboring players. */
-html:root .app .room-members-card,html:root .app .room-members,html:root .app .room-member,html:root .app .room-member-heading{overflow:visible!important}
-html:root .app .room-member{position:relative!important}
-html:root .app .room-member:has(.member-chat-bubble){z-index:6}
-html:root .app .room-member:has(.member-chat-bubble:hover),html:root .app .room-member:has(.member-chat-bubble:focus-visible){z-index:10}
-html:root .app .room-member-heading .member-speech-slot{display:block!important;position:absolute!important;left:8px!important;right:8px!important;top:0!important;height:0!important;min-height:0!important;pointer-events:none!important}
-html:root .app .member-speech-slot .member-chat-bubble{position:absolute!important;bottom:10px!important;left:0!important;right:auto!important;display:block!important;width:max-content!important;max-width:100%!important;max-height:none!important;height:auto!important;margin:0!important;padding:10px 13px!important;border:1px solid #dfcc7f!important;border-radius:14px!important;background:#fff5c9!important;color:#493d20!important;box-shadow:0 5px 16px #3d331c25!important;text-align:left!important;font-size:14px!important;font-weight:500!important;line-height:20px!important;white-space:normal!important;pointer-events:auto!important;cursor:pointer!important;animation:speech-arrive .18s ease-out!important;overflow:visible!important;transform:none!important;backdrop-filter:none!important}
-html:root .app .member-speech-slot .member-chat-bubble>span{display:-webkit-box!important;-webkit-box-orient:vertical!important;-webkit-line-clamp:3!important;max-height:60px!important;line-height:20px!important;overflow:hidden!important;overflow-wrap:anywhere!important;white-space:pre-wrap!important}
-html:root .app .member-chat-bubble:after{content:''!important;position:absolute!important;left:18px!important;bottom:-6px!important;width:10px!important;height:10px!important;transform:rotate(45deg)!important;background:inherit!important;border-right:1px solid #dfcc7f!important;border-bottom:1px solid #dfcc7f!important}
-html:root .app .member-chat-bubble:focus-visible{outline:2px solid #8b6b18!important;outline-offset:3px!important}
-html:root[data-theme=dark] .app .member-speech-slot .member-chat-bubble{background:#f0d88e!important;color:#302819!important;border-color:#d5b65d!important}
-@keyframes speech-arrive{from{opacity:0;translate:0 5px}to{opacity:1;translate:0 0}}
-@media(prefers-reduced-motion:reduce){html:root .app .member-speech-slot .member-chat-bubble{animation:none!important}}
-@media(max-width:900px) and (hover:hover) and (pointer:fine){
-html:root .app.app.app.app .room-member-heading .member-speech-slot{left:4px!important;right:4px!important}
-html:root .app.app.app.app .member-speech-slot .member-chat-bubble{bottom:4px!important;left:auto!important;right:0!important;max-width:min(280px,100%)!important;border-radius:0!important;background:#ffffd8!important;border:1px solid #89896a!important;color:#333!important;box-shadow:3px 3px 0 #0002!important;font-size:13px!important;padding:8px 10px!important;animation:none!important}
-html:root .app.app.app.app .member-chat-bubble:after{left:auto!important;right:16px!important;border-color:#89896a!important}
+html:root .app .room-members-card,
+html:root .app .room-members,
+html:root .app .room-member,
+html:root .app .room-member-heading {
+  overflow: visible !important;
 }
-html:root .app .room-member-heading .member-speech-slot{overflow:visible!important;grid-area:auto!important;bottom:auto!important;transform:none!important}
-@media(min-width:901px){html:root .app .member-speech-slot .member-chat-bubble{max-width:240px!important}}
-@media(max-width:900px) and (hover:hover) and (pointer:fine){html:root .app.app.app.app .room-member-heading .member-speech-slot{display:block!important;overflow:visible!important}}
-html:root .app.app.app.app .room-members-card,html:root .app.app.app.app .room-members,html:root .app.app.app.app .room-member,html:root .app.app.app.app .room-member-heading{overflow:visible!important}
-@media(max-width:900px) and (hover:hover) and (pointer:fine){html:root .app.app.app.app .member-speech-slot .member-chat-bubble{left:0!important;right:auto!important}html:root .app.app.app.app .member-chat-bubble:after{left:16px!important;right:auto!important}}
-.chat-inquiry-notice{padding:10px 14px;margin:0;font-size:12px;line-height:1.6;background:#e5f2e7;color:#365b45;border-top:1px solid #bcd7c4}.chat-inquiry-notice a{text-decoration:underline;font-weight:700}html[data-theme=dark] .chat-inquiry-notice{background:#233e32;color:#c4e3cc;border-color:#4c6c58}
+html:root .app .room-member {
+  position: relative !important;
+}
+html:root .app .room-member:has(.member-chat-bubble) {
+  z-index: 6;
+}
+html:root .app .room-member:has(.member-chat-bubble:hover),
+html:root .app .room-member:has(.member-chat-bubble:focus-visible) {
+  z-index: 10;
+}
+html:root .app .room-member-heading .member-speech-slot {
+  display: block !important;
+  position: absolute !important;
+  left: 8px !important;
+  right: 8px !important;
+  top: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  pointer-events: none !important;
+}
+html:root .app .member-speech-slot .member-chat-bubble {
+  position: absolute !important;
+  bottom: 10px !important;
+  left: 0 !important;
+  right: auto !important;
+  display: block !important;
+  width: max-content !important;
+  max-width: 100% !important;
+  max-height: none !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 10px 13px !important;
+  border: 1px solid #dfcc7f !important;
+  border-radius: 14px !important;
+  background: #fff5c9 !important;
+  color: #493d20 !important;
+  box-shadow: 0 5px 16px #3d331c25 !important;
+  text-align: left !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 20px !important;
+  white-space: normal !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  animation: speech-arrive 0.18s ease-out !important;
+  overflow: visible !important;
+  transform: none !important;
+  backdrop-filter: none !important;
+}
+html:root .app .member-speech-slot .member-chat-bubble > span {
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 3 !important;
+  max-height: 60px !important;
+  line-height: 20px !important;
+  overflow: hidden !important;
+  overflow-wrap: anywhere !important;
+  white-space: pre-wrap !important;
+}
+html:root .app .member-chat-bubble:after {
+  content: '' !important;
+  position: absolute !important;
+  left: 18px !important;
+  bottom: -6px !important;
+  width: 10px !important;
+  height: 10px !important;
+  transform: rotate(45deg) !important;
+  background: inherit !important;
+  border-right: 1px solid #dfcc7f !important;
+  border-bottom: 1px solid #dfcc7f !important;
+}
+html:root .app .member-chat-bubble:focus-visible {
+  outline: 2px solid #8b6b18 !important;
+  outline-offset: 3px !important;
+}
+html:root[data-theme='dark'] .app .member-speech-slot .member-chat-bubble {
+  background: #f0d88e !important;
+  color: #302819 !important;
+  border-color: #d5b65d !important;
+}
+@keyframes speech-arrive {
+  from {
+    opacity: 0;
+    translate: 0 5px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html:root .app .member-speech-slot .member-chat-bubble {
+    animation: none !important;
+  }
+}
+@media (max-width: 900px) and (hover: hover) and (pointer: fine) {
+  html:root .app.app.app.app .room-member-heading .member-speech-slot {
+    left: 4px !important;
+    right: 4px !important;
+  }
+  html:root .app.app.app.app .member-speech-slot .member-chat-bubble {
+    bottom: 4px !important;
+    left: auto !important;
+    right: 0 !important;
+    max-width: min(280px, 100%) !important;
+    border-radius: 0 !important;
+    background: #ffffd8 !important;
+    border: 1px solid #89896a !important;
+    color: #333 !important;
+    box-shadow: 3px 3px 0 #0002 !important;
+    font-size: 13px !important;
+    padding: 8px 10px !important;
+    animation: none !important;
+  }
+  html:root .app.app.app.app .member-chat-bubble:after {
+    left: auto !important;
+    right: 16px !important;
+    border-color: #89896a !important;
+  }
+}
+html:root .app .room-member-heading .member-speech-slot {
+  overflow: visible !important;
+  grid-area: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+}
+@media (min-width: 901px) {
+  html:root .app .member-speech-slot .member-chat-bubble {
+    max-width: 240px !important;
+  }
+}
+@media (max-width: 900px) and (hover: hover) and (pointer: fine) {
+  html:root .app.app.app.app .room-member-heading .member-speech-slot {
+    display: block !important;
+    overflow: visible !important;
+  }
+}
+html:root .app.app.app.app .room-members-card,
+html:root .app.app.app.app .room-members,
+html:root .app.app.app.app .room-member,
+html:root .app.app.app.app .room-member-heading {
+  overflow: visible !important;
+}
+@media (max-width: 900px) and (hover: hover) and (pointer: fine) {
+  html:root .app.app.app.app .member-speech-slot .member-chat-bubble {
+    left: 0 !important;
+    right: auto !important;
+  }
+  html:root .app.app.app.app .member-chat-bubble:after {
+    left: 16px !important;
+    right: auto !important;
+  }
+}
+.chat-inquiry-notice {
+  padding: 10px 14px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  background: #e5f2e7;
+  color: #365b45;
+  border-top: 1px solid #bcd7c4;
+}
+.chat-inquiry-notice a {
+  text-decoration: underline;
+  font-weight: 700;
+}
+html[data-theme='dark'] .chat-inquiry-notice {
+  background: #233e32;
+  color: #c4e3cc;
+  border-color: #4c6c58;
+}
 /* Private inquiry mode is visibly distinct before anything is sent. */
-.room-chat .chat-compose.is-inquiry{background:linear-gradient(135deg,#eee8ffb8,#e7efffb3);border-top:1px solid #a798d6}
-.room-chat .chat-compose.is-inquiry textarea{background:#f8f5ff;color:#65419c;border:1px solid #a98bda;box-shadow:0 0 0 3px #9873ca16;caret-color:#7549b1}
-.room-chat .chat-compose.is-inquiry .primary{background:linear-gradient(135deg,#8660ba,#69489d);border-color:#a58ac9;color:#fff;box-shadow:inset 0 1px 0 #ffffff40}
-.chat-inquiry-label{display:inline;font-size:11px;white-space:nowrap}.room-chat .chat-compose.is-inquiry>span{color:#72529e;font-weight:650}
-html[data-theme=dark] .room-chat .chat-compose.is-inquiry{background:linear-gradient(135deg,#372a4c,#26334a);border-color:#796197}
-html[data-theme=dark] .room-chat .chat-compose.is-inquiry textarea{background:#2f2541;color:#e3caff;border-color:#9d7abb}
-html[data-theme=dark] .room-chat .chat-compose.is-inquiry>span{color:#d7b8f2}
-@media(max-width:900px) and (hover:hover) and (pointer:fine){.app .room-chat .chat-compose.is-inquiry textarea{background:#f0e9ff!important;color:#65419c!important;border-color:#a98bda!important}.app .room-chat .chat-compose.is-inquiry .primary{background:#7751a8!important;color:#fff!important}.app .room-chat .chat-inquiry-label{display:inline!important}}
-@media(max-width:900px) and (hover:hover) and (pointer:fine){.app.app.app.app.app .chat-compose.is-inquiry{grid-template-columns:minmax(0,1fr) 76px!important;background:#eee8ff!important}.app.app.app.app.app .chat-compose.is-inquiry textarea{background:#f0e9ff!important;color:#65419c!important}.app.app.app.app.app .chat-compose.is-inquiry button{background:#7751a8!important;color:#fff!important}.app.app.app.app.app .chat-compose.is-inquiry>span{background:#eee8ff!important;color:#65419c!important}}
+.room-chat .chat-compose.is-inquiry {
+  background: linear-gradient(135deg, #eee8ffb8, #e7efffb3);
+  border-top: 1px solid #a798d6;
+}
+.room-chat .chat-compose.is-inquiry textarea {
+  background: #f8f5ff;
+  color: #65419c;
+  border: 1px solid #a98bda;
+  box-shadow: 0 0 0 3px #9873ca16;
+  caret-color: #7549b1;
+}
+.room-chat .chat-compose.is-inquiry .primary {
+  background: linear-gradient(135deg, #8660ba, #69489d);
+  border-color: #a58ac9;
+  color: #fff;
+  box-shadow: inset 0 1px 0 #ffffff40;
+}
+.chat-inquiry-label {
+  display: inline;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.room-chat .chat-compose.is-inquiry > span {
+  color: #72529e;
+  font-weight: 650;
+}
+html[data-theme='dark'] .room-chat .chat-compose.is-inquiry {
+  background: linear-gradient(135deg, #372a4c, #26334a);
+  border-color: #796197;
+}
+html[data-theme='dark'] .room-chat .chat-compose.is-inquiry textarea {
+  background: #2f2541;
+  color: #e3caff;
+  border-color: #9d7abb;
+}
+html[data-theme='dark'] .room-chat .chat-compose.is-inquiry > span {
+  color: #d7b8f2;
+}
+@media (max-width: 900px) and (hover: hover) and (pointer: fine) {
+  .app .room-chat .chat-compose.is-inquiry textarea {
+    background: #f0e9ff !important;
+    color: #65419c !important;
+    border-color: #a98bda !important;
+  }
+  .app .room-chat .chat-compose.is-inquiry .primary {
+    background: #7751a8 !important;
+    color: #fff !important;
+  }
+  .app .room-chat .chat-inquiry-label {
+    display: inline !important;
+  }
+}
+@media (max-width: 900px) and (hover: hover) and (pointer: fine) {
+  .app.app.app.app.app .chat-compose.is-inquiry {
+    grid-template-columns: minmax(0, 1fr) 76px !important;
+    background: #eee8ff !important;
+  }
+  .app.app.app.app.app .chat-compose.is-inquiry textarea {
+    background: #f0e9ff !important;
+    color: #65419c !important;
+  }
+  .app.app.app.app.app .chat-compose.is-inquiry button {
+    background: #7751a8 !important;
+    color: #fff !important;
+  }
+  .app.app.app.app.app .chat-compose.is-inquiry > span {
+    background: #eee8ff !important;
+    color: #65419c !important;
+  }
+}
