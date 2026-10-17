@@ -1,3 +1,5 @@
+import {SafetyNotice} from '@/components/safety/settings';
+import './safety.css';
 import {FriendInvitations} from '@/components/game/friend-invitations';
 import type { Metadata } from "next";
 import "./globals.css";
@@ -36,7 +38,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body className="antialiased"><AppearanceProvider><Announcement/><FriendInvitations/>{children}<LegalLinks/></AppearanceProvider></body>
+      <body className="antialiased"><AppearanceProvider><Announcement/><SafetyNotice/><FriendInvitations/>{children}<LegalLinks/></AppearanceProvider></body>
     </html>
   );
 }
