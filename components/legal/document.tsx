@@ -50,6 +50,7 @@ export function LegalLinks() {
       <a href="/terms" target="_blank" rel="noopener noreferrer">
         이용약관
       </a>
+      <a href="/how-to-play">게임 방법</a>
       <a href="/support">문의하기</a>
       <span>운영 이가람 · 최반석</span>
     </nav>

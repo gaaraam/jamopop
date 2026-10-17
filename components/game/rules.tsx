@@ -71,6 +71,7 @@ export function Rules({
             입력 사전 출처·이용 조건
           </a>
         </details>
+        <a href="/how-to-play">예제로 보는 게임 방법 →</a>
       </DialogContent>
     </Dialog>
   );

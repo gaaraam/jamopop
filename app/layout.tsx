@@ -25,7 +25,8 @@ import { LegalLinks } from '@/components/legal/document';
 
 export const metadata: Metadata = {
   title: '자음모음팝',
-  description: '자음모음팝 — 동료들과 함께 푸는 한글 단어 게임.',
+  description:
+    '자모와 색깔 단서로 정답을 찾는 한글 단어 추리 게임. 로그인 없이 오늘의 단어를 풀거나 친구들과 같은 방에서 즐기세요.',
   icons: {
     icon: '/favicon.svg',
     shortcut: '/favicon.svg',

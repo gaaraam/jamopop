@@ -60,7 +60,7 @@ export function Intro({ onStart, onHelp }: { onStart: () => void; onHelp: () => 
     <main
       className={`signature-page kongal-intro first-play ${playing ? 'is-learning refined glass' : ''}`}
     >
-      <h1 className="sr-only">자음모음팝</h1>
+      <h1 className="sr-only">자음모음팝 · 한글 단어 추리 게임</h1>
       <header className="signature-nav">
         <ThemeSwitch />
         <button onClick={onHelp} aria-label="게임 방법">
