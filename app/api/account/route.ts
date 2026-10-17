@@ -86,7 +86,7 @@ export async function GET(req: Request) {
       nextOffset: rows.length > 20 ? offset + 20 : null,
     });
   } catch (e) {
-    console.error('account read failed', e);
+    console.error('account read failed');
     return reply({ error: '내 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.' }, 503);
   }
 }
@@ -168,7 +168,7 @@ export async function POST(req: Request) {
     }
     return GET(req);
   } catch (e) {
-    console.error('account update failed', e);
+    console.error('account update failed');
     return reply({ error: '저장하지 못했어요. 다시 시도해 주세요.' }, 503);
   }
 }

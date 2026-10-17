@@ -60,7 +60,7 @@ export async function GET(req: Request) {
     const play = await one('SELECT * FROM daily_plays WHERE owner=? AND day=?', who.owner, p.day);
     return reply(view(p, play, who.signedIn), 200, who.cookie);
   } catch (e) {
-    console.error('daily read', e);
+    console.error('daily read');
     return reply({ error: '오늘의 단어를 불러오지 못했어요. 다시 시도해 주세요.' }, 503);
   }
 }
@@ -117,7 +117,7 @@ export async function POST(req: Request) {
       return reply({ error: '문제가 바뀌었거나 다른 창에서 제출했어요. 기록을 갱신합니다.' }, 409);
     return reply(view(p, { guesses: JSON.stringify(guesses), status }, who.signedIn));
   } catch (e) {
-    console.error('daily submit', e);
+    console.error('daily submit');
     return reply({ error: '저장하지 못했어요. 다시 연결해 기록을 확인해 주세요.' }, 503);
   }
 }

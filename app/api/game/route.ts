@@ -88,7 +88,9 @@ async function state(req: Request, roomId: string, mode: string) {
       now - PRESENCE_INTERVAL,
     );
   }
-  if (mode === 'daily' && r.ends_at) await expirePlays(r, now);
+  // Only item attacks can shorten an individual deadline before the shared deadline.
+  if (mode === 'daily' && r.ends_at && (r.variant === 'items' || now >= r.ends_at))
+    await expirePlays(r, now);
   const [p, live] = await Promise.all([
     one('SELECT * FROM plays WHERE round_id=? AND member_id=?', r.id, m.id),
     liveInfo(room, m.id, now),

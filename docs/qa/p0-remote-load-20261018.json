@@ -1,0 +1,30 @@
+{
+  "environment": "remote-protected-synthetic",
+  "results": [
+    {
+      "concurrency": 100,
+      "rooms": 10,
+      "snapshot": {
+        "requests": 100,
+        "p50Ms": 5665,
+        "p95Ms": 5778
+      },
+      "submission": {
+        "requests": 100,
+        "p50Ms": 2567,
+        "p95Ms": 2743
+      },
+      "duplicate": {
+        "requests": 100,
+        "p50Ms": 2062,
+        "p95Ms": 2229
+      },
+      "restore": {
+        "requests": 100,
+        "p50Ms": 5190,
+        "p95Ms": 5232
+      },
+      "verified": "one persisted guess per participant"
+    }
+  ]
+}

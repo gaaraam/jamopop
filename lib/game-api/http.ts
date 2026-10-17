@@ -18,7 +18,7 @@ export function reply(data: any, status = 200, token?: string, req?: Request) {
 }
 export function failure(e: unknown) {
   if (e instanceof UserError) return reply({ error: e.message }, e.status);
-  console.error('game request failed', e);
+  console.error('game request failed');
   return reply(
     { error: '잠시 연결이 원활하지 않아요. 입력은 그대로 두고 다시 시도해 주세요.' },
     503,

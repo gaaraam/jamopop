@@ -57,7 +57,7 @@ export async function GET(req: Request) {
       who.cookie,
     );
   } catch (e) {
-    console.error('solo read', e);
+    console.error('solo read');
     return reply({ error: '도전을 불러오지 못했어요. 다시 시도해 주세요.' }, 503);
   }
 }
@@ -131,7 +131,7 @@ export async function POST(req: Request) {
     // Older clients still receive the catalog until they explicitly opt out.
     return reply(view(state, who.signedIn, req.headers.get('X-Solo-Catalog') !== 'omit'));
   } catch (e) {
-    console.error('solo update', e);
+    console.error('solo update');
     return reply({ error: '저장하지 못했어요. 기록을 확인한 뒤 다시 시도해 주세요.' }, 503);
   }
 }

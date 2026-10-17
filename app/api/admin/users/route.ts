@@ -173,7 +173,7 @@ export async function GET(req: Request) {
       nextOffset: filtered.length > offset + 50 ? offset + 50 : null,
     });
   } catch (e) {
-    console.error('admin users read failed', e);
+    console.error('admin users read failed');
     return reply({ error: '사용자 정보를 불러오지 못했어요.' }, 503);
   }
 }
