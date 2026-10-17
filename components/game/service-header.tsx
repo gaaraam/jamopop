@@ -1,8 +1,9 @@
 'use client';
-import { Home, ShoppingBag, Building2, ArrowLeft } from 'lucide-react';
+import { Home, ShoppingBag, Building2, ArrowLeft, CalendarDays } from 'lucide-react';
 import { ThemeSwitch } from '@/components/theme';
 import { useEffect, type ReactNode } from 'react';
 const links = [
+  { id: 'daily', href: '/daily', name: '오늘의 단어', Icon: CalendarDays },
   { id: 'solo', href: '/solo', name: '개인 도전', Icon: Building2 },
   { id: 'shop', href: '/shop', name: '상점', Icon: ShoppingBag },
   { id: 'home', href: '/home', name: '내 집', Icon: Home },
@@ -52,7 +53,7 @@ export function ServiceHeader({
       <div className="service-header-actions">
         <nav aria-label="주 메뉴">
           {links
-            .filter((x) => x.id !== active && (!playOnly || x.id === 'solo'))
+            .filter((x) => x.id !== active && (!playOnly || ['solo', 'daily'].includes(x.id)))
             .map(({ id, href, name, Icon }) => (
               <a key={id} href={href} aria-label={name}>
                 <Icon size={17} />

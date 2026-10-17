@@ -259,6 +259,9 @@ export function Intro({ onStart, onHelp }: { onStart: () => void; onHelp: () => 
             {playing ? '연습 건너뛰고 대기실' : '바로 대기실'}
           </button>
         )}
+        <a className="text-btn" href="/daily">
+          오늘의 단어 →
+        </a>
         <span className="signature-note">로그인 없이 플레이 가능</span>
       </section>
     </main>
