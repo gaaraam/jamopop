@@ -28,5 +28,6 @@
   "0026_kongal_homes.sql": "8a1fcd66fa79575c2c30ccdb2492ecb3b213b6892701145e8db8c38a02730ebf",
   "0027_home_life.sql": "fb5ff5666a7419416fe9fe55a0acb2a85e274b11f4e69951b534b72b79ccbc5b",
   "0028_community_safety.sql": "05d562f02d4759cff371aaba4e10706deb48a0a8e925ff1dee9cfac9caaaf8ce",
-  "0029_daily_word.sql": "5adee2b6317dfe8d8315dee44282b96183f4195b7ec8ba7dccec83415da3b1b9"
+  "0029_daily_word.sql": "5adee2b6317dfe8d8315dee44282b96183f4195b7ec8ba7dccec83415da3b1b9",
+  "0030_account_deletion.sql": "16c1310dd48352ddbe4b67f9fa13012a007ff889d16b0612eef0b3fc01a8b2b4"
 }

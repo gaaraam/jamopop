@@ -80,7 +80,9 @@ export async function POST(req: Request) {
         (b.status === 'answered' && !b.answer.trim())
       )
         return reply({ error: '처리 상태와 답변을 확인해 주세요.' }, 400);
-      const ticket = await one('SELECT category FROM inquiries WHERE id=?', b.id);
+      const ticket = await one('SELECT category,status FROM inquiries WHERE id=?', b.id);
+      if (ticket?.category === '계정 삭제' && ticket.status === 'closed')
+        return reply({ error: '완료되거나 취소된 삭제 요청은 수정할 수 없습니다.' }, 409);
       if (ticket?.category === '계정 삭제' && b.status === 'closed')
         return reply(
           {

@@ -219,3 +219,37 @@ html[data-theme='dark'] .support-badge {
     font-size: 25px;
   }
 }
+
+.deletion-tools {
+  margin-block: 16px;
+  padding-block: 16px;
+  border-top: 1px solid var(--ui-border, #ccd0df);
+}
+.deletion-tools p {
+  line-height: 1.6;
+}
+.deletion-tools input {
+  width: 100%;
+  min-width: 0;
+}
+.deletion-tools a {
+  text-decoration: underline;
+}
+.deletion-counts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+.deletion-counts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.deletion-counts dd {
+  margin: 0;
+  font-weight: 700;
+}
+.deletion-reference {
+  overflow-wrap: anywhere;
+  color: var(--muted-foreground);
+}

@@ -71,7 +71,7 @@ export async function safetyBefore(req,env){
   }
   if(write&&path==='/api/game'&&body.action==='join'&&typeof body.room==='string'&&req.headers.get('CF-Connecting-IP')){const room=await one(env,'SELECT id FROM rooms WHERE (id=? OR invite_code=?) AND password_hash IS NOT NULL',body.room,body.room);if(room){const fingerprint=await hash(req.headers.get('CF-Connecting-IP'));const q=await rateLimit(env,'password-ip:'+room.id+':'+fingerprint,60,60000);if(!q.allowed)return {response:json({error:'비밀번호 시도가 많아요. 잠시 후 다시 입력해 주세요.'},429,{'Retry-After':String(q.retryAfter)})}}}
   const limited=await restriction(env,actor);
-  const exempt=path==='/auth/google/start'||path==='/api/safety'&&!(req.method==='POST'&&body.action==='report')||path==='/api/inquiries'||(path==='/api/account'&&req.method==='GET');
+  const exempt=path==='/auth/google/start'||path==='/api/safety'&&!(req.method==='POST'&&body.action==='report')||path==='/api/inquiries'||path==='/api/account-deletion'||(path==='/api/account'&&req.method==='GET');
   const inquiryCommand=body.action==='chat_send'&&typeof body.body==='string'&&/^@문의(?:\s|$)/.test(body.body.trim());
   const social=['chat_send','react','cheer','draw'].includes(body.action);
   if(!exempt&&!inquiryCommand&&limited&&(limited.kind==='suspend'||limited.kind==='chat_mute'&&social))return {response:json({error:`${limited.kind==='suspend'?'서비스 이용':'대화·그림 공유'}가 일시 제한됐어요. 사유: ${limited.reason}. 문의하기에서 이의를 신청할 수 있어요.`,restriction:limited.kind,until:limited.expiresAt},403)};

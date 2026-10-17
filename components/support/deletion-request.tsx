@@ -32,7 +32,7 @@ export function DeletionRequest({ signedIn, onSaved }: { signedIn: boolean; onSa
       const result = (await response.json()) as { error?: string };
       if (!response.ok) throw Error(result.error || '접수하지 못했어요.');
       setNotice(
-        '삭제 요청을 접수했어요. 아래 내 문의에서 처리 안내를 확인하세요. 아직 기록은 삭제되지 않았습니다.',
+        '삭제 요청을 접수했어요. 아래 내 문의에서 처리 안내를 확인하세요. 요청 항목을 열어 완료 조회 코드를 받아 주세요. 코드 발급 전에는 삭제를 실행하지 않습니다.',
       );
       setConfirmation('');
       onSaved();
@@ -50,8 +50,9 @@ export function DeletionRequest({ signedIn, onSaved }: { signedIn: boolean; onSa
       </summary>
       <div className="support-ticket-body">
         <p>
-          현재 로그인한 계정과 연결 기록의 삭제를 요청합니다. 관리자가 연결된 프로필과 공유 기록의
-          처리 범위를 확인하고 이 문의에 답변합니다.
+          현재 로그인한 Google 계정과 연결된 모든 Google·Sites 프로필 및 개인 기록의 삭제를
+          요청합니다. 관리자가 연결된 프로필과 공유 기록의 처리 범위를 확인하고 이 문의에
+          답변합니다.
         </p>
         <p>
           접수 즉시 삭제되지 않습니다. 별도의 게스트 기록이나 다른 계정의 기록은 자동으로 포함하지
