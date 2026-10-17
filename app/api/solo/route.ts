@@ -38,10 +38,10 @@ async function load(owner: string) {
   );
   return (await one('SELECT state,revision FROM solo_progress WHERE owner=?', owner))!;
 }
-function view(state: SoloState, signedIn: boolean) {
+function view(state: SoloState, signedIn: boolean, includeStages = true) {
   return {
     ...publicSolo(state),
-    stages: STAGES,
+    ...(includeStages ? { stages: STAGES } : {}),
     unlocked: unlockedStage(state),
     signedIn,
     serverNow: Date.now(),
@@ -128,7 +128,8 @@ export async function POST(req: Request) {
         { error: '다른 창에서 변경됐거나 시간이 종료됐어요. 최신 기록을 불러옵니다.' },
         409,
       );
-    return reply(view(state, who.signedIn));
+    // Older clients still receive the catalog until they explicitly opt out.
+    return reply(view(state, who.signedIn, req.headers.get('X-Solo-Catalog') !== 'omit'));
   } catch (e) {
     console.error('solo update', e);
     return reply({ error: '저장하지 못했어요. 기록을 확인한 뒤 다시 시도해 주세요.' }, 503);

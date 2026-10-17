@@ -67,20 +67,22 @@ test('solo: random pools, locked stages, persistence, ownership, rewards, duplic
       (
         await route.GET(new Request('https://test/api/solo', { headers: { 'test-user': user } }))
       ).json();
-    const post = async (body, user = 'one') => {
+    const post = async (body, user = 'one', compact = false) => {
       const r = await route.POST(
         new Request('https://test/api/solo', {
           method: 'POST',
-          headers: { 'test-user': user },
+          headers: { 'test-user': user, ...(compact ? { 'X-Solo-Catalog': 'omit' } : {}) },
           body: JSON.stringify(body),
         }),
       );
       return { status: r.status, data: await r.json() };
     };
     assert.equal((await get()).unlocked, 1);
+    assert.deepEqual((await get()).stages, logic.STAGES);
     assert.equal((await post({ action: 'start', stage: 2 })).status, 403);
     let result = await post({ action: 'start', stage: 1 });
     assert.equal(result.status, 200);
+    assert.deepEqual(result.data.stages, logic.STAGES);
     assert.equal(result.data.active.answer, undefined);
     let id = result.data.active.id;
     assert.equal((await get()).active.id, id);
@@ -134,6 +136,35 @@ test('solo: random pools, locked stages, persistence, ownership, rewards, duplic
     );
     assert.equal((await post({ action: 'start', stage: 4, previousId: id })).status, 200);
     assert.equal((await get('two')).xp, 0);
+    let compact = await post({ action: 'start', stage: 1 }, 'compact', true);
+    assert.equal(compact.status, 200);
+    assert.equal(Object.hasOwn(compact.data, 'stages'), false);
+    const compactId = compact.data.active.id;
+    const compactAnswer = JSON.parse(
+      db.prepare('SELECT state FROM solo_progress WHERE owner=?').get('account:compact').state,
+    ).active.answer;
+    compact = await post(
+      { action: 'guess', runId: compactId, expected: 0, word: compactAnswer },
+      'compact',
+      true,
+    );
+    assert.equal(compact.status, 200);
+    assert.equal(Object.hasOwn(compact.data, 'stages'), false);
+    const restored = await get('compact');
+    assert.deepEqual(restored.stages, logic.STAGES);
+    assert.deepEqual(restored.active, compact.data.active);
+    assert.equal(restored.xp, compact.data.xp);
+    assert.equal(restored.unlocked, compact.data.unlocked);
+    const savedBytes =
+      Buffer.byteLength(JSON.stringify(restored)) - Buffer.byteLength(JSON.stringify(compact.data));
+    assert(savedBytes > 1000);
+    console.log(`Solo catalog omitted: ${savedBytes} uncompressed bytes per successful POST`);
+    compact = await post({ action: 'start', stage: 1, previousId: compactId }, 'compact', true);
+    compact = await post({ action: 'abandon', runId: compact.data.active.id }, 'compact', true);
+    assert.equal(compact.status, 200);
+    assert.equal(compact.data.active.status, 'abandoned');
+    assert.equal(Object.hasOwn(compact.data, 'stages'), false);
+
     const guest = await route.GET(new Request('https://test/api/solo'));
     assert(guest.headers.get('set-cookie').includes('HttpOnly'));
     assert.equal((await guest.json()).signedIn, false);
