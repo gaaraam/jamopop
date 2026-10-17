@@ -23,16 +23,13 @@ export function Rules({
         </div>
         <ul className="rules">
           <li>
-            <i className="green" />
-            자모와 위치가 모두 맞아요.
+            <i className="green" />✓ 자모와 위치가 모두 맞아요.
           </li>
           <li>
-            <i className="yellow" />
-            단어에 있지만 위치가 달라요.
+            <i className="yellow" />• 단어에 있지만 위치가 달라요.
           </li>
           <li>
-            <i className="gray" />
-            없거나, 이미 맞힌 개수보다 많아요.
+            <i className="gray" />− 없거나, 이미 맞힌 개수보다 많아요.
           </li>
         </ul>
         <p>

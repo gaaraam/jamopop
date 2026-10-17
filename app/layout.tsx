@@ -19,6 +19,7 @@ import './entry-system.css';
 import './service-header.css';
 import './mini.css';
 import './first-play.css';
+import './play-accessibility.css';
 import { AppearanceProvider } from '@/components/theme';
 import { LegalLinks } from '@/components/legal/document';
 

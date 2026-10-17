@@ -1,4 +1,5 @@
 'use client';
+import { JudgmentMark, judgmentLabel } from '@/components/game/judgment-mark';
 import { GuestRecords } from '@/components/game/guest-records';
 import { ServiceHeader } from '@/components/game/service-header';
 import { GameInput } from '@/components/game/mobile-controls';
@@ -562,10 +563,12 @@ export default function Solo() {
                     return (
                       <span
                         key={`${active.id}-${r}-${c}`}
+                        aria-label={`${r + 1}번째 시도 ${c + 1}칸 ${g?.letters[c] || (!stopped && r === active.guesses.length ? letters[c] : '') || '빈칸'} ${g ? judgmentLabel[g.colors[c]] : ''}`}
                         className={`solo-tile tile ${g?.colors[c] || ''} ${!g && r === active.guesses.length ? 'current-row' : ''}`}
                       >
                         {g?.letters[c] ||
                           (!stopped && r === active.guesses.length ? letters[c] : '')}
+                        <JudgmentMark color={g?.colors[c]} />
                       </span>
                     );
                   }),
@@ -721,20 +724,25 @@ export default function Solo() {
                         type="button"
                         key={k}
                         className={`key ${colors[k] || ''}`}
+                        aria-label={colors[k] ? `${k} · ${judgmentLabel[colors[k]]}` : k}
                         disabled={busy || stopped}
                         onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => {
+                        onClick={(e) => {
                           if (!lock.current && !composing.current) {
                             const next = appendKey(textRef.current, k, stage.width);
                             if (next === textRef.current)
                               setInputError(`${stage.width}칸까지 입력할 수 있어요.`);
                             else setDraft(next);
                           }
-                          if (window.matchMedia('(hover:hover) and (pointer:fine)').matches)
+                          if (
+                            e.detail > 0 &&
+                            window.matchMedia('(hover:hover) and (pointer:fine)').matches
+                          )
                             input.current?.focus();
                         }}
                       >
                         {k}
+                        <JudgmentMark color={colors[k]} />
                       </button>
                     ))}
                     {i === 0 && (
@@ -744,10 +752,13 @@ export default function Solo() {
                         aria-label="한 칸 삭제"
                         disabled={busy || stopped}
                         onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => {
+                        onClick={(e) => {
                           if (!lock.current && !composing.current)
                             setDraft((value) => splitWord(value).slice(0, -1).join(''));
-                          if (window.matchMedia('(hover:hover) and (pointer:fine)').matches)
+                          if (
+                            e.detail > 0 &&
+                            window.matchMedia('(hover:hover) and (pointer:fine)').matches
+                          )
                             input.current?.focus();
                         }}
                       >

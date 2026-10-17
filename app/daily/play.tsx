@@ -192,8 +192,8 @@ export function DailyGame() {
         <details className="daily-help">
           <summary>처음이라면?</summary>
           <p>
-            바람 → ㅂ ㅏ ㄹ ㅏ ㅁ. 다섯 자모의 단어를 다섯 번 안에 맞혀 보세요. 초록은 제자리,
-            노랑은 다른 자리, 회색은 미포함 또는 개수 초과예요.
+            바람 → ㅂ ㅏ ㄹ ㅏ ㅁ. 다섯 자모의 단어를 다섯 번 안에 맞혀 보세요. 초록 ✓는 제자리,
+            노랑 •는 다른 자리, 회색 −는 미포함 또는 개수 초과예요.
           </p>
         </details>
         {!data ? (

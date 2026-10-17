@@ -1,6 +1,7 @@
 'use client';
 import { Delete } from 'lucide-react';
 import { KEYS, type Guess, type Color } from '@/lib/game';
+import { JudgmentMark, judgmentLabel } from './judgment-mark';
 export function WordBoard({
   roundId,
   width,
@@ -56,9 +57,10 @@ export function WordBoard({
                 } as React.CSSProperties
               }
               className={`tile ${g ? g.colors[c] + (reveal?.roundId === roundId && reveal.row === r ? ' revealed' + (won && r === guesses.length - 1 ? ' victory-tile' : '') : '') : active && letters[c] ? `filled ${composing ? '' : 'input-pop'}` : ''} ${active ? 'active-row' : ''} ${pending ? 'submission-pending' : ''}`}
-              aria-label={`${r + 1}번째 시도 ${c + 1}칸 ${g?.letters[c] || (active && letters[c]) || '빈칸'} ${g ? { green: '정확', yellow: '다른 위치', gray: '미포함' }[g.colors[c]] : ''}`}
+              aria-label={`${r + 1}번째 시도 ${c + 1}칸 ${g?.letters[c] || (active && letters[c]) || '빈칸'} ${g ? judgmentLabel[g.colors[c]] : ''}`}
             >
               {g?.letters[c] || (active ? letters[c] : '')}
+              <JudgmentMark color={g?.colors[c]} />
             </div>
           );
         }),
@@ -86,10 +88,12 @@ export function WordKeyboard({
               type="button"
               className={`key ${keyboardColors[c] || ''} ${pressed === c ? 'key-pressed' : ''}`}
               key={c}
+              aria-label={keyboardColors[c] ? `${c} · ${judgmentLabel[keyboardColors[c]]}` : c}
               disabled={disabled}
               onClick={() => onKey(c)}
             >
               {c}
+              <JudgmentMark color={keyboardColors[c]} />
             </button>
           ))}
           {i === 0 && (
