@@ -1,0 +1,41 @@
+/* Shared clue shapes retain the established green/yellow/gray backgrounds. */
+.main-board .tile,
+.keyboard .key {
+  position: relative;
+}
+.judgment-mark {
+  position: absolute;
+  right: 3px;
+  bottom: 2px;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  pointer-events: none;
+}
+.keyboard .judgment-mark {
+  right: 2px;
+  bottom: 2px;
+  font-size: 9px;
+}
+.judgment-yellow {
+  font-size: 14px;
+}
+:where(.keyboard, .input-area, .daily-result, .solo-result)
+  :is(button, a, input, textarea):focus-visible {
+  outline: 3px solid var(--foreground);
+  outline-offset: 3px;
+}
+@media (pointer: coarse) {
+  .keyboard .key {
+    min-height: 44px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-board .tile,
+  .main-board,
+  .keyboard .key {
+    animation: none !important;
+    transition: none !important;
+  }
+}
