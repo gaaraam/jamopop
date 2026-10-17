@@ -122,3 +122,28 @@ html:root[data-theme=dark] .solo-page .quest-floor.selected{background:color-mix
 html:root .solo-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;padding:0;margin:0 0 12px;border:1px solid var(--ui-line);border-radius:16px;background:var(--ui-surface);max-width:620px}
 .solo-stat{display:flex;align-items:center;gap:12px;padding:16px 20px;min-width:0}.solo-stat+.solo-stat{border-left:1px solid var(--ui-line)}.solo-stat>svg{width:22px;height:22px;color:var(--ui-muted);flex-shrink:0}.solo-stat:first-child>svg{color:#c29b37;fill:#eacb6930}.solo-stat>div{display:flex;flex-direction:column;gap:5px}.solo-stat>div>span{font-size:11px;font-weight:500;color:var(--ui-muted);white-space:nowrap}.solo-stat strong{display:flex;align-items:baseline;gap:8px;font:700 22px var(--font-game);font-variant-numeric:tabular-nums;line-height:1.2}.solo-stat strong small{font:500 11px var(--font-body);color:var(--ui-muted);white-space:nowrap}.quest-stage-action small{display:flex;justify-content:flex-end;gap:3px}.solo-clear-stars{display:flex;justify-content:center;gap:8px;color:#c6a044;padding:12px 0}
 @media(max-width:600px){.solo-stat{padding:12px 10px;gap:8px}.solo-stat>svg{width:17px;height:17px}.solo-stat strong{font-size:18px;gap:5px}.solo-stat strong small{font-size:10px}}
+
+/* Keep feedback with the input, including after dictionary rejection. */
+.solo-input-status{display:block;min-height:24px;margin-top:6px;font-size:12px;line-height:1.5;text-align:center;color:var(--ui-muted)}
+.solo-input-status.invalid{color:#b04435}
+html:root[data-theme=dark] .solo-input-status.invalid{color:#ffb3a7}
+html:root[data-theme=dark] :is(.solo-tile.gray,.solo-keyboard .key.gray){background:#465264!important;border-color:#536175!important;color:#d5deeb!important}
+/* Six rows still leave room for a full-size touch keyboard on short phones. */
+@media(max-width:700px){
+ html:root .solo-page[data-playing=true]{padding:8px 12px 24px}
+ .solo-page[data-playing=true]>.service-header{margin-bottom:8px;padding-bottom:8px}
+ html:root .solo-page[data-playing=true] .solo-play{margin:8px auto;padding:12px}
+ html:root .solo-play .mission-banner{margin:6px 0 4px}
+ .solo-play .mission-banner small{display:none}
+ html:root .solo-play .mission-banner h1{font-size:18px;margin:0}
+ html:root .solo-mission-story{margin-bottom:4px}
+ html:root .solo-mission-story summary{padding:4px 0}
+ html:root .solo-play-meta{margin-bottom:6px}
+ html:root .solo-board{--cell-size:clamp(24px,calc((100svh - 520px) / var(--board-rows,6) - 5px),42px);width:fit-content;max-width:100%;grid-auto-rows:var(--cell-size);gap:4px;margin-bottom:8px}
+ html:root .solo-board .solo-tile{width:var(--cell-size);height:var(--cell-size);font-size:20px;border-radius:8px}
+ html:root .solo-play input{height:44px}
+ html:root .solo-keyboard{margin-top:8px;gap:4px}
+ html:root .solo-keyboard .key{height:44px}
+ html:root .solo-page .solo-submit{min-height:44px;margin-top:8px}
+ html:root .solo-play .legend{margin-top:8px;padding-top:8px}
+}
