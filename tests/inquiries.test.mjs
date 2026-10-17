@@ -98,6 +98,80 @@ test('private inquiries: ownership, admin replies, duplicate sends, rate limit a
     assert.equal((await (await post('one', body)).json()).id, id);
     assert.equal((await post(null, data())).status, 401);
     assert((await GET(req(null))).headers.get('set-cookie').includes('HttpOnly'));
+    const deletion = {
+      action: 'request-deletion',
+      confirm: '계정 삭제 요청',
+      owner: 'account:victim',
+    };
+    assert.equal((await post(null, deletion)).status, 401);
+    assert.equal((await post('requester', { ...deletion, confirm: '' })).status, 400);
+    const attempts = await Promise.all(
+      Array.from({ length: 4 }, () => post('requester', deletion)),
+    );
+    const ids = await Promise.all(
+      attempts.map(async (response) => {
+        assert.equal(response.status, 200);
+        return (await response.json()).id;
+      }),
+    );
+    assert.equal(new Set(ids).size, 1);
+    assert.equal(
+      db.prepare("SELECT COUNT(*) n FROM inquiries WHERE category='계정 삭제'").get().n,
+      1,
+    );
+    assert.equal(
+      db.prepare('SELECT owner FROM inquiries WHERE id=?').get(ids[0]).owner,
+      'account:requester',
+    );
+    assert.equal((await (await GET(req('victim'))).json()).rows.length, 0);
+    assert.equal((await (await GET(req('requester'))).json()).rows[0].accountReference, undefined);
+    const adminRows = await (
+      await GET(
+        new Request('https://test/api/inquiries?admin=1', { headers: { 'test-user': 'admin' } }),
+      )
+    ).json();
+    assert.equal(
+      adminRows.rows.find((row) => row.id === ids[0]).accountReference,
+      'account:requester',
+    );
+    assert.equal(
+      (
+        await post('admin', {
+          action: 'respond',
+          id: ids[0],
+          revision: 0,
+          status: 'closed',
+          answer: '삭제 완료',
+        })
+      ).status,
+      409,
+    );
+    assert.equal(
+      (
+        await post('admin', {
+          action: 'respond',
+          id: ids[0],
+          revision: 0,
+          status: 'reviewing',
+          answer: '연결 범위를 확인하고 있습니다.',
+        })
+      ).status,
+      200,
+    );
+    assert.equal((await (await post('requester', deletion)).json()).id, ids[0]);
+    assert.equal((await post('requester', { ...data(), category: '계정 삭제' })).status, 400);
+    assert.equal(
+      (
+        await POST(
+          new Request('https://test/api/inquiries', {
+            method: 'POST',
+            headers: { 'test-user': 'requester', origin: 'https://other.test' },
+            body: JSON.stringify(deletion),
+          }),
+        )
+      ).status,
+      403,
+    );
     assert.equal(inquiryCommand('@문의  키보드가 안돼요'), '키보드가 안돼요');
     assert.equal(inquiryCommand('@문의'), '');
     assert.equal(inquiryCommand('일반 대화'), null);
