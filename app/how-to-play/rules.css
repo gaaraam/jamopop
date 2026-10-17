@@ -1,0 +1,142 @@
+.public-rules {
+  max-width: 960px;
+  margin: 24px auto 64px;
+  padding: 0 16px;
+  color: var(--ui-ink);
+}
+.rules-intro,
+.rules-end {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 24px 0;
+}
+.rules-intro p {
+  margin: 0;
+}
+.rules-start {
+  display: inline-flex;
+  padding: 14px 20px;
+  background: var(--ui-accent);
+  color: var(--ui-accent-ink);
+  border-radius: var(--ui-radius-control);
+  font-weight: 700;
+  text-decoration: none;
+}
+.rules-sections {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.rules-sections section {
+  min-width: 0;
+  padding: 24px;
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius-card);
+}
+.rules-sections h2 {
+  font: 700 20px var(--font-game);
+  margin: 0 0 20px;
+}
+.rules-sections p {
+  line-height: 1.75;
+  margin: 16px 0 0;
+  font-size: 15px;
+}
+.rules-split {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 0;
+  font-size: 22px;
+}
+.rules-split small {
+  font-size: 13px;
+  color: var(--ui-muted);
+}
+.rules-example {
+  margin: 0;
+}
+.rules-example figcaption {
+  font-size: 14px;
+  margin-bottom: 12px;
+  color: var(--ui-muted);
+}
+.rules-tiles {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.public-rules .rules-tiles .tile {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  font-size: 24px;
+  position: relative;
+}
+.rules-legend {
+  display: grid;
+  gap: 8px;
+  margin: 20px 0 0;
+  font-size: 14px;
+}
+.rules-legend div {
+  display: flex;
+  gap: 12px;
+}
+.rules-legend dt {
+  min-width: 60px;
+  font-weight: 700;
+}
+.rules-legend dd {
+  margin: 0;
+}
+.rules-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.rules-table th,
+.rules-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ui-line);
+}
+.rules-table th {
+  width: 96px;
+  padding-right: 12px;
+}
+.public-rules a:focus-visible {
+  outline: 3px solid var(--ui-focus);
+  outline-offset: 4px;
+}
+@media (max-width: 700px) {
+  .public-rules {
+    margin-top: 12px;
+    padding: 0 12px;
+  }
+  .rules-sections {
+    grid-template-columns: 1fr;
+  }
+  .rules-sections section {
+    padding: 20px;
+  }
+  .rules-end {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+.rules-sections p b {
+  white-space: nowrap;
+}
