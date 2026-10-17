@@ -85,7 +85,7 @@ export async function GET(req: Request) {
       serverNow: now,
     });
   } catch (e) {
-    console.error('admin read failed', e);
+    console.error('admin read failed');
     return reply({ error: '운영 현황을 불러오지 못했어요. 다시 시도해 주세요.' }, 503);
   }
 }

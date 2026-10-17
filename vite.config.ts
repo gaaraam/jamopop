@@ -23,6 +23,11 @@ export default defineConfig({
         ],
         vars: { MIGRATION_LOCK: 'open' },
         triggers: { crons: ['17 18 * * *'] },
+        observability: {
+          enabled: true,
+          head_sampling_rate: 0.1,
+          logs: { enabled: true, invocation_logs: false },
+        },
       },
     }),
   ],

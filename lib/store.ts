@@ -1,7 +1,8 @@
+import { measuredDatabase } from './operational-metrics.mjs';
 import { env } from 'cloudflare:workers';
 export function database(): D1Database {
   if (!env.DB) throw new Error('STORAGE_UNAVAILABLE');
-  return env.DB;
+  return measuredDatabase(env.DB);
 }
 export async function one<T = any>(sql: string, ...values: any[]): Promise<T | null> {
   return database()

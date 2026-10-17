@@ -68,29 +68,24 @@ export async function partyState(r: any, m: any) {
   const spectator = await trackSpectator(m, r.id),
     loadout = await ensureLoadout(r, m);
   await awardTitles(r, m);
-  const titles = await all(
-      'SELECT title,earned_at AS earnedAt FROM earned_titles WHERE owner=?',
-      memberOwner(m),
+  const [titles, equipped, hints, events, viewed] = await Promise.all([
+    all('SELECT title,earned_at AS earnedAt FROM earned_titles WHERE owner=?', memberOwner(m)),
+    one('SELECT title FROM equipped_titles WHERE owner=?', memberOwner(m)),
+    all(
+      'SELECT h.member_id AS memberId,m.name,h.updated_at AS updatedAt FROM drawing_hints h JOIN members m ON m.id=h.member_id WHERE h.round_id=? AND m.blocked=0',
+      r.id,
     ),
-    equipped = await one('SELECT title FROM equipped_titles WHERE owner=?', memberOwner(m));
-  const hints = await all(
-    'SELECT h.member_id AS memberId,m.name,h.updated_at AS updatedAt FROM drawing_hints h JOIN members m ON m.id=h.member_id WHERE h.round_id=? AND m.blocked=0',
-    r.id,
-  );
-  const events =
     r.variant === 'items'
-      ? await all(
+      ? all(
           'SELECT e.id,e.actor AS actorId,e.target AS targetId,e.effect,e.created_at AS createdAt,a.name AS actor,t.name AS target FROM item_events e JOIN members a ON a.id=e.actor JOIN members t ON t.id=e.target WHERE e.round_id=? AND e.applied=1 ORDER BY e.created_at DESC LIMIT 6',
           r.id,
         )
-      : [];
+      : Promise.resolve([]),
+    one('SELECT 1 FROM hint_views WHERE round_id=? AND member_id=?', r.id, m.id),
+  ]);
   return {
     hintPolicy: !!r.hint_policy,
-    hintUsed: !!(await one(
-      'SELECT 1 FROM hint_views WHERE round_id=? AND member_id=?',
-      r.id,
-      m.id,
-    )),
+    hintUsed: !!viewed,
     spectator,
     nextParticipant: spectator && !m.spectator,
     variant: r.variant || 'normal',
