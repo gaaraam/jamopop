@@ -21,7 +21,12 @@ export const SOLO_SKINS:Skin[]=[
  {id:'solo-rescue-penguin',name:'별빛 구조대',avatar:'🐧',price:0,box:'0 627 627 627',source:'/characters/solo-rewards.webp',sheetSize:1254,reward:'모든 층 복구'},
  {id:'solo-golden-penguin',name:'황금별 구조대',avatar:'🐧',price:0,box:'627 627 627 627',source:'/characters/solo-rewards.webp',sheetSize:1254,reward:'별 45개'},
 ];
-export const ALL_SKINS=[...SKINS,...SOLO_SKINS];
+export const HOME_SKINS:Skin[]=[
+ {id:'home-nap-rabbit',name:'낮잠 친구',avatar:'🐰',price:0,box:'0 0 240 240',source:'/characters/home-nap-rabbit.svg',sheetSize:240,reward:'우리 사이 12'},
+ {id:'home-snack-cat',name:'간식 대장',avatar:'🐱',price:0,box:'0 0 240 240',source:'/characters/home-snack-cat.svg',sheetSize:240,reward:'우리 사이 36'},
+ {id:'home-star-bear',name:'별꿈 친구',avatar:'🐻',price:0,box:'0 0 240 240',source:'/characters/home-star-bear.svg',sheetSize:240,reward:'우리 사이 72'},
+];
+export const ALL_SKINS=[...SKINS,...SOLO_SKINS,...HOME_SKINS];
 export function soloRewardIds(best:Record<string,number>){
  const through=(n:number)=>Array.from({length:n},(_,i)=>best[i+1]>=1&&best[i+1]<=3).every(Boolean);
  return SOLO_SKINS.filter((_,i)=>i===3?Array.from({length:15},(_,j)=>best[j+1]===3).every(Boolean):through([3,9,15][i])).map(s=>s.id);
