@@ -27,7 +27,7 @@ export function LegalDocument({ title, children }: { title: string; children: Re
             {title}
             {!contactEmail && <small className="legal-draft">검토용 초안</small>}
           </h1>
-          <p>시행일 2026년 10월 14일 · 운영자 {operator}</p>
+          <p>시행일 2026년 10월 18일 · 운영자 {operator}</p>
         </header>
         {children}
         <footer>

@@ -141,6 +141,7 @@ export default function Admin() {
         <a href="/admin/announcements">전체 공지 ↗</a>
         <a href="/admin/inquiries">문의함 ↗</a>
         <a href="/admin/reports">신고함 ↗</a>
+        <a href="/admin/operations">데이터 보관 ↗</a>
         <ThemeSwitch />
       </header>
       <div className="admin-title">

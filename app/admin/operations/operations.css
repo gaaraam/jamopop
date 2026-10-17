@@ -1,0 +1,32 @@
+.operations-page .admin-panel {
+  margin-top: 24px;
+}
+.operations-page .admin-panel > p {
+  line-height: 1.7;
+  color: var(--ui-muted);
+}
+.operations-page .admin-table {
+  margin-block: 24px;
+  border: 1px solid var(--ui-line);
+  border-radius: 12px;
+}
+.operations-page caption {
+  text-align: left;
+  font-weight: 700;
+  padding: 16px 12px;
+  color: var(--ui-ink);
+}
+.operations-page .admin-table th[scope='row'] {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ui-ink);
+}
+.operations-page .admin-table td:last-child {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.operations-page h2 {
+  font-family: var(--font-game);
+  font-size: 18px;
+  margin-block: 20px 8px;
+}
