@@ -7,11 +7,14 @@ const reply = (data: unknown, status = 200, cookie = '') =>
     headers: { 'Cache-Control': 'private, no-store', ...(cookie ? { 'Set-Cookie': cookie } : {}) },
   });
 async function state(req: Request, owner: string | null) {
-  const rows = await all(
+  const rowsPromise = all(
     "SELECT l.id,l.owner,l.name,COALESCE(p.avatar,l.avatar) avatar,p.skin_id AS skin,CASE WHEN l.deleted=1 THEN '' ELSE l.body END AS body,l.created_at AS createdAt,l.deleted FROM lobby_messages l LEFT JOIN profiles p ON l.owner='account:'||p.id ORDER BY l.id DESC LIMIT 80",
   );
   const id = accountId(req);
-  const profile = id ? await one('SELECT name FROM profiles WHERE id=?', id) : null;
+  const [rows, profile] = await Promise.all([
+    rowsPromise,
+    id ? one('SELECT name FROM profiles WHERE id=?', id) : null,
+  ]);
   return {
     messages: rows.reverse().map(({ owner: author, ...m }) => ({
       ...m,

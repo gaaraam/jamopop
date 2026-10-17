@@ -31,23 +31,34 @@ test('real route: shared five-minute deadline, server expiry, reset, legacy and 
       db.exec(readFileSync(join('drizzle', f), 'utf8'));
     const run = async (sql, ...args) => {
       const r = db.prepare(sql).run(...args);
-      if (crossDeadline && sql.startsWith('INSERT INTO plays')) {
-        now = crossDeadline;
-        crossDeadline = null;
-      }
       return { meta: { changes: r.changes } };
     };
     const store = {
       run,
-      one: async (sql, ...args) => db.prepare(sql).get(...args) || null,
-      all: async (sql, ...args) => db.prepare(sql).all(...args),
+      one: async (sql, ...args) => {
+        const result = db.prepare(sql).get(...args) || null;
+        if (crossDeadline && sql.startsWith('SELECT * FROM plays')) {
+          now = crossDeadline;
+          crossDeadline = null;
+        }
+        return result;
+      },
+      all: async (sql, ...args) => {
+        assert(args.length <= 100, 'D1 limits every query to 100 bindings');
+        return db.prepare(sql).all(...args);
+      },
       database: () => ({
         prepare: (sql) => ({ bind: (...args) => ({ sql, args }) }),
         batch: async (qs) => {
           db.exec('BEGIN');
           try {
             const out = [];
-            for (const q of qs) out.push(await run(q.sql, ...q.args));
+            for (const q of qs)
+              out.push(
+                /^SELECT/i.test(q.sql.trim())
+                  ? { results: db.prepare(q.sql).all(...q.args) }
+                  : await run(q.sql, ...q.args),
+              );
             db.exec('COMMIT');
             return out;
           } catch (e) {
@@ -137,9 +148,32 @@ test('real route: shared five-minute deadline, server expiry, reset, legacy and 
       );
     const get = (room) => GET(new Request(`https://test.local/api/game?room=${room}&mode=daily`));
     const created = await (
-      await post({ action: 'create', roomName: 'test', name: 'host', avatar: '🐱', width: 5 })
+      await post({
+        action: 'create',
+        roomName: 'test',
+        name: 'host',
+        avatar: '🐱',
+        width: 5,
+        includeState: true,
+      })
     ).json();
     assert(created.roomId);
+    assert.equal(created.room.id, created.roomId, 'create returns its authorized initial snapshot');
+    assert.equal(created.me.name, 'host');
+    assert.equal(created.play.answer, undefined, 'entry never discloses an unfinished answer');
+    assert.equal(created.round.answer, undefined);
+    const rejoined = await (
+      await post({
+        action: 'join',
+        room: created.roomId,
+        lobby: true,
+        name: 'host',
+        avatar: '🐱',
+        includeState: true,
+      })
+    ).json();
+    assert.equal(rejoined.me.id, created.me.id, 'rejoin preserves the member');
+    assert.equal(rejoined.round.id, created.round.id);
     const room = created.roomId;
     let state = await (await get(room)).json();
     const deniedLobby = await GET(new Request('https://test.local/api/game?lobby=1&archived=1'));
@@ -148,6 +182,19 @@ test('real route: shared five-minute deadline, server expiry, reset, legacy and 
     const lobby = await GET(new Request('https://test.local/api/game?lobby=1'));
     assert.equal(lobby.status, 200);
     assert.equal((await lobby.json()).rooms[0].id, room);
+    for (let i = 1; i <= 101; i++)
+      db.prepare('INSERT INTO rooms(id,name,host_id,created_at) VALUES(?,?,?,?)').run(
+        i.toString(16).padStart(24, '0'),
+        '추가 방 ' + i,
+        '빈 방장 ' + i,
+        now - i,
+      );
+    const largeLobby = await GET(new Request('https://test.local/api/game?lobby=1'));
+    assert.equal(largeLobby.status, 200, '100-room preview stays within D1 binding limits');
+    const largeList = await largeLobby.json();
+    assert.equal(largeList.rooms.length, 100);
+    assert.equal(largeList.hasMore, true);
+
     const missingProfile = await GET(
       new Request(`https://test.local/api/game?room=${room}&profile=missing`),
     );
@@ -242,8 +289,9 @@ test('real route: shared five-minute deadline, server expiry, reset, legacy and 
       409,
     );
     assert.equal(
-      db.prepare('SELECT guesses FROM plays WHERE round_id=?').get(second).guesses,
-      '[]',
+      db.prepare('SELECT guesses FROM plays WHERE round_id=?').get(second),
+      undefined,
+      'expired first submission must not leave even an empty play',
     );
     // Existing unlimited rounds retain their null deadline, even far in the future.
     db.prepare('UPDATE rounds SET ends_at=NULL WHERE id=?').run(second);
@@ -348,6 +396,59 @@ test('real route: shared five-minute deadline, server expiry, reset, legacy and 
       JSON.stringify(db.prepare('SELECT * FROM plays ORDER BY id').all()),
       savedPlays,
       'management preserves all submitted records',
+    );
+    // Two tabs race their very first guess: only one complete row may appear.
+    const fresh = await post({
+      action: 'create',
+      name: 'atomic',
+      roomName: 'race',
+      avatar: '🐱',
+      width: 5,
+    });
+    const raceRoom = (await fresh.json()).roomId;
+    const raceState = await (await get(raceRoom)).json();
+    const raceBody = {
+      action: 'guess',
+      room: raceRoom,
+      mode: 'daily',
+      roundId: raceState.round.id,
+      word: '바람',
+      expected: 0,
+      fast: true,
+    };
+    const race = await Promise.all([post(raceBody), post(raceBody)]);
+    assert.deepEqual(race.map((r) => r.status).sort(), [200, 409]);
+    const raceRows = db
+      .prepare('SELECT guesses FROM plays WHERE round_id=?')
+      .all(raceState.round.id);
+    assert.equal(raceRows.length, 1);
+    assert.equal(JSON.parse(raceRows[0].guesses).length, 1);
+    const winRoom = (
+      await (
+        await post({ action: 'create', name: 'reward', roomName: 'reward', avatar: '🐱', width: 5 })
+      ).json()
+    ).roomId;
+    const winState = await (await get(winRoom)).json();
+    const winBody = {
+      action: 'guess',
+      room: winRoom,
+      mode: 'daily',
+      roundId: winState.round.id,
+      word: '사과',
+      expected: 0,
+      fast: true,
+    };
+    const wins = await Promise.all([post(winBody), post(winBody)]);
+    assert.deepEqual(wins.map((r) => r.status).sort(), [200, 409]);
+    const rewarded = db
+      .prepare(
+        'SELECT p.status,g.amount FROM plays p LEFT JOIN gold_rewards g ON g.play_id=p.id WHERE p.round_id=?',
+      )
+      .all(winState.round.id);
+    assert.deepEqual(
+      rewarded.map((r) => ({ ...r })),
+      [{ status: 'won', amount: 30 }],
+      'first-guess UPSERT awards exactly one gold grant on INSERT',
     );
   } finally {
     Date.now = realNow;

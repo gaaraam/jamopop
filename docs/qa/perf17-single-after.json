@@ -1,0 +1,47 @@
+{
+  "environment": "protected-QA-sequential-one-player",
+  "samples": 8,
+  "entryIncludesState": true,
+  "metrics": {
+    "lobby": {
+      "requests": 8,
+      "p50Ms": 350,
+      "p95Ms": 660,
+      "statuses": {
+        "200": 8
+      }
+    },
+    "join": {
+      "requests": 8,
+      "p50Ms": 592,
+      "p95Ms": 717,
+      "statuses": {
+        "200": 8
+      }
+    },
+    "entry-to-playable": {
+      "requests": 8,
+      "p50Ms": 592,
+      "p95Ms": 717,
+      "statuses": {
+        "200": 8
+      }
+    },
+    "server-word-check": {
+      "requests": 8,
+      "p50Ms": 374,
+      "p95Ms": 420,
+      "statuses": {
+        "200": 8
+      }
+    },
+    "hint-open": {
+      "requests": 8,
+      "p50Ms": 390,
+      "p95Ms": 470,
+      "statuses": {
+        "200": 8
+      }
+    }
+  }
+}

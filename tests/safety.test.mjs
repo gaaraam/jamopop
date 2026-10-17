@@ -587,3 +587,32 @@ test('room creation, requests, invitations, inquiries and reports each enforce t
     assert.ok(response.headers.get('Retry-After'));
   }
 });
+
+test('confirmed own acknowledgements avoid social reads but adding chat still enforces blocks', async (t) => {
+  const f = fixture();
+  t.after(f.close);
+  await block(f);
+  let queries = 0;
+  const prepare = f.env.DB.prepare;
+  f.env.DB.prepare = (...args) => {
+    queries++;
+    return prepare(...args);
+  };
+  const ack = {
+    submitted: true,
+    roomId: 'room',
+    roundId: 'round',
+    memberId: 'a',
+    serverNow: Date.now(),
+    finishedAt: null,
+    play: { status: 'playing', guesses: [] },
+  };
+  assert.deepEqual(await filtered(f, 'alice', ack), ack);
+  assert.equal(queries, 0);
+  const result = await filtered(f, 'alice', {
+    ...ack,
+    chat: { messages: [{ id: 1, memberId: 'b', body: 'hidden' }] },
+  });
+  assert.equal(result.chat.messages.length, 0);
+  assert(queries > 0);
+});

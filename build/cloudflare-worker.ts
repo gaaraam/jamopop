@@ -1,4 +1,4 @@
-import {measureRequest,measuredDatabase} from '../lib/operational-metrics.mjs';
+import {measureRequest,measuredDatabase,measurePhase} from '../lib/operational-metrics.mjs';
 import {cleanupExpiredTechnical} from '../lib/retention.mjs';
 import {searchPolicy} from '../lib/search-policy.mjs';
 import {safetyBefore,safetyEndpoint,safetyAfter} from './safety.mjs';
@@ -21,10 +21,10 @@ async function serve(request:Request,env:Cloudflare.Env,ctx:ExecutionContext){
  if((env as any).MIGRATION_LOCK!=='open')return migrationResponse(sanitized);
  // Cookie-authenticated writes must originate from this frontend.
  if(!['GET','HEAD','OPTIONS'].includes(sanitized.method)&&sanitized.headers.get('origin')!==url.origin)return Response.json({error:'이 페이지에서 다시 시도해 주세요.'},{status:403});
- const trusted=await authenticatedRequest(sanitized,env);
- const safety=await safetyBefore(trusted,env);if(safety.response)return safety.response;
+ const trusted=await measurePhase('session',()=>authenticatedRequest(sanitized,env));
+ const safety=await measurePhase('safety',()=>safetyBefore(trusted,env));if(safety.response)return safety.response;
  const direct=await safetyEndpoint(trusted,env,safety);if(direct)return direct;
- let response;try{response=await safetyAfter(trusted,env,await handler.fetch(trusted,env,ctx),safety)}catch{return Response.json({error:'안전 설정을 확인하지 못했어요. 잠시 후 다시 시도해 주세요.'},{status:503})}
+ let response;try{const baseResponse=await measurePhase('handler',()=>handler.fetch(trusted,env,ctx));response=await measurePhase('filter',()=>safetyAfter(trusted,env,baseResponse,safety))}catch{return Response.json({error:'안전 설정을 확인하지 못했어요. 잠시 후 다시 시도해 주세요.'},{status:503})}
  const headers=new Headers(response.headers);
  headers.set('Cache-Control','private, no-store');headers.set('Referrer-Policy','strict-origin-when-cross-origin');headers.set('X-Content-Type-Options','nosniff');
  return new Response(response.body,{status:response.status,headers});

@@ -3,6 +3,18 @@ import { useEffect, useState, type RefObject } from 'react';
 import { type GameState, splitWord } from '@/lib/game';
 import { inputShape, previewKey, appendKey, keyboardJamo } from '@/lib/input';
 import { deadlinePassed } from '@/lib/round-timer';
+import { createGuessPreview } from '@/lib/guess-preview.mjs';
+const knownWord = createGuessPreview(
+  async () => {
+    const response = await fetch('/dictionaries/allowed-words.json', {
+      credentials: 'omit',
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!response.ok) throw Error('Dictionary unavailable');
+    return response.json();
+  },
+  (word: string) => splitWord(word).join(''),
+);
 type InputOptions = {
   data: GameState | null;
   draft: string;
@@ -158,6 +170,9 @@ export function useWordInput({
     return () => window.removeEventListener('keydown', listener);
   });
   useEffect(() => {
+    if (data?.round.dictionaryVersion === 1) void knownWord.warm();
+  }, [data?.round.dictionaryVersion]);
+  useEffect(() => {
     const d = data;
     if (
       !d ||
@@ -167,14 +182,23 @@ export function useWordInput({
       !inputShape(draft, d.round.width).valid
     )
       return;
-    const controller = new AbortController(),
-      key = previewKey(d.round.id, draft);
+    const key = previewKey(d.round.id, draft);
+    if (knownWord.peek(draft)) {
+      setPreview({ key, status: 'valid' });
+      return;
+    }
+    const controller = new AbortController();
     const timeout = setTimeout(() => {
       setPreview({ key, status: 'error' });
       controller.abort();
     }, 5000);
     const timer = setTimeout(async () => {
       try {
+        if (await knownWord(draft)) {
+          if (!controller.signal.aborted) setPreview({ key, status: 'valid' });
+          return;
+        }
+        if (controller.signal.aborted) return;
         const response = await fetch('/api/game', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

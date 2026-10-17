@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   measureRequest,
+  measurePhase,
   measuredDatabase,
   metricPath,
   operationAlerts,
@@ -71,7 +72,28 @@ test('request-local metrics isolate simultaneous traffic and preserve DB result 
   );
   assert.deepEqual(logs.map((x) => x.rowsRead).sort(), [5, 8]);
   assert.deepEqual(logs.map((x) => x.queries).sort(), [3, 4]);
+  assert.deepEqual(logs.map((x) => x.storageCalls).sort(), [3, 4]);
   assert(logs.every((x) => x.queriesWithoutRowCounts === 1));
+});
+test('failed read batch is observable without leaking provider errors or pretending it succeeded', async () => {
+  const logs = [];
+  await assert.rejects(
+    measureRequest(
+      new Request('https://x/api/game'),
+      async () => {
+        await measuredDatabase({
+          batch: async () => {
+            throw Error('secret SQL token');
+          },
+        }).batch([{}, {}]);
+      },
+      (line) => logs.push(JSON.parse(line)),
+    ),
+  );
+  assert.equal(logs[0].storageErrors, 1);
+  assert.equal(logs[0].storageCalls, 1);
+  assert.equal(logs[0].queries, 2);
+  assert(!JSON.stringify(logs).includes('secret SQL token'));
 });
 test('alerts need a sample floor and signal failure, tail latency and throttling separately', () => {
   assert.deepEqual(operationAlerts([]).alerts, []);
@@ -81,4 +103,24 @@ test('alerts need a sample floor and signal failure, tail latency and throttling
     durationMs: i < 10 ? 2000 : 100,
   }));
   assert.deepEqual(operationAlerts(samples).alerts, ['server_errors', 'latency', 'rate_limit']);
+});
+
+test('phase timing is request-local and cannot log arbitrary diagnostic names', async () => {
+  const logs = [];
+  await Promise.all(
+    [1, 2].map((n) =>
+      measureRequest(
+        new Request('https://x/api/shop'),
+        async () => {
+          await measurePhase('handler', async () => Promise.resolve(n));
+          await measurePhase('secret-account-or-sql', async () => Promise.resolve());
+          return new Response();
+        },
+        (s) => logs.push(JSON.parse(s)),
+      ),
+    ),
+  );
+  assert.equal(logs.length, 2);
+  assert(logs.every((x) => x.route === '/api/shop' && Number.isFinite(x.phases.handler)));
+  assert(!JSON.stringify(logs).includes('secret-account-or-sql'));
 });

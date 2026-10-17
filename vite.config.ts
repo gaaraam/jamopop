@@ -14,6 +14,7 @@ export default defineConfig({
         compatibility_flags: ['nodejs_compat'],
         workers_dev: true,
         preview_urls: false,
+        placement: { mode: 'smart' },
         d1_databases: [
           {
             binding: 'DB',

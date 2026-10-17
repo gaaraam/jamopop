@@ -31,6 +31,8 @@ const reply = (data: unknown, status = 200, cookie = '') =>
     headers: { 'Cache-Control': 'no-store', ...(cookie ? { 'Set-Cookie': cookie } : {}) },
   });
 async function load(owner: string) {
+  const saved = await one('SELECT state,revision FROM solo_progress WHERE owner=?', owner);
+  if (saved) return saved;
   await run(
     'INSERT INTO solo_progress(owner,state,revision) VALUES(?,?,0) ON CONFLICT(owner) DO NOTHING',
     owner,

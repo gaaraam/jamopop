@@ -46,12 +46,15 @@ export function progressionFromXp(value: number) {
   return { level, xp, current: xp - floor, required: next - floor, remaining: next - xp };
 }
 // Derived from saved plays: no client-awarded XP and no double grants on retries.
-export async function accountProgressions(ids: string[]) {
+export async function accountProgressions(ids: string[], revision?: number) {
   const owners = [...new Set(ids.filter(Boolean))].sort();
   if (!owners.length) return new Map<string, ReturnType<typeof progressionFromXp>>();
-  return derivedCache('levels:' + JSON.stringify(owners), await dataRevision(), async () => {
-    const rows = await all(
-      `SELECT m.account_id AS owner,COALESCE(SUM(CASE
+  return derivedCache(
+    'levels:' + JSON.stringify(owners),
+    revision ?? (await dataRevision()),
+    async () => {
+      const rowsPromise = all(
+        `SELECT m.account_id AS owner,COALESCE(SUM(CASE
  WHEN r.mode='speed' AND p.status='won' THEN 90
  WHEN r.mode='speed' AND p.status='lost' THEN 10
  WHEN p.status='won' AND json_array_length(p.guesses)>0 THEN 30
@@ -60,20 +63,24 @@ export async function accountProgressions(ids: string[]) {
  LEFT JOIN rounds r ON r.id=p.round_id
  WHERE m.account_id IN (${owners.map(() => '?').join(',')}) AND r.mode IN('daily','speed')
  GROUP BY m.account_id`,
-      ...owners,
-    );
-    const result = new Map(owners.map((id) => [id, progressionFromXp(0)]));
-    for (const row of rows) result.set(row.owner, progressionFromXp(Number(row.xp)));
-    const solo = await all(
-      `SELECT owner,json_extract(state,'$.xp') AS xp FROM solo_progress WHERE owner IN (${owners.map(() => '?').join(',')})`,
-      ...owners.map((id) => 'account:' + id),
-    );
-    for (const row of solo) {
-      const id = row.owner.slice(8);
-      result.set(id, progressionFromXp((result.get(id)?.xp || 0) + Number(row.xp || 0)));
-    }
-    return result;
-  });
+        ...owners,
+      );
+      const [rows, solo] = await Promise.all([
+        rowsPromise,
+        all(
+          `SELECT owner,json_extract(state,'$.xp') AS xp FROM solo_progress WHERE owner IN (${owners.map(() => '?').join(',')})`,
+          ...owners.map((id) => 'account:' + id),
+        ),
+      ]);
+      const result = new Map(owners.map((id) => [id, progressionFromXp(0)]));
+      for (const row of rows) result.set(row.owner, progressionFromXp(Number(row.xp)));
+      for (const row of solo) {
+        const id = row.owner.slice(8);
+        result.set(id, progressionFromXp((result.get(id)?.xp || 0) + Number(row.xp || 0)));
+      }
+      return result;
+    },
+  );
 }
 
 export async function avatarAccess(req: Request, level?: number) {
@@ -81,14 +88,17 @@ export async function avatarAccess(req: Request, level?: number) {
     token = guestToken(req);
   const guest = /^[a-f0-9]{64}$/.test(token) ? await tokenHash(token) : '';
   // Only trusted persisted choices can retain a character selected before gating.
-  const rows = await all(
+  const rowsPromise = all(
     'SELECT avatar FROM members WHERE account_id=? OR (account_id IS NULL AND token_hash=?)',
     owner,
     guest,
   );
-  const profile = owner ? await one('SELECT avatar FROM profiles WHERE id=?', owner) : null;
-  const actualLevel =
-    level ?? (owner ? (await accountProgressions([owner])).get(owner)?.level || 1 : 1);
+  const [rows, profile, levels] = await Promise.all([
+    rowsPromise,
+    owner ? one('SELECT avatar FROM profiles WHERE id=?', owner) : null,
+    level === undefined && owner ? accountProgressions([owner]) : null,
+  ]);
+  const actualLevel = level ?? (owner ? levels?.get(owner)?.level || 1 : 1);
   return unlockedAvatars(actualLevel, [
     ...rows.map((r) => r.avatar),
     ...(profile ? [profile.avatar] : []),

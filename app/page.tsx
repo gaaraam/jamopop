@@ -489,6 +489,7 @@ export default function Home() {
         variant: variant === 'speed' ? 'normal' : variant,
         spectator: joinSpectator,
         lobby: joiningFromLobby && !invite,
+        includeState: true,
       });
       setRoomPassword('');
       setRoom(result.roomId);
@@ -500,7 +501,10 @@ export default function Home() {
         location.assign('/speed?room=' + result.roomId);
         return;
       }
-      await refresh(result.roomId, 'daily');
+      if (result.room?.id === result.roomId && result.me && result.round && result.play) {
+        accept(result as GameState);
+        setRestoring(false);
+      } else await refresh(result.roomId, 'daily');
     } catch (e) {
       setEntryError((e as Error).message);
     } finally {

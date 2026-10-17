@@ -1,0 +1,98 @@
+{
+  "environment": "remote-protected-synthetic",
+  "users": 30,
+  "linked": 15,
+  "durationSeconds": 123,
+  "cycles": 40,
+  "failures": [],
+  "metrics": {
+    "/healthz": {
+      "requests": 1,
+      "p50Ms": 290,
+      "p95Ms": 290,
+      "statuses": {
+        "200": 1
+      }
+    },
+    "setup": {
+      "requests": 30,
+      "p50Ms": 919,
+      "p95Ms": 1281,
+      "statuses": {
+        "200": 30
+      }
+    },
+    "initial": {
+      "requests": 30,
+      "p50Ms": 599,
+      "p95Ms": 709,
+      "statuses": {
+        "200": 30
+      }
+    },
+    "submit": {
+      "requests": 30,
+      "p50Ms": 853,
+      "p95Ms": 1048,
+      "statuses": {
+        "200": 30
+      }
+    },
+    "snapshot": {
+      "requests": 1200,
+      "p50Ms": 969,
+      "p95Ms": 1240,
+      "statuses": {
+        "200": 1200
+      }
+    },
+    "/api/lobby-chat": {
+      "requests": 40,
+      "p50Ms": 344,
+      "p95Ms": 395,
+      "statuses": {
+        "200": 40
+      }
+    },
+    "/api/solo": {
+      "requests": 80,
+      "p50Ms": 315,
+      "p95Ms": 717,
+      "statuses": {
+        "200": 80
+      }
+    },
+    "duplicate": {
+      "requests": 120,
+      "p50Ms": 412,
+      "p95Ms": 590,
+      "statuses": {
+        "409": 120
+      }
+    },
+    "lobby": {
+      "requests": 80,
+      "p50Ms": 825,
+      "p95Ms": 1240,
+      "statuses": {
+        "200": 80
+      }
+    },
+    "/api/shop": {
+      "requests": 40,
+      "p50Ms": 510,
+      "p95Ms": 691,
+      "statuses": {
+        "200": 40
+      }
+    },
+    "account": {
+      "requests": 120,
+      "p50Ms": 620,
+      "p95Ms": 826,
+      "statuses": {
+        "200": 120
+      }
+    }
+  }
+}

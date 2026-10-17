@@ -21,7 +21,12 @@ import {
 import { ROOM_ROUND_MS } from '@/lib/round-timer';
 import { database, one, run } from '@/lib/store';
 import { randomWord } from '@/lib/words';
-export async function handleRoomEntry(req: Request, b: any, now: number): Promise<Response | null> {
+export async function handleRoomEntry(
+  req: Request,
+  b: any,
+  now: number,
+  readState?: StateReader,
+): Promise<Response | null> {
   if (b.action === 'archive_room' || b.action === 'restore_room') {
     check(isSiteAdmin(req), '관리자만 방을 정리할 수 있어요.', 403);
     check(typeof b.room === 'string' && /^[a-f0-9]{24}$/.test(b.room), '방을 확인해 주세요.');
@@ -43,11 +48,39 @@ export async function handleRoomEntry(req: Request, b: any, now: number): Promis
     const tokenHash = await hash(token),
       id = uuid(),
       owner = accountId(req);
+    // Start independent reads together; still await the entitlement check before any write.
+    const access = avatarAccess(req);
+    const roomPromise =
+      b.action === 'join'
+        ? b.lobby === true
+          ? one('SELECT * FROM rooms WHERE id=?', typeof b.room === 'string' ? b.room : '')
+          : resolveRoom(req, b.room)
+        : Promise.resolve(null);
+    const [allowed, joiningRoom] = await Promise.all([access, roomPromise]);
     check(
-      (await avatarAccess(req)).includes(avatar),
+      allowed.includes(avatar),
       '아직 해금되지 않은 캐릭터예요. 필요한 레벨을 확인해 주세요.',
       403,
     );
+    async function entered(roomId: string) {
+      if (b.includeState === true && readState) {
+        // Use the newly issued cookie for a first guest join; trusted account headers are preserved.
+        const headers = new Headers(req.headers);
+        const cookies = (headers.get('cookie') || '')
+          .split(';')
+          .map((v) => v.trim())
+          .filter((v) => v && !v.startsWith('bw_session='));
+        cookies.push('bw_session=' + token);
+        headers.set('cookie', cookies.join('; '));
+        try {
+          const snapshot = await readState(new Request(req.url, { headers }), roomId, 'daily');
+          return reply({ ...(snapshot as object), roomId }, 200, token, req);
+        } catch {
+          // The membership write already committed. Let the client retry only the read, never create again.
+        }
+      }
+      return reply({ roomId }, 200, token, req);
+    }
     if (b.action === 'create') {
       check(
         b.password === undefined || b.password === '' || validRoomPassword(b.password),
@@ -94,12 +127,9 @@ export async function handleRoomEntry(req: Request, b: any, now: number): Promis
           )
           .bind(id, roomId, tokenHash, name, avatar, now, owner, now),
       ]);
-      return reply({ roomId }, 200, token, req);
+      return entered(roomId);
     }
-    const room =
-      b.lobby === true
-        ? await one('SELECT * FROM rooms WHERE id=?', typeof b.room === 'string' ? b.room : '')
-        : await resolveRoom(req, b.room);
+    const room = joiningRoom;
     check(room, '방을 찾을 수 없어요.', 404);
     const existing = await findMember(req, room.id);
     if (room.password_hash && !existing && !isSiteAdmin(req)) {
@@ -141,7 +171,8 @@ export async function handleRoomEntry(req: Request, b: any, now: number): Promis
     if (existing) {
       if (!existing.chat_seen || now - existing.last_seen >= 90000)
         await presenceNotice(existing, now);
-      await run('UPDATE members SET name=?,avatar=? WHERE id=?', name, avatar, existing.id);
+      if (existing.name !== name || existing.avatar !== avatar)
+        await run('UPDATE members SET name=?,avatar=? WHERE id=?', name, avatar, existing.id);
     } else {
       const inserted = await run(
         'INSERT INTO members(id,room_id,token_hash,name,avatar,last_seen,account_id,last_active) SELECT ?,?,?,?,?,?,?,? WHERE (?=1 OR (SELECT COUNT(*) FROM members WHERE room_id=? AND blocked=0)<40)',
@@ -170,7 +201,7 @@ export async function handleRoomEntry(req: Request, b: any, now: number): Promis
         room.current_round_id,
       );
     }
-    return reply({ roomId: room.id }, 200, token, req);
+    return entered(room.id);
   }
   return null;
 }
