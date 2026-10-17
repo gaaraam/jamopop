@@ -521,3 +521,15 @@ html[data-theme='dark'] {
     padding: 0 10px;
   }
 }
+
+.age-check-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+}
+.age-check-option input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--ui-accent, #6963aa);
+}

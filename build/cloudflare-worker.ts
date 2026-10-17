@@ -1,3 +1,4 @@
+import {cleanupExpiredTechnical} from '../lib/retention.mjs';
 import {searchPolicy} from '../lib/search-policy.mjs';
 import {safetyBefore,safetyEndpoint,safetyAfter} from './safety.mjs';
 import handler from 'vinext/server/fetch-handler';
@@ -26,7 +27,7 @@ async function serve(request:Request,env:Cloudflare.Env,ctx:ExecutionContext){
  headers.set('Cache-Control','private, no-store');headers.set('Referrer-Policy','strict-origin-when-cross-origin');headers.set('X-Content-Type-Options','nosniff');
  return new Response(response.body,{status:response.status,headers});
 }
-export default {async fetch(request:Request,env:Cloudflare.Env,ctx:ExecutionContext){
+export default {async scheduled(_event:ScheduledController, env:Cloudflare.Env, ctx:ExecutionContext){ctx.waitUntil(cleanupExpiredTechnical(env.DB).then(counts=>{console.log(JSON.stringify({event:'technical_expiry_cleanup',counts}))}));}, async fetch(request:Request,env:Cloudflare.Env,ctx:ExecutionContext){
  const response=await serve(request,env,ctx);
  const headers=new Headers(response.headers);
  headers.set('X-Robots-Tag',searchPolicy(request.url,response.status));

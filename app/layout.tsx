@@ -1,3 +1,4 @@
+import { AgeCheck } from '@/components/legal/age-check';
 import { SafetyNotice } from '@/components/safety/settings';
 import './safety.css';
 import { FriendInvitations } from '@/components/game/friend-invitations';
@@ -62,6 +63,7 @@ export default function RootLayout({
         <AppearanceProvider>
           <Announcement />
           <SafetyNotice />
+          <AgeCheck />
           <FriendInvitations />
           {children}
           <LegalLinks />

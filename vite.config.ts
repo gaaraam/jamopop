@@ -22,6 +22,7 @@ export default defineConfig({
           },
         ],
         vars: { MIGRATION_LOCK: 'open' },
+        triggers: { crons: ['17 18 * * *'] },
       },
     }),
   ],
