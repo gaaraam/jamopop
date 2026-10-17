@@ -292,7 +292,7 @@ test('account ownership, safe claims, privacy, pagination and preservation', asy
     let code = ts.transpileModule(readFileSync('app/api/game/route.ts', 'utf8'), {
       compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
     }).outputText;
-    for (const [name, url] of Object.entries({
+    const gameUrls = {
       '@/lib/room-password': module('lib/room-password.ts', 'room-password.mjs'),
       '@/lib/room-invitations': module('lib/room-invitations.ts', 'room-invitations.mjs', {
         account: accountUrl,
@@ -319,7 +319,18 @@ test('account ownership, safe claims, privacy, pagination and preservation', asy
       '@/lib/input': pathToFileURL(inputPath).href,
       '@/lib/words': pathToFileURL(wordsPath).href,
       '@/lib/guess-dictionary': pathToFileURL(dictPath).href,
-    }))
+    };
+    for (const part of ['http', 'lobby', 'profile']) {
+      let extracted = ts.transpileModule(readFileSync('lib/game-api/' + part + '.ts', 'utf8'), {
+        compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
+      }).outputText;
+      for (const [name, url] of Object.entries(gameUrls))
+        extracted = extracted.replaceAll("'" + name + "'", JSON.stringify(url));
+      const file = join(dir, 'game-' + part + '.mjs');
+      writeFileSync(file, extracted);
+      gameUrls['@/lib/game-api/' + part] = pathToFileURL(file).href;
+    }
+    for (const [name, url] of Object.entries(gameUrls))
       code = code.replaceAll("'" + name + "'", JSON.stringify(url));
     writeFileSync(gameRoutePath, code);
     const gameApi = await import(pathToFileURL(gameRoutePath).href);

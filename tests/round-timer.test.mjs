@@ -119,6 +119,8 @@ test('real route: shared five-minute deadline, server expiry, reset, legacy and 
     for (const [from, to] of Object.entries(urls))
       partyCode = partyCode.replaceAll(`'${from}'`, JSON.stringify(to));
     urls['@/lib/party'] = stub('party', partyCode);
+    for (const part of ['http', 'lobby', 'profile'])
+      urls['@/lib/game-api/' + part] = compile('lib/game-api/' + part + '.ts', 'game-' + part);
     let compiled = ts.transpileModule(readFileSync('app/api/game/route.ts', 'utf8'), {
       compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
     }).outputText;
@@ -140,6 +142,20 @@ test('real route: shared five-minute deadline, server expiry, reset, legacy and 
     assert(created.roomId);
     const room = created.roomId;
     let state = await (await get(room)).json();
+    const deniedLobby = await GET(new Request('https://test.local/api/game?lobby=1&archived=1'));
+    assert.equal(deniedLobby.status, 403, 'extracted lobby errors retain the route error boundary');
+    assert.equal(deniedLobby.headers.get('cache-control'), 'no-store');
+    const lobby = await GET(new Request('https://test.local/api/game?lobby=1'));
+    assert.equal(lobby.status, 200);
+    assert.equal((await lobby.json()).rooms[0].id, room);
+    const missingProfile = await GET(
+      new Request(`https://test.local/api/game?room=${room}&profile=missing`),
+    );
+    assert.equal(missingProfile.status, 404, 'extracted profile not-found keeps its status');
+    const outsiderProfile = await GET(
+      new Request(`https://test.local/api/game?room=${'b'.repeat(24)}&profile=missing`),
+    );
+    assert.equal(outsiderProfile.status, 401, 'profile lookup still requires room membership');
     const first = state.round.id,
       end = state.round.endsAt;
     assert.equal(end - now, 300000);
