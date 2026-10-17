@@ -13,6 +13,7 @@ test('party integration: items, concurrency, deadlines, titles, hints, spectator
  urls['@/lib/inquiries']=stub('inquiries',`export const inquiryCommand=()=>null,inquiryOwner=async()=>null,createInquiry=async()=>null;`);
  urls['@/lib/words']=stub('words',`export const randomWord=()=> '사과',WORD_COUNTS={5:1};`);urls['@/lib/guess-dictionary']=stub('dict','export const acceptsGuess=()=>true;');urls['@/lib/input']=stub('input','export const inputShape=()=>({valid:true,letters:[]});');urls['@/lib/game']=pathToFileURL(resolve('lib/game.ts')).href;urls['@/lib/round-timer']=pathToFileURL(resolve('lib/round-timer.ts')).href;urls['@/lib/party']=compile('lib/party.ts','party');
  urls['./store']=urls['@/lib/store'];
+ urls['@/lib/room-password']=compile('lib/room-password.ts','room-password');
  urls['@/lib/competition']=compile('lib/competition.ts','competition');
  urls['./sync-policy.mjs']=urls['@/lib/sync-policy.mjs']=pathToFileURL(resolve('lib/sync-policy.mjs')).href;
  urls['@/lib/derived-cache']=compile('lib/derived-cache.ts','derived-cache');

@@ -69,7 +69,7 @@ test('account ownership, safe claims, privacy, pagination and preservation',asyn
  const wordsPath=join(dir,'words.mjs');writeFileSync(wordsPath,"export const WORD_COUNTS={5:100};export const randomWord=()=> '사과';");
  const dictPath=join(dir,'dict.mjs');writeFileSync(dictPath,"export const acceptsGuess=()=>true;");
  const gameRoutePath=join(dir,'game-route.mjs');let code=ts.transpileModule(readFileSync('app/api/game/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
- for(const [name,url] of Object.entries({'@/lib/room-invitations':module('lib/room-invitations.ts','room-invitations.mjs',{account:accountUrl}),'@/lib/companions':module('lib/companions.ts','companions.mjs',{account:accountUrl}),'@/lib/competition':module('lib/competition.ts','competition.mjs'),'@/lib/derived-cache':derivedUrl,'@/lib/sync-policy.mjs':pathToFileURL(resolve('lib/sync-policy.mjs')).href,'@/app/api/lobby-chat/route':module('app/api/lobby-chat/route.ts','lobby-chat.mjs',{account:accountUrl}),'@/app/api/announcements/route':module('app/api/announcements/route.ts','announcements.mjs',{account:accountUrl}),'@/lib/party':module('lib/party.ts','party.mjs'),'@/lib/inquiries':module('lib/inquiries.ts','inquiries.mjs',{account:accountUrl}),'@/lib/round-timer':pathToFileURL(resolve('lib/round-timer.ts')).href,'@/lib/cosmetics':cosmeticsUrl,'@/lib/account':accountUrl,'@/lib/store':pathToFileURL(storePath).href,'@/lib/game':gameUrl,'@/lib/input':pathToFileURL(inputPath).href,'@/lib/words':pathToFileURL(wordsPath).href,'@/lib/guess-dictionary':pathToFileURL(dictPath).href}))code=code.replaceAll("'"+name+"'",JSON.stringify(url));
+ for(const [name,url] of Object.entries({'@/lib/room-password':module('lib/room-password.ts','room-password.mjs'),'@/lib/room-invitations':module('lib/room-invitations.ts','room-invitations.mjs',{account:accountUrl}),'@/lib/companions':module('lib/companions.ts','companions.mjs',{account:accountUrl}),'@/lib/competition':module('lib/competition.ts','competition.mjs'),'@/lib/derived-cache':derivedUrl,'@/lib/sync-policy.mjs':pathToFileURL(resolve('lib/sync-policy.mjs')).href,'@/app/api/lobby-chat/route':module('app/api/lobby-chat/route.ts','lobby-chat.mjs',{account:accountUrl}),'@/app/api/announcements/route':module('app/api/announcements/route.ts','announcements.mjs',{account:accountUrl}),'@/lib/party':module('lib/party.ts','party.mjs'),'@/lib/inquiries':module('lib/inquiries.ts','inquiries.mjs',{account:accountUrl}),'@/lib/round-timer':pathToFileURL(resolve('lib/round-timer.ts')).href,'@/lib/cosmetics':cosmeticsUrl,'@/lib/account':accountUrl,'@/lib/store':pathToFileURL(storePath).href,'@/lib/game':gameUrl,'@/lib/input':pathToFileURL(inputPath).href,'@/lib/words':pathToFileURL(wordsPath).href,'@/lib/guess-dictionary':pathToFileURL(dictPath).href}))code=code.replaceAll("'"+name+"'",JSON.stringify(url));
  writeFileSync(gameRoutePath,code);const gameApi=await import(pathToFileURL(gameRoutePath).href);
  const gameReq=(id,token,body,query='')=>new Request('https://test.local/api/game'+query,{method:body?'POST':'GET',headers:{...(id?{'oai-authenticated-user-id':id}:{}),...(token?{cookie:`bw_session=${token}`} :{}),...(body?{'content-type':'application/json',origin:'https://test.local'}:{})},...(body?{body:JSON.stringify(body)}:{})});
  assert.equal((await gameApi.GET(gameReq('A','',null,`?room=${room}`))).status,200);
@@ -207,5 +207,20 @@ test('account ownership, safe claims, privacy, pagination and preservation',asyn
  db.prepare('INSERT INTO speed_plays(round_id,member_id,state,updated_at) VALUES(?,?,?,?)').run('reward-speed','guest',JSON.stringify(bundle),Date.now());
  const reward=await (await GET(req('A'))).json();assert.equal(reward.stats.wins,beforeReward.stats.wins+1);assert.equal(reward.stats.completed,beforeReward.stats.completed+1);assert.equal(reward.progression.xp,beforeReward.progression.xp+90);
  const repeated=await (await GET(req('A'))).json();assert.equal(repeated.progression.xp,reward.progression.xp);assert.equal(repeated.stats.wins,reward.stats.wins);
+
+ // New password rooms: both entry routes and spectators require proof; members can reconnect.
+ const legacySnapshot=JSON.stringify(db.prepare('SELECT * FROM plays ORDER BY id').all());
+ const created=await gameApi.POST(gameReq('A','',{action:'create',name:'host',avatar:'🐱',roomName:'private',width:5,password:'room-secret'}));assert.equal(created.status,200);
+ const privateId=(await created.json()).roomId,privateRow=db.prepare('SELECT * FROM rooms WHERE id=?').get(privateId);
+ assert.notEqual(privateRow.password_hash,'room-secret');assert(privateRow.password_hash.startsWith('v1:'));
+ const info=await (await gameApi.GET(gameReq(null,'',null,`?room=${privateId}&info=1&publicRoom=1`))).json();assert.deepEqual(info,{name:'private',locked:true});
+ const privateJoin={action:'join',room:privateId,lobby:true,name:'visitor',avatar:'🐱'};
+ assert.equal((await gameApi.POST(gameReq('C','',{...privateJoin}))).status,403);
+ assert.equal((await gameApi.POST(gameReq('C','',{...privateJoin,password:'wrong'}))).status,403);
+ assert.equal((await gameApi.POST(gameReq('C','',{...privateJoin,password:'room-secret'}))).status,200);
+ assert.equal((await gameApi.POST(gameReq('C','',{...privateJoin}))).status,200,'existing member reconnects without password');
+ assert.equal((await gameApi.POST(gameReq('D','',{...privateJoin,lobby:false,room:privateRow.invite_code,name:'spectator',spectator:true}))).status,403);
+ assert.equal((await gameApi.POST(gameReq('D','',{...privateJoin,lobby:false,room:privateRow.invite_code,name:'spectator',spectator:true,password:'room-secret'}))).status,200);
+ assert.equal(JSON.stringify(db.prepare('SELECT * FROM plays ORDER BY id').all()),legacySnapshot,'entry never mutates ongoing plays');
  }finally{db.close();delete globalThis.__accountTestStore;delete globalThis.__testAdminId;rmSync(dir,{recursive:true,force:true})}
 });

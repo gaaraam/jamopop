@@ -1,3 +1,4 @@
+import {FURNITURE} from '@/lib/furniture';
 import {CARD_SKINS} from '@/lib/card-skins';
 import {accountId,avatarAccess} from '@/lib/account';
 import {database,one} from '@/lib/store';
@@ -15,9 +16,16 @@ export async function POST(req:Request){
  if(req.headers.get('origin')!==new URL(req.url).origin)return send({error:'현재 페이지에서 다시 시도해 주세요.'},403);
  const b=await req.json() as {action:string;skin?:string;slot?:string};
  if(!['buy','equip','unequip'].includes(b.action))return send({error:'요청을 확인해 주세요.'},400);
- if(b.slot!==undefined&&!['character','card'].includes(b.slot))return send({error:'잘못된 장착 슬롯이에요.'},400);
+ if(b.slot!==undefined&&!['character','card','home'].includes(b.slot))return send({error:'잘못된 장착 슬롯이에요.'},400);
  const db=database();
  if(!await one('SELECT 1 FROM profiles WHERE id=?',id))return send({error:'마이페이지에서 프로필을 먼저 저장해 주세요.'},409);
+ if(b.slot==='home'){
+ const item=FURNITURE.find(f=>f.id===b.skin);
+ if(b.action!=='buy'||!item||item.price===0)return send({error:'구매할 가구를 확인해 주세요.'},400);
+ await db.prepare(`INSERT INTO skin_purchases(account_id,skin_id,price,purchased_at) SELECT ?,?,?,? WHERE (${BALANCE_SQL})>=? ON CONFLICT(account_id,skin_id) DO NOTHING`).bind(id,item.id,item.price,Date.now(),id,id,item.price).run();
+ if(!await one('SELECT 1 FROM skin_purchases WHERE account_id=? AND skin_id=?',id,item.id))return send({error:'골드가 부족해요.'},409);
+ return GET(req);
+ }
  if(b.slot==='card'){
  if(b.action==='unequip'){
  await db.prepare('DELETE FROM equipped_card_skins WHERE account_id=?').bind(id).run();return GET(req);
