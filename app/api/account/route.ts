@@ -1,3 +1,4 @@
+import {guestSoloStatus,linkGuestSolo} from '@/lib/guest-solo';
 import {canEquip,equippedAtLevel} from '@/lib/cosmetics';
 import {all,one,run,database} from '@/lib/store';
 import {accountId,guestToken,tokenHash,AVATARS,accountProgressions,avatarAccess,isSiteAdmin} from '@/lib/account';
@@ -11,13 +12,14 @@ export async function GET(req:Request){try{
  const equipped=await one('SELECT name_color,avatar_frame FROM account_cosmetics WHERE account_id=?',id);
  const cosmetics=equippedAtLevel(equipped?.name_color,equipped?.avatar_frame,progression?.level||1);
  const profile=await one('SELECT name,avatar,skin_id AS skin FROM profiles WHERE id=?',id);
+ const guestSolo=await guestSoloStatus(guest,id);
  const pending=guest?await one(`SELECT COUNT(*) n FROM members WHERE token_hash=? AND account_id IS NULL`,guest):{n:0};
  const conflicts=guest?await one(`SELECT COUNT(*) n FROM members g WHERE g.token_hash=? AND g.account_id IS NULL AND EXISTS(SELECT 1 FROM members a WHERE a.room_id=g.room_id AND a.account_id=?)`,guest,id):{n:0};
  const stats=await one(`SELECT COUNT(*) completed,COALESCE(SUM(p.status='won'),0) wins,AVG(CASE WHEN p.status='won' THEN json_array_length(p.guesses)*1.0/CASE WHEN r.mode='speed' THEN 5 ELSE 1 END END) average FROM plays p JOIN members m ON m.id=p.member_id JOIN rounds r ON r.id=p.round_id WHERE m.account_id=? AND r.mode<>'practice' AND p.status IN('won','lost','forfeited')`,id);
  const rooms=await all(`SELECT r.id,r.name,m.name AS nickname,m.avatar,m.skin_id AS skin,m.blocked,m.last_seen AS lastSeen FROM members m JOIN rooms r ON r.id=m.room_id WHERE m.account_id=? ORDER BY m.last_seen DESC,r.id LIMIT 100`,id);
  const rawOffset=Number(new URL(req.url).searchParams.get('offset')||0),offset=Number.isSafeInteger(rawOffset)&&rawOffset>=0?Math.min(rawOffset,100000):0;
  const rows=await all(`SELECT p.id,r.room_id AS roomId,rm.name AS roomName,r.mode,r.width,p.status,p.guesses,p.updated_at AS updatedAt,r.phase,CASE WHEN p.status IN('won','lost','forfeited') OR r.retired_at IS NOT NULL THEN r.answer ELSE NULL END AS answer FROM plays p JOIN members m ON m.id=p.member_id JOIN rounds r ON r.id=p.round_id JOIN rooms rm ON rm.id=r.room_id WHERE m.account_id=? AND p.guesses<>'[]' ORDER BY p.updated_at DESC,p.id LIMIT 21 OFFSET ?`,id,offset);
- return reply({signedIn:true,accountKey:id,isAdmin:isSiteAdmin(req),email:req.headers.get('oai-authenticated-user-email')||'',profile,progression,cosmetics,avatarAccess:await avatarAccess(req,progression?.level||1),pending:pending.n,conflicts:conflicts.n,stats,rooms,records:rows.slice(0,20).map(r=>({...r,guesses:JSON.parse(r.guesses),status:r.status==='playing'&&r.phase==='interrupted'?'interrupted':r.status})),nextOffset:rows.length>20?offset+20:null});
+ return reply({signedIn:true,accountKey:id,isAdmin:isSiteAdmin(req),email:req.headers.get('oai-authenticated-user-email')||'',profile,progression,cosmetics,avatarAccess:await avatarAccess(req,progression?.level||1),guestSolo,pending:pending.n,conflicts:conflicts.n,stats,rooms,records:rows.slice(0,20).map(r=>({...r,guesses:JSON.parse(r.guesses),status:r.status==='playing'&&r.phase==='interrupted'?'interrupted':r.status})),nextOffset:rows.length>20?offset+20:null});
  }catch(e){console.error('account read failed',e);return reply({error:'내 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.'},503);}}
 export async function POST(req:Request){try{
  const origin=req.headers.get('origin');if(origin&&origin!==new URL(req.url).origin)return reply({error:'이 페이지에서 다시 시도해 주세요.'},403);
@@ -50,6 +52,7 @@ export async function POST(req:Request){try{
  }
  else{
  const guest=await guestHash(req);
+ await linkGuestSolo(guest,id);
  // D1 batch is transactional. Uniqueness and the owner-null guard prevent concurrent claims.
  await database().batch([
  database().prepare(`INSERT INTO profiles(id,name,avatar,created_at) VALUES(?,?,?,?) ON CONFLICT(id) DO NOTHING`).bind(id,name,avatar,Date.now()),

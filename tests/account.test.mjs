@@ -15,11 +15,12 @@ test('account ownership, safe claims, privacy, pagination and preservation',asyn
  const store={adminAccountId:()=>globalThis.__testAdminId||'',one:async(sql,...args)=>db.prepare(sql).get(...args)||null,all:async(sql,...args)=>db.prepare(sql).all(...args),run:async(sql,...args)=>({meta:{changes:db.prepare(sql).run(...args).changes}}),database:()=>({prepare,batch:async queries=>{db.exec('BEGIN');try{const out=queries.map(q=>q.run());db.exec('COMMIT');return out}catch(e){db.exec('ROLLBACK');throw e}}})};
  globalThis.__accountTestStore=store;
  const storePath=join(dir,'store.mjs');writeFileSync(storePath,'export const {one,all,run,database,adminAccountId}=globalThis.__accountTestStore;');
- function module(file,name,extra={}){const input=readFileSync(file,'utf8');const out=ts.transpileModule(input,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText.replaceAll("'@/lib/cosmetics'",JSON.stringify(name==='cosmetics.mjs'?'':cosmeticsUrl)).replaceAll("'./store'",JSON.stringify(pathToFileURL(storePath).href)).replaceAll("'@/lib/store'",JSON.stringify(pathToFileURL(storePath).href)).replaceAll("'@/lib/inquiries'",JSON.stringify(pathToFileURL(join(dir,'inquiries.mjs')).href)).replaceAll("'./derived-cache'", JSON.stringify(derivedUrl)).replaceAll("'@/lib/account'", JSON.stringify(extra.account||''));const p=join(dir,name);writeFileSync(p,out);return pathToFileURL(p).href;}
+ function module(file,name,extra={}){const input=readFileSync(file,'utf8');const out=ts.transpileModule(input,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText.replaceAll("'@/lib/guest-solo'",JSON.stringify(pathToFileURL(join(dir,'guest-solo.mjs')).href)).replaceAll("'@/lib/cosmetics'",JSON.stringify(name==='cosmetics.mjs'?'':cosmeticsUrl)).replaceAll("'./store'",JSON.stringify(pathToFileURL(storePath).href)).replaceAll("'@/lib/store'",JSON.stringify(pathToFileURL(storePath).href)).replaceAll("'@/lib/inquiries'",JSON.stringify(pathToFileURL(join(dir,'inquiries.mjs')).href)).replaceAll("'./derived-cache'", JSON.stringify(derivedUrl)).replaceAll("'@/lib/account'", JSON.stringify(extra.account||''));const p=join(dir,name);writeFileSync(p,out);return pathToFileURL(p).href;}
  const derivedPath=join(dir,'derived-cache.mjs');
  writeFileSync(derivedPath,ts.transpileModule(readFileSync('lib/derived-cache.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText.replaceAll("'./store'",JSON.stringify(pathToFileURL(storePath).href)).replaceAll("'./sync-policy.mjs'",JSON.stringify(pathToFileURL(resolve('lib/sync-policy.mjs')).href)));
  const derivedUrl=pathToFileURL(derivedPath).href;
  const cosmeticsUrl=module('lib/cosmetics.ts','cosmetics.mjs');
+ module('lib/guest-solo.ts','guest-solo.mjs');
  const accountUrl=module('lib/account.ts','account.mjs'),{tokenHash,findMember}=await import(accountUrl),{GET,POST}=await import(module('app/api/account/route.ts','route.mjs',{account:accountUrl}));
  const guest='a'.repeat(64),hash=await tokenHash(guest),room='a'.repeat(24),other='b'.repeat(24);
  db.prepare('INSERT INTO rooms(id,name,host_id,created_at) VALUES(?,?,?,?)').run(room,'방','guest',1);
@@ -222,5 +223,14 @@ test('account ownership, safe claims, privacy, pagination and preservation',asyn
  assert.equal((await gameApi.POST(gameReq('D','',{...privateJoin,lobby:false,room:privateRow.invite_code,name:'spectator',spectator:true}))).status,403);
  assert.equal((await gameApi.POST(gameReq('D','',{...privateJoin,lobby:false,room:privateRow.invite_code,name:'spectator',spectator:true,password:'room-secret'}))).status,200);
  assert.equal(JSON.stringify(db.prepare('SELECT * FROM plays ORDER BY id').all()),legacySnapshot,'entry never mutates ongoing plays');
+ // End-to-end account API: solo-only guest claims work without any room membership.
+ const soloToken='e'.repeat(64),soloOwner='guest:'+await tokenHash(soloToken);
+ const soloState={best:{1:3},recent:['수박'],active:null,xp:90};
+ db.prepare('INSERT INTO solo_progress(owner,state,revision) VALUES(?,?,0)').run(soloOwner,JSON.stringify(soloState));
+ const pendingSolo=await (await GET(req('solo-owner',soloToken))).json();assert.deepEqual(pendingSolo.guestSolo,{pending:true,conflict:false});assert.equal(pendingSolo.pending,0);
+ const linkedSoloResponse=await POST(req('solo-owner',soloToken,{action:'link',name:'콩알',avatar:'🐱'}));assert.equal(linkedSoloResponse.status,200);
+ const linkedSolo=await linkedSoloResponse.json();assert.equal(linkedSolo.guestSolo.pending,false);assert.equal(linkedSolo.progression.xp,90);
+ const repeatedSolo=await (await POST(req('solo-owner',soloToken,{action:'link',name:'콩알',avatar:'🐱'}))).json();assert.equal(repeatedSolo.progression.xp,90,'solo claim cannot double XP');
+ assert.equal(JSON.parse(db.prepare('SELECT state FROM solo_progress WHERE owner=?').get('account:solo-owner').state).best[1],3,'solo achievement entitlements survive');
  }finally{db.close();delete globalThis.__accountTestStore;delete globalThis.__testAdminId;rmSync(dir,{recursive:true,force:true})}
 });
