@@ -1,5 +1,6 @@
 'use client';
 import { SafetyActions, type SafetyTarget } from '@/components/safety/actions';
+import { chatViewport } from '@/lib/chat-viewport.mjs';
 import { isChatToggleKey } from '@/lib/chat-shortcut.mjs';
 import { CharacterAvatar } from '@/components/game/character-avatar';
 
@@ -253,20 +254,28 @@ export function RoomChat({
       left: `-${startX}px`,
       width: '100%',
     });
+    const element = root.current;
     const update = () => {
-      const focused = root.current?.contains(document.activeElement);
-      const inset = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
-      setKeyboardBottom(focused ? inset : 0);
-      setViewportHeight(viewport.height);
+      const metrics = chatViewport({
+        innerHeight: window.innerHeight,
+        height: viewport.height,
+        offsetTop: viewport.offsetTop,
+        scale: viewport.scale,
+        focused: !!element?.contains(document.activeElement),
+      });
+      setKeyboardBottom(metrics.bottom);
+      setViewportHeight(metrics.height);
     };
     viewport.addEventListener('resize', update);
     viewport.addEventListener('scroll', update);
-    root.current?.addEventListener('focusin', update);
+    element?.addEventListener('focusin', update);
+    element?.addEventListener('focusout', update);
     update();
     return () => {
       viewport.removeEventListener('resize', update);
       viewport.removeEventListener('scroll', update);
-      root.current?.removeEventListener('focusin', update);
+      element?.removeEventListener('focusin', update);
+      element?.removeEventListener('focusout', update);
       setKeyboardBottom(0);
       setViewportHeight(0);
       Object.assign(body.style, previous);
