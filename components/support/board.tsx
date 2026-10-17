@@ -1,4 +1,5 @@
 'use client';
+import { DeletionTools } from './deletion-tools';
 import { DeletionRequest } from './deletion-request';
 import { SafetySettings } from '@/components/safety/settings';
 import { useEffect, useRef, useState } from 'react';
@@ -75,10 +76,19 @@ function Inquiry({ item, admin, onSaved }: { item: Ticket; admin: boolean; onSav
         {admin && item.category === '계정 삭제' && (
           <p className="support-meta">
             확인할 계정: <code>{item.accountReference}</code>
-            <br />이 화면은 요청 접수·답변용입니다. 계정 삭제를 실행하지 않습니다.
+            <br />
+            아래 미리보기에서 삭제 범위를 확인한 뒤 실행합니다.
           </p>
         )}
-        {admin ? (
+        {item.category === '계정 삭제' && (
+          <DeletionTools
+            inquiry={item.id}
+            admin={admin}
+            closed={item.status === 'closed'}
+            onSaved={onSaved}
+          />
+        )}
+        {admin && !(item.category === '계정 삭제' && item.status === 'closed') ? (
           <form
             onSubmit={(e) => {
               e.preventDefault();

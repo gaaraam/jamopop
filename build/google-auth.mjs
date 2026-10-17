@@ -41,7 +41,7 @@ export async function googleAuth(req,env){
   const p=await verifyGoogleToken(tokens.id_token,env.GOOGLE_CLIENT_ID,attempt.nonce);
   const session=random(),now=Date.now();
   await env.DB.batch([
-   env.DB.prepare('INSERT INTO google_accounts(subject,game_account_id,email,name,created_at,last_login_at) VALUES(?,?,?,?,?,?) ON CONFLICT(subject) DO UPDATE SET email=excluded.email,name=excluded.name,last_login_at=excluded.last_login_at').bind(p.subject,'google:'+p.subject,p.email,p.name,now,now),
+   env.DB.prepare('INSERT INTO google_accounts(subject,game_account_id,email,name,created_at,last_login_at) VALUES(?,?,?,?,?,?) ON CONFLICT(subject) DO UPDATE SET email=excluded.email,name=excluded.name,last_login_at=excluded.last_login_at').bind(p.subject,'google:'+crypto.randomUUID(),p.email,p.name,now,now),
    env.DB.prepare("INSERT OR IGNORE INTO linked_game_accounts(account_id,subject,label,linked_at) SELECT game_account_id,subject,'Google 프로필',created_at FROM google_accounts WHERE subject=?").bind(p.subject),
    env.DB.prepare('DELETE FROM google_sessions WHERE expires_at<=?').bind(now),
    env.DB.prepare('INSERT INTO google_sessions VALUES(?,?,?)').bind(await hash(session),p.subject,now+30*86400000)
