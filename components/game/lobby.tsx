@@ -35,8 +35,9 @@ export function Lobby({onSelect,onCreate,onRegister,signedIn,playerName,playerAv
  },[archived]);
  useEffect(()=>{
   const release=ownSync();let last=Date.now();void refresh();const run=()=>{last=Date.now();void refresh()};const timer=setInterval(()=>{if(!document.hidden&&Date.now()-last>=pollDelay({lobby:true,idleMs:Date.now()-activity.current,chatOpen:chatOpen.current}))run()},500);const active=()=>{activity.current=Date.now()};window.addEventListener('pointerdown',active);window.addEventListener('keydown',active);
+  const safetyChanged=()=>{const previous=controller.current;controller.current=null;previous?.abort();run()};window.addEventListener('jamopop-safety-change',safetyChanged);
   const visible=()=>{if(!document.hidden)run()};document.addEventListener('visibilitychange',visible);
-  return()=>{release();clearInterval(timer);window.removeEventListener('pointerdown',active);window.removeEventListener('keydown',active);document.removeEventListener('visibilitychange',visible);const old=controller.current;controller.current=null;old?.abort();};
+  return()=>{window.removeEventListener('jamopop-safety-change',safetyChanged);release();clearInterval(timer);window.removeEventListener('pointerdown',active);window.removeEventListener('keydown',active);document.removeEventListener('visibilitychange',visible);const old=controller.current;controller.current=null;old?.abort();};
  },[refresh]);
   const organize=async(room:LobbyRoom)=>{
   if(mutating.current)return;

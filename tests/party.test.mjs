@@ -46,5 +46,18 @@ test('party integration: items, concurrency, deadlines, titles, hints, spectator
  db.prepare('UPDATE item_loadouts SET ends_at=? WHERE member_id=?').run(now-1,'d');await hintGet('d');assert.equal(db.prepare('SELECT COUNT(*) n FROM hint_views').get().n,1,'expired player exempt');
  const clean=await (await get('a')).json();assert.equal(clean.party.hintUsed,true);assert.equal(clean.players.find(p=>p.id==='a').hintUsed,true);
  const snapshot=JSON.stringify(db.prepare('SELECT * FROM plays').all());response=await game.POST(req('a',{action:'force_reset',mode:'daily',width:5,variant:'normal'},'/api/game'));assert.equal(response.status,200);const next=await response.json();assert.equal(next.party.variant,'normal');assert.equal(next.party.hintPolicy,true);assert.equal(JSON.stringify(db.prepare('SELECT * FROM plays').all()),snapshot);assert.equal((await post('c',{action:'draw',strokes:stroke})).status,400,'old round action rejected');assert.equal((await (await get('watch')).json()).party.spectator,false,'next round participant');
+ // Private-room listing is metadata only; direct reads, observing and joins still require membership/password.
+ const priv='f'.repeat(24),privRound='private-round',passwords=await import(urls['@/lib/room-password']);
+ db.prepare('INSERT INTO rooms(id,name,host_id,created_at,current_round_id,password_hash) VALUES(?,?,?,?,?,?)').run(priv,'비밀번호 방','a',now,privRound,await passwords.hashRoomPassword('test1234'));
+ db.prepare("INSERT INTO rounds(id,room_id,mode,answer,starts_at,ends_at,width,dictionary_version) VALUES(?,?,'daily','사과',?,?,5,1)").run(privRound,priv,now,now+300000);
+ const privateRead=await game.GET(req('outsider',null,`/api/game?room=${priv}&mode=daily`));assert.equal(privateRead.status,401);
+ assert.notEqual((await api.GET(req('outsider',null,`/api/party?room=${priv}&roundId=${privRound}&watch=a`))).status,200);
+ const privateJoin=(who,password,spectator=false)=>game.POST(new Request('https://test/api/game',{method:'POST',headers:{user:who,origin:'https://test','CF-Connecting-IP':'203.0.113.1'},body:JSON.stringify({action:'join',lobby:true,room:priv,name:who,avatar:'🐱',password,spectator})}));
+ assert.equal((await privateJoin('outsider',undefined)).status,403);
+ assert.equal((await privateJoin('outsider','wrong',true)).status,403);
+ for(let i=0;i<8;i++)assert.equal((await privateJoin('outsider','wrong')).status,403);
+ assert.equal((await privateJoin('outsider','test1234')).status,429);
+ assert.equal((await privateJoin('office-colleague','test1234',true)).status,200,'same office IP has an independent identity budget');
+ const publicList=await (await game.GET(req('a',null,'/api/game?lobby=1'))).json();assert.equal(JSON.stringify(publicList).includes('v1:'),false);assert.equal(publicList.rooms.find(r=>r.id===priv).locked,1);
  }finally{Date.now=oldNow;db.close();delete globalThis.__partyStore;rmSync(dir,{recursive:true,force:true})}
 });

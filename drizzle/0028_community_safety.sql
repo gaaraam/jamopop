@@ -1,0 +1,10 @@
+CREATE TABLE safety_blocks(id TEXT PRIMARY KEY,owner TEXT NOT NULL,target TEXT NOT NULL,target_alias TEXT,name TEXT NOT NULL,mode TEXT NOT NULL CHECK(mode IN ('block','mute')),created_at INTEGER NOT NULL,UNIQUE(owner,target));
+CREATE INDEX safety_blocks_target ON safety_blocks(target);
+CREATE INDEX safety_blocks_alias ON safety_blocks(target_alias);
+CREATE TABLE safety_reports(id TEXT PRIMARY KEY,reporter TEXT NOT NULL,request_id TEXT NOT NULL,kind TEXT NOT NULL,reference TEXT NOT NULL,subject TEXT NOT NULL,subject_alias TEXT,name TEXT NOT NULL,reason TEXT NOT NULL,details TEXT NOT NULL,evidence TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'new' CHECK(status IN ('new','reviewing','closed')),created_at INTEGER NOT NULL,updated_at INTEGER NOT NULL,revision INTEGER NOT NULL DEFAULT 0,last_action TEXT,UNIQUE(reporter,request_id),UNIQUE(reporter,kind,reference));
+CREATE INDEX safety_reports_status ON safety_reports(status,updated_at DESC);
+CREATE TABLE safety_restrictions(subject TEXT PRIMARY KEY,kind TEXT NOT NULL CHECK(kind IN ('warn','chat_mute','suspend')),reason TEXT NOT NULL,expires_at INTEGER NOT NULL,updated_at INTEGER NOT NULL);
+CREATE TABLE safety_actions(id TEXT PRIMARY KEY,report_id TEXT NOT NULL,actor TEXT NOT NULL,kind TEXT NOT NULL,reason TEXT NOT NULL,expires_at INTEGER,created_at INTEGER NOT NULL);
+CREATE INDEX safety_actions_report ON safety_actions(report_id,created_at);
+CREATE TABLE safety_rate(key TEXT PRIMARY KEY,hits INTEGER NOT NULL,expires_at INTEGER NOT NULL);
+CREATE INDEX safety_rate_expiry ON safety_rate(expires_at);

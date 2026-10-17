@@ -12,7 +12,7 @@ export async function verifyRoomPassword(password:unknown,stored:string){
  if(!validRoomPassword(password)||!/^v1:[a-f0-9]{32}:[a-f0-9]{64}$/.test(stored))return false;
  const [,salt,expected]=stored.split(':');const actual=await derive(password,bytes(salt));let diff=0;for(let i=0;i<actual.length;i++)diff|=actual.charCodeAt(i)^expected.charCodeAt(i);return diff===0;
 }
-/** Atomic attempt budget shared across isolates; clearing cookies does not reset an IP budget. */
+/** Atomic per-room identity budget shared across isolates. The Worker adds a wider IP ceiling. */
 export async function allowRoomPasswordAttempt(room:string,address:string,now=Date.now()){
  const fingerprint=hex(new Uint8Array(await crypto.subtle.digest('SHA-256',enc.encode(room+':'+address))));
  const window=Math.floor(now/60000);

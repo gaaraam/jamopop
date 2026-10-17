@@ -1,4 +1,5 @@
 'use client';
+import {SafetyActions} from '@/components/safety/actions';
 import {CharacterAvatar} from '@/components/game/character-avatar';
 
 import {useEffect,useState} from 'react';
@@ -14,7 +15,7 @@ function RecordBlock({label,stats}:{label:string;stats:Stats}){
  <div><strong>{stats.average==null?'—':stats.average.toFixed(1)}{stats.average!=null&&<small>회</small>}</strong><span>성공 평균 시도</span></div>
  </div></section>;
 }
-export function PlayerProfile({roomId,target,onClose}:{roomId:string;target:{id:string;name:string}|null;onClose:()=>void}){
+export function PlayerProfile({roomId,target,onClose,meId}:{meId?:string;roomId:string;target:{id:string;name:string}|null;onClose:()=>void}){
  const [result,setResult]=useState<{key:string;profile?:Profile;error?:string}|null>(null),[retry,setRetry]=useState(0);
  const key=target?roomId+':'+target.id:'';
  useEffect(()=>{
@@ -32,7 +33,7 @@ export function PlayerProfile({roomId,target,onClose}:{roomId:string;target:{id:
  <DialogTitle className="sr-only">{target?.name} 프로필</DialogTitle>
  <DialogDescription className="sr-only">참가자의 레벨과 전체 및 현재 방 게임 전적입니다.</DialogDescription>
  {p?<><header className="public-profile-hero"><span className="public-profile-avatar"><CharacterAvatar avatar={p.avatar} skin={p.skin}/></span><div><span className="public-profile-level">{p.linked?`Lv. ${p.level}`:'게스트'}</span><h2>{p.name}</h2>{p.title&&<span className="public-profile-title">{titleNames[p.title]||p.title}</span>}</div></header>
- <RecordBlock label="전체 전적" stats={p.overall}/><RecordBlock label="현재 방" stats={p.room}/>
+ <div className="safety-profile-actions">{target&&target.id!==meId&&<SafetyActions target={{kind:'member',id:target.id,room:roomId}} name={p.name}/>}</div><RecordBlock label="전체 전적" stats={p.overall}/><RecordBlock label="현재 방" stats={p.room}/>
  <p className="profile-scope">방 게임 기준 · 연습·개인 도전 제외</p>
  </>:current?.error?<div className="profile-state" role="alert"><p>{current.error}</p><button onClick={()=>{setResult(null);setRetry(n=>n+1)}}>다시 불러오기</button></div>:<div className="profile-state" role="status">프로필을 불러오는 중…</div>}
  </DialogContent></Dialog>;
