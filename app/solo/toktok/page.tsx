@@ -10,15 +10,23 @@ import {
   finishedToktok,
   hintToktok,
   tapToktok,
-  TOKTOK_TARGET,
+  targetToktok,
+  TOKTOK_FEVER,
   TOKTOK_TURNS,
 } from '@/lib/jamo-toktok.mjs';
-import { readToktok, replayToktok, writeToktok } from '@/lib/toktok-progress.mjs';
+import { readToktok, replayToktok, writeToktok, nextToktokRound } from '@/lib/toktok-progress.mjs';
 import { RECENT_SOLO_KEY } from '@/lib/solo-recent.mjs';
 import '../challenges.css';
 import './toktok.css';
-type Progress = { seed: number; moves: number[]; best: number };
-const empty: Progress = { seed: 1, moves: [], best: 0 };
+type Progress = {
+  seed: number;
+  moves: number[];
+  best: number;
+  rules: number;
+  round: number;
+  bestRound: number;
+};
+const empty: Progress = { seed: 1, moves: [], best: 0, rules: 2, round: 1, bestRound: 1 };
 function newSeed() {
   return crypto.getRandomValues(new Uint32Array(1))[0] || 1;
 }
@@ -39,11 +47,12 @@ export default function JamoToktok() {
     audio = useRef<AudioContext | null>(null),
     soundOn = useRef(true);
   const game = useMemo(
-    () => replayToktok(progress.seed, progress.moves)!,
-    [progress.seed, progress.moves],
+    () => replayToktok(progress.seed, progress.moves, progress)!,
+    [progress.seed, progress.moves, progress.rules, progress.round],
   );
   const done = finishedToktok(game),
-    won = game.score >= TOKTOK_TARGET;
+    target = targetToktok(game),
+    won = game.score >= target;
   function stopMotion() {
     generation.current++;
     if (timer.current) clearTimeout(timer.current);
@@ -119,7 +128,7 @@ export default function JamoToktok() {
   function take(index: number) {
     if (!ready || locked.current) return;
     const p = current.current,
-      before = replayToktok(p.seed, p.moves)!;
+      before = replayToktok(p.seed, p.moves, p)!;
     const next = tapToktok(before, index);
     if (!next) {
       if (!finishedToktok(before)) {
@@ -134,7 +143,7 @@ export default function JamoToktok() {
     const v = ++generation.current;
     commit({ ...p, moves: [...p.moves, index], best: Math.max(p.best, next.score) });
     setOldBoard(before.board);
-    const label =
+    const baseLabel =
       next.triggered > 1
         ? `${next.triggered}연쇄!`
         : next.triggered
@@ -142,6 +151,7 @@ export default function JamoToktok() {
           : next.earned !== null
             ? `${GLYPHS[next.earned]} 합성!`
             : '톡톡!';
+    const label = next.feverUsed ? `피버 ×2 · ${baseLabel}` : baseLabel;
     setEffect({
       id: v,
       cells: next.cells,
@@ -150,9 +160,14 @@ export default function JamoToktok() {
       index,
       chain: next.triggered,
       glyph: GLYPHS[before.board[index].ch],
+      fever: next.feverUsed,
     });
-    playSound(next.triggered + 1);
-    setMessage(`${label} +${next.points.toLocaleString()}점`);
+    playSound(next.feverUsed ? 5 : next.triggered + 1);
+    setMessage(
+      next.rules === 2 && next.fever === TOKTOK_FEVER
+        ? '피버 준비! 다음에 고른 폭발은 점수 2배'
+        : `${label} +${next.points.toLocaleString()}점`,
+    );
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     timer.current = setTimeout(
       () => {
@@ -170,9 +185,10 @@ export default function JamoToktok() {
       reduce ? 0 : 240,
     );
   }
-  function restart() {
+  function restart(advance = false) {
     stopMotion();
-    commit({ seed: newSeed(), moves: [], best: current.current.best });
+    const p = current.current;
+    commit(nextToktokRound(p, newSeed(), advance));
   }
   function undo() {
     if (locked.current || !current.current.moves.length) return;
@@ -209,16 +225,16 @@ export default function JamoToktok() {
               </div>
             </div>
             <div className="toktok-goal">
-              <span>목표</span>
-              <strong>{TOKTOK_TARGET.toLocaleString()}</strong>
+              <span>{progress.rules === 2 ? `${progress.round}라운드 목표` : '목표'}</span>
+              <strong>{target.toLocaleString()}</strong>
               <div
                 role="progressbar"
                 aria-label="목표 점수"
                 aria-valuemin={0}
-                aria-valuemax={TOKTOK_TARGET}
-                aria-valuenow={Math.min(game.score, TOKTOK_TARGET)}
+                aria-valuemax={target}
+                aria-valuenow={Math.min(game.score, target)}
               >
-                <i style={{ width: `${Math.min(100, (game.score / TOKTOK_TARGET) * 100)}%` }} />
+                <i style={{ width: `${Math.min(100, (game.score / target) * 100)}%` }} />
               </div>
             </div>
             <div className="toktok-recipes" aria-label="합성 자모 연결">
@@ -241,7 +257,13 @@ export default function JamoToktok() {
               </p>
               <p>
                 ㄱ 네 개는 ㄲ, ㅏ 네 개와 판의 ㅗ 하나는 ㅘ, ㅣ 네 개와 ㅏ 하나는 ㅐ로 합성돼요.
-                18번 안에 18,000점에 도전하세요.
+                18번 안에 목표 점수에 도전하세요. 라운드를 클리어하면 다음 목표가 2,000점씩
+                올라가며, 최대 30,000점이에요.
+              </p>
+              <p>
+                큰 무리·합성·연쇄로 피버 6칸을 모으세요. 피버가 차면 다음에 선택한 폭발 점수가 2배가
+                돼요. 시간제한은 없으니 크게 터뜨릴 수를 골라보세요. 이전 버전의 진행 중인 판에는 새
+                규칙을 적용하지 않아요.
               </p>
               <p>
                 진행과 최고 점수는 이 브라우저에 저장돼요. 계정 전적·골드와 별개이며 브라우저
@@ -280,7 +302,34 @@ export default function JamoToktok() {
                 {sound ? <Volume2 size={18} /> : <VolumeX size={18} />}
               </button>
             </div>
-            <div className="toktok-play-area">
+            {progress.rules === 2 && (
+              <div
+                className={`toktok-fever ${game.fever === TOKTOK_FEVER ? 'ready' : ''}`}
+                role="progressbar"
+                aria-label="피버"
+                aria-valuemin={0}
+                aria-valuemax={TOKTOK_FEVER}
+                aria-valuenow={game.fever}
+                aria-valuetext={
+                  game.fever === TOKTOK_FEVER
+                    ? '다음 폭발 점수 2배'
+                    : `${game.fever} / ${TOKTOK_FEVER}`
+                }
+              >
+                <strong>{game.fever === TOKTOK_FEVER ? '다음 폭발 ×2' : '피버'}</strong>
+                <div aria-hidden="true">
+                  {Array.from({ length: TOKTOK_FEVER }, (_, i) => (
+                    <i key={i} className={i < (game.fever ?? 0) ? 'filled' : ''} />
+                  ))}
+                </div>
+                <span aria-hidden="true">
+                  {game.fever ?? 0}/{TOKTOK_FEVER}
+                </span>
+              </div>
+            )}
+            <div
+              className={`toktok-play-area ${game.fever === TOKTOK_FEVER ? 'toktok-fever-ready' : ''}`}
+            >
               <ToktokBoard
                 board={oldBoard || game.board}
                 onPick={take}
@@ -293,12 +342,19 @@ export default function JamoToktok() {
                 <div className="toktok-result" role="status">
                   <CharacterAvatar avatar={won ? '🐻' : '🐰'} />
                   <h2>{won ? '목표 달성!' : '이번 판 완료'}</h2>
+                  {progress.rules === 2 && (
+                    <p className="toktok-round-result">
+                      {progress.round}라운드 · 최대 {game.maxChain ?? 0}연쇄 · 피버{' '}
+                      {game.feverCount ?? 0}회
+                    </p>
+                  )}
                   <strong>
                     {game.score.toLocaleString()}
                     <small>점</small>
                   </strong>
-                  <button type="button" className="primary" onClick={restart}>
-                    다음 판<ArrowRight size={18} />
+                  <button type="button" className="primary" onClick={() => restart(won)}>
+                    {won ? '다음 라운드' : '다시 도전'}
+                    <ArrowRight size={18} />
                   </button>
                   <button type="button" onClick={undo}>
                     <Undo2 size={16} />한 수 되돌리기
@@ -314,7 +370,7 @@ export default function JamoToktok() {
                 <Undo2 size={18} />
                 되돌리기
               </button>
-              <button type="button" disabled={busy} onClick={restart}>
+              <button type="button" disabled={busy} onClick={() => restart()}>
                 <RotateCcw size={18} />새 판
               </button>
               <button type="button" disabled={busy || done} onClick={hint}>
