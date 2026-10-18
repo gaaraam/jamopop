@@ -114,7 +114,11 @@ export function Companions({
             {error}
           </p>
         )}
-        {tab === 'friends' && !data?.signedIn ? (
+        {!data ? (
+          <p className="companion-empty" role="status">
+            접속 정보를 확인하고 있어요…
+          </p>
+        ) : tab === 'friends' && !data.signedIn ? (
           <button className="text-btn" onClick={onRegister}>
             로그인하고 친구 연결하기 →
           </button>

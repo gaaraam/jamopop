@@ -1,4 +1,5 @@
 'use client';
+import { NotificationSlot } from '@/components/game/notification-slot';
 import { useScreenStart } from '@/components/game/hooks/use-screen-start';
 import { CharacterAvatar } from '@/components/game/character-avatar';
 import { EntryCharacter } from '@/components/game/entry-character';
@@ -996,6 +997,7 @@ export default function Home() {
               </button>
             </div>
             <div className="nav-actions">
+              <NotificationSlot />
               <ThemeSwitch />
               <AccountPanel
                 onAvatarAccess={setAllowedAvatars}

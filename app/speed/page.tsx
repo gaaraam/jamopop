@@ -1,4 +1,5 @@
 'use client';
+import { NotificationSlot } from '@/components/game/notification-slot';
 import { clearActiveRoom, rememberActiveRoom } from '@/lib/active-room.mjs';
 import { CharacterAvatar } from '@/components/game/character-avatar';
 
@@ -440,6 +441,7 @@ export default function Speed() {
           </button>
         </div>
         <div className="nav-actions">
+          <NotificationSlot />
           <ThemeSwitch />
           <AccountPanel
             defaultName={data?.roster.find((m: any) => m.id === data.me.id)?.name || ''}

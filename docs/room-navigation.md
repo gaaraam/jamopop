@@ -12,3 +12,5 @@
 
 ![프로필에서 게임방으로 돌아가기](qa/room-return-profile.png)
 ![회원은 비밀번호만 입력](qa/member-password-only.png)
+
+공통 헤더는 대기실 링크를 다른 목적지로 바꾸지 않고, 유효한 방 문맥에 별도 `게임방 복귀`를 제공한다. [화면 계층·로딩·복귀 동선](overlay-loading-navigation.md) 참고.

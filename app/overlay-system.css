@@ -1,0 +1,93 @@
+/* Layer contract: HUD 30, notifications 40, modal backdrop/content 80/81. */
+:root {
+  --ui-layer-hud: 30;
+  --ui-layer-popover: 40;
+  --ui-layer-backdrop: 80;
+  --ui-layer-modal: 81;
+}
+[data-slot='dialog-overlay'],
+[data-slot='alert-dialog-overlay'] {
+  z-index: var(--ui-layer-backdrop);
+}
+[data-slot='dialog-content'],
+[data-slot='alert-dialog-content'] {
+  z-index: var(--ui-layer-modal);
+}
+html body .room-chat {
+  z-index: var(--ui-layer-hud);
+}
+html body #service-notifications .friend-notifications {
+  z-index: var(--ui-layer-popover);
+}
+/* :has closes the visual gap before the modal observer renders; hidden/inert also remove interaction. */
+body:has(
+    [data-slot='dialog-overlay'],
+    [data-slot='alert-dialog-overlay'],
+    [aria-modal='true'][role='dialog'],
+    [aria-modal='true'][role='alertdialog']
+  )
+  :is(.game-chat, .friend-notifications),
+html body :is(.game-chat, .friend-notifications)[hidden] {
+  visibility: hidden;
+  pointer-events: none;
+}
+/* Collapsed chat occupies its content width, rather than a full-screen dark strip. */
+html body .game-chat.room-chat[data-open='false'] {
+  left: auto;
+  right: 16px;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  width: min(360px, calc(100vw - 32px));
+  height: auto;
+  padding: 8px 12px;
+  border: 1px solid #ffffff26;
+  border-radius: 16px;
+  background: #1c2639e8;
+  box-shadow: 0 4px 18px #0d17251a;
+  color: #fff;
+}
+html body .game-chat[data-open='false'] .chat-toggle {
+  color: #fff;
+  min-height: 44px;
+}
+html body .game-chat[data-open='false'] .chat-peek {
+  max-height: 58px;
+  overflow: hidden;
+}
+html body .game-chat[data-open='false'] .chat-toggle-hint {
+  color: #c1ccdf;
+}
+#service-notifications {
+  position: relative;
+  flex: none;
+}
+.nav-actions #service-notifications .friend-notification-trigger {
+  min-width: 40px;
+  min-height: 40px;
+  box-shadow: none;
+}
+.nav-actions #service-notifications .friend-notification-trigger > span {
+  display: none;
+}
+.service-header .room-return {
+  background: var(--ui-surface-muted);
+}
+@media (max-width: 760px) {
+  html body .game-chat.room-chat[data-open='false'] {
+    right: 12px;
+    width: auto;
+    max-width: calc(100vw - 24px);
+  }
+  html body .game-chat[data-open='false'] .chat-peek {
+    display: none;
+  }
+}
+@media (max-width: 760px) {
+  .service-header nav a.room-return {
+    flex-basis: auto;
+    width: auto;
+    padding-inline: 10px;
+  }
+  .service-header nav a.room-return span {
+    display: inline;
+  }
+}

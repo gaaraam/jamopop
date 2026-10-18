@@ -457,8 +457,10 @@ export function Lobby({
                 />
               </span>
               <span className="lounge-player-info">
-                <small>{signedIn ? '내 캐릭터' : '게스트 프로필'}</small>
-                <strong>{playerName || '게스트'}</strong>
+                <small>
+                  {signedIn === null ? '프로필 확인 중' : signedIn ? '내 캐릭터' : '게스트 프로필'}
+                </small>
+                <strong>{signedIn === null ? '—' : playerName || '게스트'}</strong>
                 {self && (
                   <>
                     <em>Lv.{self.level}</em>

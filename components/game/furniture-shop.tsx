@@ -1,53 +1,22 @@
 'use client';
+import { AsyncStatus } from '@/components/ui/async-status';
+import { useShopWallet } from './hooks/use-shop-wallet';
 import { ServiceHeader } from '@/components/game/service-header';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { FURNITURE } from '@/lib/furniture';
 import { FurnitureArt } from './furniture-art';
 type Wallet = { balance: number; owned: string[] };
 export function FurnitureShop({ onBack }: { onBack: () => void }) {
-  const [data, setData] = useState<Wallet | null>(null),
-    [selected, setSelected] = useState<string>('home-sofa'),
-    [error, setError] = useState(''),
-    [busy, setBusy] = useState(false),
+  const { data, loading, busy, guest, error, request } = useShopWallet<Wallet>();
+  const [selected, setSelected] = useState<string>('home-sofa'),
     [confirm, setConfirm] = useState(false),
-    [guest, setGuest] = useState(false),
     [notice, setNotice] = useState('');
   const item = FURNITURE.find((f) => f.id === selected)!,
     owned = item.price === 0 || !!data?.owned.includes(item.id);
-  async function load() {
-    try {
-      const r = await fetch('/api/shop');
-      const d = (await r.json()) as Wallet & { error?: string };
-      setGuest(r.status === 401);
-      if (!r.ok) throw Error(d.error || '처리하지 못했어요.');
-      setData(d);
-      setError('');
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  }
-  useEffect(() => {
-    void load();
-  }, []);
   async function buy() {
-    if (busy) return;
-    setBusy(true);
-    setError('');
-    try {
-      const r = await fetch('/api/shop', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'buy', slot: 'home', skin: item.id }),
-      });
-      const d = (await r.json()) as Wallet & { error?: string };
-      if (!r.ok) throw Error(d.error || '처리하지 못했어요.');
-      setData(d);
+    if (await request({ action: 'buy', slot: 'home', skin: item.id })) {
       setConfirm(false);
       setNotice('내 가구에 추가했어요. 집에 놓아 보세요.');
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
     }
   }
   return (
@@ -66,8 +35,12 @@ export function FurnitureShop({ onBack }: { onBack: () => void }) {
             <FurnitureArt id={item.id} />
           </div>
           <h2>{item.name}</h2>
-          <span className="skin-tag">{owned ? '보유 중' : '가구 · 소품'}</span>
-          {owned ? (
+          <span className="skin-tag">{data && owned ? '보유 중' : '가구 · 소품'}</span>
+          {!data ? (
+            <button className="shop-primary" disabled>
+              {loading ? '보유 정보 확인 중…' : guest ? '로그인 후 이용' : '정보 확인 필요'}
+            </button>
+          ) : owned ? (
             <a href="/home" className="shop-primary">
               내 집에 배치하기
             </a>
@@ -98,15 +71,26 @@ export function FurnitureShop({ onBack }: { onBack: () => void }) {
             <small>{item.price - data.balance} G 더 필요해요.</small>
           )}
           <p role="status">{notice}</p>
-          {error && (
-            <p role="alert">
-              {error}{' '}
-              {guest ? (
-                <a href="/auth/google/start?return_to=%2Fshop%3Fcategory%3Dhome">로그인</a>
-              ) : (
-                <button onClick={() => void load()}>다시 불러오기</button>
-              )}
-            </p>
+          {!data && !guest ? (
+            <AsyncStatus
+              label="보유 정보를 확인하고 있어요"
+              error={error}
+              retrying={loading}
+              onRetry={() => void request()}
+            />
+          ) : (
+            error && (
+              <p role="alert">
+                {error}{' '}
+                {guest ? (
+                  <a href="/auth/google/start?return_to=%2Fshop%3Fcategory%3Dhome">로그인</a>
+                ) : (
+                  <button disabled={loading || busy} onClick={() => void request()}>
+                    다시 불러오기
+                  </button>
+                )}
+              </p>
+            )
           )}
         </section>
         <section className="shop-catalog">

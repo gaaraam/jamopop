@@ -1,4 +1,6 @@
 'use client';
+import { AsyncStatus } from '@/components/ui/async-status';
+import { useShopWallet } from '@/components/game/hooks/use-shop-wallet';
 import { ServiceHeader } from '@/components/game/service-header';
 import { useEffect, useState } from 'react';
 import { CharacterAvatar } from '@/components/game/character-avatar';
@@ -21,15 +23,33 @@ type Wallet = {
   allowed: string[];
 };
 export default function Shop() {
-  const [homeShop, setHomeShop] = useState(false);
+  const [homeShop, setHomeShop] = useState<boolean | null>(null);
   useEffect(() => {
-    setHomeShop(new URLSearchParams(location.search).get('category') === 'home');
+    const sync = () => setHomeShop(new URLSearchParams(location.search).get('category') === 'home');
+    sync();
+    window.addEventListener('popstate', sync);
+    return () => window.removeEventListener('popstate', sync);
   }, []);
+  function selectHome(home: boolean) {
+    history.pushState(null, '', home ? '/shop?category=home' : '/shop');
+    setHomeShop(home);
+  }
+  if (homeShop === null)
+    return (
+      <main className="skin-shop">
+        <ServiceHeader active="shop" />
+        <AsyncStatus label="상점을 준비하고 있어요" onRetry={() => {}} />
+      </main>
+    );
+  return homeShop ? (
+    <FurnitureShop onBack={() => selectHome(false)} />
+  ) : (
+    <SkinShop onHome={() => selectHome(true)} />
+  );
+}
+function SkinShop({ onHome }: { onHome: () => void }) {
+  const { data, loading, busy, guest: signedOut, error, request } = useShopWallet<Wallet>();
   const [category, setCategory] = useState<'character' | 'card'>('character'),
-    [data, setData] = useState<Wallet | null>(null),
-    [error, setError] = useState(''),
-    [signedOut, setSignedOut] = useState(false),
-    [busy, setBusy] = useState(false),
     [selected, setSelected] = useState(SKINS[0].id),
     [collection, setCollection] = useState(false),
     [confirm, setConfirm] = useState(false),
@@ -43,35 +63,9 @@ export default function Shop() {
     owned = !!data?.owned.includes(skin.id),
     locked = !isCard && !!data && !skin.reward && !data.allowed.includes(skin.avatar),
     equipped = (isCard ? data?.cardEquipped : data?.equipped) === skin.id;
-  async function load() {
-    setError('');
-    try {
-      const r = await fetch('/api/shop');
-      const d = (await r.json()) as Wallet & { error?: string };
-      if (r.status === 401) setSignedOut(true);
-      if (!r.ok) throw new Error(d.error);
-      setData(d);
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  }
-  useEffect(() => {
-    void load();
-  }, []);
   async function act(action: 'buy' | 'equip' | 'unequip') {
-    if (busy) return;
-    setBusy(true);
-    setError('');
     setNotice('');
-    try {
-      const r = await fetch('/api/shop', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, skin: skin.id, slot: isCard ? 'card' : 'character' }),
-      });
-      const d = (await r.json()) as Wallet & { error?: string };
-      if (!r.ok) throw new Error(d.error);
-      setData(d);
+    if (await request({ action, skin: skin.id, slot: isCard ? 'card' : 'character' })) {
       setConfirm(false);
       setNotice(
         action === 'buy'
@@ -80,21 +74,8 @@ export default function Shop() {
             ? '모든 방에 적용했어요.'
             : '기본 꾸미기로 돌아왔어요.',
       );
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
     }
   }
-  if (homeShop)
-    return (
-      <FurnitureShop
-        onBack={() => {
-          setHomeShop(false);
-          history.replaceState(null, '', '/shop');
-        }}
-      />
-    );
   return (
     <main className="skin-shop">
       <ServiceHeader active="shop">
@@ -103,14 +84,7 @@ export default function Shop() {
         </b>
       </ServiceHeader>
       <nav className="shop-categories" aria-label="꾸미기 종류">
-        <button
-          onClick={() => {
-            setHomeShop(true);
-            history.replaceState(null, '', '/shop?category=home');
-          }}
-        >
-          가구 · 소품
-        </button>
+        <button onClick={onHome}>가구 · 소품</button>
         {(['character', 'card'] as const).map((c) => (
           <button
             key={c}
@@ -183,17 +157,23 @@ export default function Shop() {
               }
               onClick={() => (owned ? void act(equipped ? 'unequip' : 'equip') : setConfirm(true))}
             >
-              {busy
-                ? '적용 중…'
-                : skin.reward && !owned
-                  ? `${skin.reward} 보상`
-                  : locked
-                    ? `Lv.${avatarLevel(skin.avatar)} 캐릭터 해금 필요`
-                    : equipped
-                      ? '기본 스킨으로 변경'
-                      : owned
-                        ? '장착하기'
-                        : `${skin.price} G · 구매`}
+              {!data
+                ? loading
+                  ? '보유 정보 확인 중…'
+                  : signedOut
+                    ? '로그인 후 이용'
+                    : '정보 확인 필요'
+                : busy
+                  ? '적용 중…'
+                  : skin.reward && !owned
+                    ? `${skin.reward} 보상`
+                    : locked
+                      ? `Lv.${avatarLevel(skin.avatar)} 캐릭터 해금 필요`
+                      : equipped
+                        ? '기본 스킨으로 변경'
+                        : owned
+                          ? '장착하기'
+                          : `${skin.price} G · 구매`}
             </button>
           )}
           {!owned && data && data.balance < skin.price && (
@@ -202,15 +182,26 @@ export default function Shop() {
           <p role="status" className="shop-notice">
             {notice}
           </p>
-          {error && (
-            <div role="alert" className="shop-error">
-              {error}
-              {signedOut ? (
-                <a href="/auth/google/start?return_to=%2Fshop">Google로 로그인</a>
-              ) : (
-                <button onClick={() => void load()}>다시 불러오기</button>
-              )}
-            </div>
+          {!data && !signedOut ? (
+            <AsyncStatus
+              label="보유 정보를 확인하고 있어요"
+              error={error}
+              retrying={loading}
+              onRetry={() => void request()}
+            />
+          ) : (
+            error && (
+              <div role="alert" className="shop-error">
+                {error}
+                {signedOut ? (
+                  <a href="/auth/google/start?return_to=%2Fshop">Google로 로그인</a>
+                ) : (
+                  <button disabled={loading || busy} onClick={() => void request()}>
+                    다시 불러오기
+                  </button>
+                )}
+              </div>
+            )
           )}
         </section>
         <section className="shop-catalog">
@@ -218,8 +209,8 @@ export default function Shop() {
             <button aria-pressed={!collection} onClick={() => setCollection(false)}>
               모든 스킨 <span>{catalog.length}</span>
             </button>
-            <button aria-pressed={collection} onClick={() => setCollection(true)}>
-              보유 스킨 <span>{ownedCount}</span>
+            <button aria-pressed={collection} disabled={!data} onClick={() => setCollection(true)}>
+              보유 스킨 <span>{data ? ownedCount : '—'}</span>
             </button>
           </nav>
           <div className="skin-grid">
@@ -229,7 +220,7 @@ export default function Shop() {
                 <button
                   className={`skin-product ${selected === s.id ? 'selected' : ''} ${s.id.startsWith('rare-') ? 'rare' : ''}`}
                   aria-pressed={selected === s.id}
-                  data-owned={!!data?.owned.includes(s.id)}
+                  data-owned={data ? data.owned.includes(s.id) : undefined}
                   key={s.id}
                   disabled={busy}
                   onClick={() => {
@@ -247,16 +238,20 @@ export default function Shop() {
                     {s.name} {!s.id.startsWith('card-') && CHARACTER_ART[s.avatar]?.name}
                   </strong>
                   <small>
-                    {data?.equipped === s.id || data?.cardEquipped === s.id
-                      ? '✓ 장착 중'
-                      : data?.owned.includes(s.id)
-                        ? '보유'
-                        : s.reward || `${s.price} G`}
+                    {!data
+                      ? s.reward || `${s.price} G`
+                      : data?.equipped === s.id || data?.cardEquipped === s.id
+                        ? '✓ 장착 중'
+                        : data?.owned.includes(s.id)
+                          ? '보유'
+                          : s.reward || `${s.price} G`}
                   </small>
                 </button>
               ))}
           </div>
-          {collection && !ownedCount && <p className="shop-empty">아직 보유한 스킨이 없어요.</p>}
+          {data && collection && !ownedCount && (
+            <p className="shop-empty">아직 보유한 스킨이 없어요.</p>
+          )}
           <details className="gold-guide">
             <summary>골드 모으는 방법</summary>
             <p>

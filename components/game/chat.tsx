@@ -1,4 +1,5 @@
 'use client';
+import { useModalOpen } from './overlay-state';
 import { SafetyActions, type SafetyTarget } from '@/components/safety/actions';
 import { chatViewport } from '@/lib/chat-viewport.mjs';
 import { isChatToggleKey } from '@/lib/chat-shortcut.mjs';
@@ -44,6 +45,7 @@ export function RoomChat({
   openRequest?: number;
   onMessages: (roomId: string, messages: BubbleMessage[], serverNow: number) => void;
 }) {
+  const modal = useModalOpen();
   const [open, setOpen] = useState(false),
     [messages, setMessages] = useState<Message[]>([]),
     [draft, setDraft] = useState(''),
@@ -169,9 +171,9 @@ export function RoomChat({
     return () => window.removeEventListener('jamopop-safety-change', update);
   }, [load]);
   useEffect(() => {
-    onOpenChange?.(open);
+    onOpenChange?.(open && !modal);
     return () => onOpenChange?.(false);
-  }, [open, onOpenChange]);
+  }, [open, modal, onOpenChange]);
   useEffect(() => {
     alive.current = true;
     try {
@@ -236,7 +238,7 @@ export function RoomChat({
     };
   }, [open]);
   useEffect(() => {
-    if (!open || !window.matchMedia('(pointer:coarse)').matches) return;
+    if (!open || modal || !window.matchMedia('(pointer:coarse)').matches) return;
     const viewport = window.visualViewport;
     if (!viewport) return;
     const startX = window.scrollX,
@@ -281,7 +283,7 @@ export function RoomChat({
       Object.assign(body.style, previous);
       window.scrollTo(startX, startY);
     };
-  }, [open]);
+  }, [open, modal]);
   const shortcutFocus = useRef(false);
   const shortcutReturn = useRef<HTMLElement | null>(null);
   useEffect(() => {
@@ -389,7 +391,12 @@ export function RoomChat({
       updateDraft('');
       setEmojiOpen(false);
       pending.current = null;
-      input.current?.focus();
+      if (
+        !document.querySelector(
+          '[data-slot="dialog-overlay"], [data-slot="alert-dialog-overlay"], [aria-modal="true"]',
+        )
+      )
+        input.current?.focus();
     }
   }
   const isInquiry = /^@문의(?:\s|$)/.test(draft.trim());
@@ -397,6 +404,8 @@ export function RoomChat({
   return (
     <section
       ref={root}
+      hidden={modal}
+      inert={modal}
       style={
         {
           '--chat-keyboard-bottom': `${keyboardBottom}px`,

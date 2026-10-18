@@ -1,4 +1,4 @@
-import { ThemeSwitch } from '@/components/theme';
+import { ServiceHeader } from '@/components/game/service-header';
 import type { ReactNode } from 'react';
 export const operator = '이가람';
 // Confirm the public contact address with the operator before publication.
@@ -13,13 +13,7 @@ export function Contact() {
 export function LegalDocument({ title, children }: { title: string; children: ReactNode }) {
   return (
     <main className="legal-page">
-      <nav className="legal-nav">
-        <a href="/">← 첫 화면</a>
-        <div className="legal-nav-actions">
-          <ThemeSwitch />
-          <a href="/?lobby=1">대기실</a>
-        </div>
-      </nav>
+      <ServiceHeader active="policy" title="자음모음팝" playOnly />
       <article className="legal-document">
         <header>
           <span>자음모음팝</span>
