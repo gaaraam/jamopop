@@ -6,6 +6,10 @@ import { ServiceHeader } from './service-header';
 import { CharacterAvatar } from './character-avatar';
 import { StackBoard } from './stack-board';
 import { STACK_STAGES } from '@/lib/stack-stages.mjs';
+import { ToktokBoard } from './toktok-board';
+import { startToktok } from '@/lib/jamo-toktok.mjs';
+import { readToktok } from '@/lib/toktok-progress.mjs';
+import '@/app/solo/toktok/toktok.css';
 import { readStack } from '@/lib/stack-progress.mjs';
 import '@/app/solo/stack/stack.css';
 import { readExit } from '@/lib/exit-progress.mjs';
@@ -16,6 +20,7 @@ export function SoloHub() {
   const [progress, setProgress] = useState({ stage: 1, completed: 0 });
   const [recent, setRecent] = useState('');
   const [stackCompleted, setStackCompleted] = useState(0);
+  const [toktokBest, setToktokBest] = useState(0);
   useEffect(() => {
     let saved = { stage: 1, best: {} };
     try {
@@ -24,8 +29,9 @@ export function SoloHub() {
     setProgress({ stage: saved.stage, completed: Object.keys(saved.best).length });
     try {
       const recentGame = localStorage.getItem(RECENT_SOLO_KEY) || '';
-      setRecent(['word', 'exit', 'stack'].includes(recentGame) ? recentGame : '');
+      setRecent(['word', 'exit', 'stack', 'toktok'].includes(recentGame) ? recentGame : '');
       setStackCompleted(readStack(localStorage).completed.length);
+      setToktokBest(readToktok(localStorage, 1).best);
     } catch {}
   }, []);
   return (
@@ -35,12 +41,24 @@ export function SoloHub() {
         <a
           className="challenge-resume"
           href={
-            recent === 'stack' ? '/solo/stack' : recent === 'exit' ? '/solo/exit' : '/solo/word'
+            recent === 'toktok'
+              ? '/solo/toktok'
+              : recent === 'stack'
+                ? '/solo/stack'
+                : recent === 'exit'
+                  ? '/solo/exit'
+                  : '/solo/word'
           }
         >
           <Play size={18} fill="currentColor" />
           <strong>
-            {recent === 'stack' ? '자모 쏙쏙' : recent === 'exit' ? '콩알 탈출' : '단어 복구'}
+            {recent === 'toktok'
+              ? '자모 톡톡'
+              : recent === 'stack'
+                ? '자모 쏙쏙'
+                : recent === 'exit'
+                  ? '콩알 탈출'
+                  : '단어 복구'}
           </strong>
           <span>이어서 도전</span>
           <ArrowRight size={18} />
@@ -118,6 +136,21 @@ export function SoloHub() {
             <div>
               <h2>자모 쏙쏙</h2>
               <span>{stackCompleted} / 30 완료</span>
+            </div>
+            <span className="challenge-play">
+              <ArrowRight />
+            </span>
+          </div>
+        </a>
+        <a className="challenge-choice toktok-choice" href="/solo/toktok">
+          <div className="challenge-art" aria-hidden="true">
+            <ToktokBoard board={startToktok(43).board} preview />
+            <CharacterAvatar avatar="🐻" className="challenge-mascot" />
+          </div>
+          <div className="challenge-choice-label">
+            <div>
+              <h2>자모 톡톡</h2>
+              <span>{toktokBest ? `최고 ${toktokBest.toLocaleString()}점` : '합성 · 연쇄'}</span>
             </div>
             <span className="challenge-play">
               <ArrowRight />
