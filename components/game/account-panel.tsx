@@ -1,4 +1,5 @@
 'use client';
+import { clearActiveRoom } from '@/lib/active-room.mjs';
 import { CharacterAvatar } from '@/components/game/character-avatar';
 
 import { AvatarPicker } from '@/components/game/avatar-picker';
@@ -463,7 +464,11 @@ export function AccountPanel({
             <a href="/support#account-deletion" className="text-btn">
               계정 삭제 요청
             </a>
-            <form action="/auth/logout" method="post">
+            <form
+              action="/auth/logout"
+              method="post"
+              onSubmit={() => clearActiveRoom(sessionStorage)}
+            >
               <button className="text-btn">로그아웃</button>
             </form>
           </div>

@@ -1,4 +1,5 @@
 'use client';
+import { clearActiveRoom, rememberActiveRoom } from '@/lib/active-room.mjs';
 import { CharacterAvatar } from '@/components/game/character-avatar';
 
 import { GameInput, RoundOptions } from '@/components/game/mobile-controls';
@@ -161,6 +162,7 @@ export default function Speed() {
       location.replace('/?r=' + d.room.id);
       return;
     }
+    rememberActiveRoom(sessionStorage, d.room.id, d.room.active ? 'speed' : 'daily');
     latest.current = d;
     offset.current = d.serverNow - Date.now();
     setClock(Date.now() + offset.current);
@@ -421,7 +423,10 @@ export default function Speed() {
           <span className="nav-divider" />
           <button
             className="nav-room"
-            onClick={() => location.assign('/?lobby=1')}
+            onClick={() => {
+              clearActiveRoom(sessionStorage);
+              location.assign('/?lobby=1');
+            }}
             aria-label="방 목록 열기"
           >
             <span className="nav-room-icon">
@@ -470,7 +475,10 @@ export default function Speed() {
           <button
             className="nav-exit"
             aria-label="방 목록으로 나가기"
-            onClick={() => location.assign('/?lobby=1')}
+            onClick={() => {
+              clearActiveRoom(sessionStorage);
+              location.assign('/?lobby=1');
+            }}
           >
             <LogOut size={19} />
           </button>

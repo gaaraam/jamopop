@@ -1,6 +1,6 @@
 import { date } from '@/lib/game-api/runtime';
 import { GET as announcementGet } from '@/app/api/announcements/route';
-import { accountProgressions, isSiteAdmin } from '@/lib/account';
+import { accountId, accountProgressions, isSiteAdmin } from '@/lib/account';
 import { settleSpeed } from '@/lib/competition';
 import { equippedAtLevel } from '@/lib/cosmetics';
 import { dataRevision, derivedCache } from '@/lib/derived-cache';
@@ -349,6 +349,8 @@ export async function GET(req: Request) {
     }
     return reply(await state(req, id, mode, verifiedMember));
   } catch (e) {
+    if (e instanceof UserError && e.status === 401)
+      return reply({ error: e.message, canUseProfile: !!accountId(req) }, 401);
     return failure(e);
   }
 }

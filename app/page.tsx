@@ -2,6 +2,7 @@
 import { CharacterAvatar } from '@/components/game/character-avatar';
 import { EntryCharacter } from '@/components/game/entry-character';
 import { GuestRecords } from '@/components/game/guest-records';
+import { clearActiveRoom, rememberActiveRoom } from '@/lib/active-room.mjs';
 import { useRoomSync } from '@/components/game/hooks/use-room-sync';
 import { useWordInput } from '@/components/game/hooks/use-word-input';
 import { WorksheetChrome } from '@/components/game/worksheet-chrome';
@@ -234,6 +235,7 @@ export default function Home() {
   draftRef.current = draft;
   busyRef.current = busy;
   function returnToLobby() {
+    clearActiveRoom(sessionStorage);
     publishRoom(null);
     setProfileTarget(null);
     setShowIntro(false);
@@ -268,6 +270,9 @@ export default function Home() {
     setMode('daily');
     modeRef.current = 'daily';
     setRestoring(true);
+    setData(null);
+    dataRef.current = null;
+    setProfileTarget(null);
     history.replaceState({}, '', `?r=${selected.id}&lobby=1`);
     if (spectator) {
       setData(null);
@@ -284,6 +289,7 @@ export default function Home() {
     publishInvitations(d.invitations);
     publishRoom(d.room);
     if (d.room.activeSpeedId && modeRef.current === 'daily') {
+      rememberActiveRoom(sessionStorage, d.room.id, 'speed');
       location.replace('/speed?room=' + d.room.id);
       return;
     }
@@ -339,6 +345,7 @@ export default function Home() {
     if (d.play.status !== 'playing')
       writeDraft(localStorage, draftKey(d.me.id, d.round.id), d.play.guesses.length, '');
     rememberRoom(localStorage, d.room.id, d.room.name, modeRef.current);
+    rememberActiveRoom(sessionStorage, d.room.id, modeRef.current);
     dataRef.current = d;
     setData(d);
     setConnection(true);
@@ -352,6 +359,36 @@ export default function Home() {
     chatOpen,
     active: !!data,
     accept,
+    onEntryRequired: async (target, targetMode, info, signal) => {
+      setSignedIn(!!info.canUseProfile);
+      if (!info.canUseProfile) return {};
+      const response = await checkedFetch('/api/game', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal,
+        body: JSON.stringify({
+          action: 'join',
+          room: target,
+          lobby: joiningFromLobby && !invite,
+          useProfile: true,
+          includeState: true,
+        }),
+      });
+      const result = (await response.json()) as any;
+      if (roomRef.current !== target || modeRef.current !== targetMode) return {};
+      if (!response.ok) {
+        if (result.needsPassword) {
+          setPrivateRoom(true);
+          return {};
+        }
+        return { error: result.error || '입장하지 못했어요. 다시 시도해 주세요.' };
+      }
+      setSignedIn(true);
+      if (result.room && result.me && result.round && result.play) return { state: result };
+      const snapshot = await checkedFetch(`/api/game?room=${result.roomId}&mode=daily`, { signal });
+      if (!snapshot.ok) throw Error('입장 상태 확인 실패');
+      return { state: (await snapshot.json()) as GameState };
+    },
     setData,
     setEntryError,
     setMode,
@@ -373,6 +410,7 @@ export default function Home() {
       fetch(`/api/game?room=${r}&info=1${params.get('lobby') === '1' ? '&publicRoom=1' : ''}`)
         .then((r) => r.json())
         .then((d: any) => {
+          if (roomRef.current !== r) return;
           if (d.name) {
             setRoomName(d.name);
             setPrivateRoom(!!d.locked);
@@ -490,6 +528,7 @@ export default function Home() {
         spectator: joinSpectator,
         lobby: joiningFromLobby && !invite,
         includeState: true,
+        useProfile: signedIn === true,
       });
       setRoomPassword('');
       setRoom(result.roomId);
@@ -690,7 +729,7 @@ export default function Home() {
         </>
       )}
       <Toaster position="top-center" richColors />
-      {!showIntro && <GuestRecords showLogin={isFinished} />}
+      {!showIntro && !restoring && <GuestRecords showLogin={isFinished} />}
       {data && (
         <RoomSettings
           data={data}
@@ -702,10 +741,18 @@ export default function Home() {
         />
       )}
       <Rules open={help} onOpenChange={setHelp} />
-      {!data && !room && restoring ? (
-        <div className="intro-loading" role="status">
-          불러오는 중…
-        </div>
+      {!data && restoring ? (
+        <main className="room-entry-loading" aria-busy="true">
+          <span className="room-entry-loading-mark" aria-hidden="true">
+            •••
+          </span>
+          <p role="status">{room ? '게임방에 들어가는 중…' : '불러오는 중…'}</p>
+          {room && (
+            <button className="text-btn" onClick={returnToLobby}>
+              대기실로
+            </button>
+          )}
+        </main>
       ) : !data && !room && !entryOpen && showIntro ? (
         <Intro onStart={returnToLobby} onHelp={() => setHelp(true)} />
       ) : !data && !room && !entryOpen ? (
@@ -855,21 +902,25 @@ export default function Home() {
                     관전자로 입장
                   </label>
                 )}
-                <label>
-                  닉네임
-                  <input
-                    autoComplete="nickname"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="닉네임 입력"
-                    maxLength={16}
-                    required
-                  />
-                </label>
-                <fieldset>
-                  <legend>캐릭터</legend>
-                  <AvatarPicker value={avatar} onChange={setAvatar} allowed={allowedAvatars} />
-                </fieldset>
+                {signedIn !== true && (
+                  <>
+                    <label>
+                      닉네임
+                      <input
+                        autoComplete="nickname"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="닉네임 입력"
+                        maxLength={16}
+                        required
+                      />
+                    </label>
+                    <fieldset>
+                      <legend>캐릭터</legend>
+                      <AvatarPicker value={avatar} onChange={setAvatar} allowed={allowedAvatars} />
+                    </fieldset>
+                  </>
+                )}
                 {entryError && (
                   <p className="error" role="alert">
                     {entryError}
