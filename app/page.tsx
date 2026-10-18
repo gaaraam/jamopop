@@ -1302,6 +1302,7 @@ export default function Home() {
               ) : (
                 <div className="input-area">
                   <GameInput
+                    tileWidth={width}
                     aria-label="단어 입력"
                     value={draft}
                     onChange={(e) => {

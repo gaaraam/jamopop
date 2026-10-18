@@ -19,6 +19,7 @@ export function keyboardJamo(key: string, shift = false) {
     o: 'ㅒ',
     p: 'ㅖ',
   };
+  if (key === 'Delete') return 'Backspace';
   if (key === 'Enter' || key === 'Backspace') return key;
   if (key.length !== 1) return null;
   const lower = key.toLowerCase(),
@@ -56,4 +57,8 @@ export function editTileDraft(value: string, key: string, start = value.length, 
     return start !== end ? before + after : splitWord(before).slice(0, -1).join('') + after;
   }
   return before + key + after;
+}
+
+export function capTileDraft(value: string, width: number) {
+  return splitWord(value).slice(0, width).join('');
 }

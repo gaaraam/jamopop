@@ -49,8 +49,9 @@ try {
       await p.keyboard.type('r'.repeat(width));
       assert.equal(await i.inputValue(), 'ㄱ'.repeat(width));
       await p.keyboard.type('r');
-      assert.equal(await i.inputValue(), 'ㄱ'.repeat(width + 1));
-      assert((await p.locator('#input-status').textContent()).includes('칸에 맞춰'));
+      assert.equal(await i.inputValue(), 'ㄱ'.repeat(width));
+      await p.getByRole('button', { name: '한 칸 지우기', exact: true }).click();
+      assert.equal(await i.inputValue(), 'ㄱ'.repeat(width - 1));
       await p.keyboard.press('Meta+a');
       await p.keyboard.type('tkrhk');
       assert.equal(await i.inputValue(), 'ㅅㅏㄱㅗㅏ');
@@ -60,7 +61,10 @@ try {
     await test(`${path} touch key then physical key`, async () => {
       const p = await page();
       if (path === '/solo') await p.request.get(base + '/api/solo');
-      if (path === '/solo') await post(p, '/api/solo', { action: 'start', stage: 1 });
+      if (path === '/solo') {
+        await p.request.get(base + '/api/solo');
+        await post(p, '/api/solo', { action: 'start', stage: 1 });
+      }
       await p.goto(base + path);
       if (path === '/') await p.getByRole('button', { name: '시작하기', exact: true }).click();
       if (path === '/solo' && !(await p.locator('.main-board').count()))
@@ -270,6 +274,59 @@ try {
       assert(await p.locator('.keyboard').isVisible());
       await p.close();
     });
+  await test('room correction at invisible caret, Delete, screen key, and abandoned IME', async () => {
+    const p = await page();
+    const d = await room(p);
+    await p.goto(base + '/?r=' + d.roomId);
+    const i = p.getByRole('textbox', { name: '단어 입력', exact: true });
+    await i.waitFor({ state: 'attached' });
+    await i.fill('사과');
+    await i.evaluate((el) => el.setSelectionRange(0, 0));
+    await i.press('Backspace');
+    assert.equal(await i.inputValue(), 'ㅅㅏㄱㅗ');
+    await i.press('Delete');
+    assert.equal(await i.inputValue(), 'ㅅㅏㄱ');
+    await p.getByRole('button', { name: '한 칸 지우기', exact: true }).click();
+    assert.equal(await i.inputValue(), 'ㅅㅏ');
+    await i.fill('사과');
+    await i.evaluate((el) =>
+      el.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true })),
+    );
+    await p.getByRole('button', { name: '한 칸 지우기', exact: true }).click();
+    assert.equal(await i.inputValue(), 'ㅅㅏㄱㅗ');
+    await p.getByRole('button', { name: '한 칸 지우기', exact: true }).click();
+    assert.equal(await i.inputValue(), 'ㅅㅏㄱ');
+    await i.focus();
+    await i.evaluate((el) => {
+      el.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+      el.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true }));
+    });
+    await i.press('k');
+    assert.equal(await i.inputValue(), 'ㅅㅏㄱㅏ');
+    await p.close();
+  });
+  await test('all input surfaces cap physical and pasted jamo; full draft stays editable', async () => {
+    for (const path of ['/daily', '/solo', '/']) {
+      const p = await page();
+      if (path === '/solo') {
+        await p.request.get(base + '/api/solo');
+        await post(p, '/api/solo', { action: 'start', stage: 1 });
+      }
+      await p.goto(base + path);
+      if (path === '/') await p.getByRole('button', { name: '시작하기', exact: true }).click();
+      const i = p.locator('.game-input-control input');
+      await i.waitFor({ state: 'attached' });
+      await i.fill('사과나무');
+      assert.equal(await i.inputValue(), 'ㅅㅏㄱㅗㅏ');
+      await i.press('r');
+      assert.equal(await i.inputValue(), 'ㅅㅏㄱㅗㅏ');
+      await i.press('Backspace');
+      assert.equal(await i.inputValue(), 'ㅅㅏㄱㅗ');
+      await i.press('k');
+      assert.equal(await i.inputValue(), 'ㅅㅏㄱㅗㅏ');
+      await p.close();
+    }
+  });
 } finally {
   console.log(JSON.stringify(results, null, 2));
   await b.close();

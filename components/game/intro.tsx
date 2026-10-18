@@ -138,6 +138,7 @@ export function Intro({ onStart, onHelp }: { onStart: () => void; onHelp: () => 
                 </div>
                 <div className="input-area">
                   <GameInput
+                    tileWidth={5}
                     id="first-word"
                     aria-label="연습 단어 입력"
                     aria-describedby="first-input-status"

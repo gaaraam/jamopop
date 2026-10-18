@@ -673,6 +673,7 @@ export default function Solo() {
                   }}
                 >
                   <GameInput
+                    tileWidth={stage.width}
                     ref={input}
                     aria-label="도전 단어 입력"
                     aria-describedby="solo-input-status"

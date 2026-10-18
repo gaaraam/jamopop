@@ -231,6 +231,7 @@ export function DailyGame() {
                   }}
                 >
                   <GameInput
+                    tileWidth={5}
                     ref={input}
                     value={draft}
                     aria-label="오늘의 단어 입력"
