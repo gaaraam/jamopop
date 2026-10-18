@@ -91,3 +91,15 @@ html body .game-chat[data-open='false'] .chat-toggle-hint {
     display: inline;
   }
 }
+/* On phones the bell already contains friend invites; link copy remains on the room card. */
+@media (max-width: 760px) and (pointer: coarse) {
+  .nav-actions #service-notifications .friend-notification-trigger[aria-label='친구 초대'],
+  .app-header .nav-actions .nav-invite {
+    display: none;
+  }
+  .nav-actions #service-notifications .friend-notification-trigger {
+    min-width: 36px;
+    min-height: 40px;
+    padding: 8px;
+  }
+}
