@@ -1414,7 +1414,7 @@
 }
 
 @media (max-width: 900px) and (hover: hover) and (pointer: fine) {
-  html:root .app.app.app.app .input-area .game-input-control {
+  html:root .app.app.app.app .input-area .game-input-control:not(.tile-input-control) {
     width: 100% !important;
     padding-right: 155px !important;
   }

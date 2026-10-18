@@ -83,7 +83,19 @@ export function WordKeyboard({
   onKey: (key: string) => void;
 }) {
   return (
-    <div className="keyboard" aria-label="한글 자판">
+    <div
+      className="keyboard"
+      aria-label="한글 자판"
+      onClick={(event) => {
+        // Mouse activation may resume typing; keyboard activation must keep button focus.
+        if (event.detail > 0 && matchMedia('(pointer:fine)').matches) {
+          event.currentTarget
+            .closest('.game-panel')
+            ?.querySelector<HTMLInputElement>('.game-input-control input')
+            ?.focus({ preventScroll: true });
+        }
+      }}
+    >
       {KEYS.map((row, i) => (
         <div className="key-row" key={row}>
           {[...row].map((c) => (
