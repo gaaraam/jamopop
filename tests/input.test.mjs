@@ -9,8 +9,15 @@ const code = ts
     compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
   })
   .outputText.replace("'./game'", JSON.stringify(game));
-const { blocksEnter, keyboardJamo, appendKey, inputShape, previewKey, editTileDraft } =
-  await import('data:text/javascript;base64,' + Buffer.from(code).toString('base64'));
+const {
+  blocksEnter,
+  keyboardJamo,
+  appendKey,
+  inputShape,
+  previewKey,
+  editTileDraft,
+  capTileDraft,
+} = await import('data:text/javascript;base64,' + Buffer.from(code).toString('base64'));
 test('physical keyboard and touch yield identical jamo', () => {
   let physical = '',
     touch = '';
@@ -36,6 +43,7 @@ test('shifted consonants and compound vowels expand correctly at boundaries', ()
   assert.equal(keyboardJamo('ArrowLeft'), null);
   assert.equal(keyboardJamo(' '), null);
   assert.equal(keyboardJamo('F5'), null);
+  assert.equal(keyboardJamo('Delete'), 'Backspace');
 });
 test('invalid and excess input cannot become submittable; round isolates preview', () => {
   assert(!inputShape('abcde', 5).valid);
@@ -61,4 +69,10 @@ test('tile input replaces selected text and deletes one decomposed jamo', () => 
   assert.equal(editTileDraft('ㄱㅏㄴ', 'ㅁ', 2, 3), 'ㄱㅏㅁ');
   assert.equal(editTileDraft('', 'Backspace'), '');
   assert.equal(editTileDraft('ㄱㅏ', 'ㄴ', 0, 0), 'ㄴㄱㅏ');
+});
+
+test('committed text and paste cannot exceed the decomposed tile width', () => {
+  assert.equal(capTileDraft('사과나무', 5), 'ㅅㅏㄱㅗㅏ');
+  assert.equal(capTileDraft('때', 2), 'ㄷㄷ');
+  for (const width of [5, 6, 7]) assert.equal(capTileDraft('ㄱ'.repeat(20), width).length, width);
 });

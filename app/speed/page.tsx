@@ -675,6 +675,7 @@ export default function Speed() {
               ) : (
                 <div className="input-area">
                   <GameInput
+                    tileWidth={width}
                     ref={input}
                     aria-label="단어 입력"
                     value={draft}
