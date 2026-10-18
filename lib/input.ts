@@ -60,5 +60,8 @@ export function editTileDraft(value: string, key: string, start = value.length, 
 }
 
 export function capTileDraft(value: string, width: number) {
-  return splitWord(value).slice(0, width).join('');
+  const letters = splitWord(value);
+  // Keep the browser's syllables intact unless the tile limit is actually exceeded.
+  // Rewriting every committed syllable invalidates the native IME replacement range.
+  return letters.length <= width ? value : letters.slice(0, width).join('');
 }
