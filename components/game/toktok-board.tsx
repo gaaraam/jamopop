@@ -10,6 +10,7 @@ export type ToktokEffect = {
   index: number;
   chain: number;
   glyph: string;
+  fever?: boolean;
 };
 export function ToktokBoard({
   board,
@@ -87,28 +88,35 @@ export function ToktokBoard({
         })}
       </div>
       {effect && (
-        <div key={effect.id} className="toktok-fx" aria-hidden="true">
-          {Array.from({ length: Math.min(72, 24 + effect.chain * 16) }, (_, i) => {
-            const angle = i * 2.399963;
-            return (
-              <i
-                key={i}
-                style={
-                  {
-                    '--x': `${((effect.index % 5) + 0.5) * 20}%`,
-                    '--y': `${(Math.floor(effect.index / 5) + 0.5) * 20}%`,
-                    '--dx': `${Math.cos(angle) * (40 + i * 2.1)}px`,
-                    '--dy': `${Math.sin(angle) * (35 + i * 1.9) - 35}px`,
-                    '--r': `${i * 31}deg`,
-                    '--delay': `${(i % 5) * 14}ms`,
-                    '--p': ['#eacb64', '#aa9acc', '#8dbfa7', '#90bed9'][i % 4],
-                  } as CSSProperties
-                }
-              >
-                {i % 5 === 0 ? effect.glyph : ''}
-              </i>
-            );
-          })}
+        <div
+          key={effect.id}
+          className={`toktok-fx ${effect.fever ? 'fever-used' : ''}`}
+          aria-hidden="true"
+        >
+          {Array.from(
+            { length: Math.min(88, 24 + effect.chain * 16 + (effect.fever ? 32 : 0)) },
+            (_, i) => {
+              const angle = i * 2.399963;
+              return (
+                <i
+                  key={i}
+                  style={
+                    {
+                      '--x': `${((effect.index % 5) + 0.5) * 20}%`,
+                      '--y': `${(Math.floor(effect.index / 5) + 0.5) * 20}%`,
+                      '--dx': `${Math.cos(angle) * (40 + i * 2.1)}px`,
+                      '--dy': `${Math.sin(angle) * (35 + i * 1.9) - 35}px`,
+                      '--r': `${i * 31}deg`,
+                      '--delay': `${(i % 5) * 14}ms`,
+                      '--p': ['#eacb64', '#aa9acc', '#8dbfa7', '#90bed9'][i % 4],
+                    } as CSSProperties
+                  }
+                >
+                  {i % 5 === 0 ? effect.glyph : ''}
+                </i>
+              );
+            },
+          )}
           <div className="toktok-burst">
             <strong>{effect.label}</strong>
             <span>+{effect.points.toLocaleString()}</span>

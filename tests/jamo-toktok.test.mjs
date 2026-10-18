@@ -87,7 +87,7 @@ test('current board, undo and completed round restore without storing animation'
   const s = tapToktok(startToktok(43), 12),
     p = { seed: 43, moves: [12], best: s.score };
   assert.ok(writeToktok(store, p));
-  assert.deepEqual(readToktok(store, 1), p);
+  assert.deepEqual(readToktok(store, 1), { ...p, rules: 1, round: 1, bestRound: 1 });
   assert.deepEqual(replayToktok(43, []), startToktok(43));
   assert.equal(store.getItem('other-record'), 'keep');
 });
@@ -118,7 +118,14 @@ test('storage exceptions are handled and invalid state is not written', () => {
       throw Error('full');
     },
   };
-  assert.deepEqual(readToktok(bad, 5), { seed: 5, moves: [], best: 0 });
+  assert.deepEqual(readToktok(bad, 5), {
+    seed: 5,
+    moves: [],
+    best: 0,
+    rules: 2,
+    round: 1,
+    bestRound: 1,
+  });
   assert.equal(writeToktok(bad, { seed: 5, moves: [], best: 0 }), false);
   assert.equal(writeToktok(storage(), { seed: 1, moves: [99], best: 0 }), false);
 });
