@@ -1,13 +1,14 @@
 /* The tutorial uses the room board, input, keyboard and submit styles unchanged. */
 .first-play .signature-center {
-  max-width: 540px;
-  padding-bottom: 40px;
+  max-width: 380px;
+  margin: 76px auto 0;
+  padding-bottom: 20px;
 }
 .first-play .intro-friends {
   margin-bottom: 6px;
 }
 .first-play.is-learning .signature-center {
-  margin: 88px auto 24px;
+  margin: 52px auto 16px;
   width: 100%;
   padding: 0 16px;
 }
@@ -35,7 +36,7 @@
 .first-play-feedback {
   display: grid;
   gap: 4px;
-  min-height: 64px;
+  min-height: 48px;
   font-size: 13px;
   line-height: 1.6;
   color: var(--ui-muted);
@@ -190,10 +191,121 @@ html body .first-play.refined.glass .first-play-panel {
   background: var(--ui-surface);
   box-shadow: var(--ui-shadow);
   color: var(--ui-ink);
-  padding: 24px;
+  padding: 16px;
 }
 @media (max-width: 600px) {
   html body .first-play.refined.glass .first-play-panel {
     padding: 20px 16px;
   }
+}
+
+/* Arrival has a stable visible identity and a viewport-sized signature. */
+.intro-brand {
+  position: absolute;
+  top: 28px;
+  left: 32px;
+  margin: 0;
+  font: 700 17px var(--font-game);
+  color: var(--ui-ink);
+}
+.first-play:not(.is-learning) .signature-board {
+  width: min(100%, 380px, calc(100svh - 370px));
+  margin-bottom: 12px;
+}
+.first-play .signature-legend {
+  margin: 12px 0 16px;
+}
+.first-play.is-learning .signature-center {
+  max-width: 500px;
+}
+.first-play-panel .board-wrap {
+  margin: 10px auto;
+  max-width: 250px;
+}
+.first-play-panel .main-board {
+  gap: 5px;
+}
+.first-play-panel .keyboard {
+  margin: 6px 0;
+  gap: 4px;
+}
+.first-play-panel .key-row {
+  gap: 4px;
+}
+.first-play-panel .key {
+  height: 44px;
+}
+.first-play-panel .input-area {
+  margin: 4px 0;
+}
+.first-play-panel .legend {
+  margin-top: 10px;
+  padding-top: 8px;
+}
+@media (max-height: 800px) {
+  .first-play-panel .board-wrap {
+    max-width: 210px;
+  }
+  .first-play-panel .first-play-heading h2 {
+    font-size: 19px;
+  }
+  .first-play-panel .first-play-prompt {
+    font-size: 12px;
+  }
+  .first-play-panel .key {
+    height: 40px;
+  }
+  .first-play-panel .legend {
+    display: none;
+  }
+}
+@media (max-width: 680px) {
+  .intro-brand {
+    left: 20px;
+    top: 22px;
+    font-size: 15px;
+  }
+  .first-play .signature-nav button[aria-label='게임 방법'] span {
+    display: none;
+  }
+  .first-play:not(.is-learning) .signature-center {
+    margin-top: 120px;
+  }
+  .first-play:not(.is-learning) .signature-board {
+    width: min(100%, 340px, calc(100svh - 355px));
+  }
+  .first-play.is-learning .signature-center {
+    margin-top: 72px;
+  }
+  .first-play-panel .first-play-heading > span {
+    max-width: 100px;
+  }
+  .first-play-panel .first-play-heading {
+    gap: 8px;
+  }
+  .first-play-panel .first-play-feedback {
+    font-size: 12px;
+  }
+  .first-play-panel .first-play-prompt label {
+    max-width: 210px;
+  }
+  .first-play-panel .key {
+    height: 44px;
+  }
+}
+.guest-records-disclosure {
+  display: block;
+  padding: 0;
+  margin: 8px auto;
+}
+.guest-records-disclosure > summary {
+  padding: 12px 16px;
+  font-size: 12px;
+  color: var(--ui-muted);
+  cursor: pointer;
+}
+.guest-records-body {
+  display: grid;
+  gap: 8px;
+  padding: 0 16px 16px;
 }

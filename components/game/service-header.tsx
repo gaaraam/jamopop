@@ -35,7 +35,7 @@ export function ServiceHeader({
     };
   }, []);
   return (
-    <header className="service-header">
+    <header className="service-header" data-play-only={playOnly || undefined}>
       <div className="service-heading">
         {active !== 'lobby' && (
           <a

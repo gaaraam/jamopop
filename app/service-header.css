@@ -195,3 +195,25 @@
     display: inline;
   }
 }
+
+/* Focused play keeps the single secondary destination on the same header row. */
+@media (max-width: 760px) {
+  .service-header[data-play-only='true'] {
+    display: flex;
+    gap: 8px;
+  }
+  .service-header[data-play-only='true'] .service-heading {
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+  .service-header[data-play-only='true'] .service-heading h1 {
+    font-size: 18px;
+  }
+  .service-header[data-play-only='true'] .service-header-actions {
+    display: flex;
+    gap: 4px;
+  }
+  .service-header[data-play-only='true'] .service-header-tools {
+    gap: 2px;
+  }
+}

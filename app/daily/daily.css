@@ -1,12 +1,12 @@
 .daily-page {
   max-width: 1060px;
   margin: auto;
-  padding: 24px 20px 60px;
+  padding: 16px 20px 40px;
   color: var(--foreground);
 }
 .daily-game {
   max-width: 520px;
-  margin: 24px auto 0 !important;
+  margin: 12px auto 0 !important;
   padding: 24px !important;
 }
 .daily-heading {
@@ -42,7 +42,7 @@
   cursor: pointer;
 }
 .daily-game .main-board {
-  width: min(100%, 310px);
+  width: min(100%, 310px, calc(100svh - 475px));
   margin: 12px auto;
   gap: 6px;
 }
@@ -242,7 +242,7 @@
     margin-bottom: 0;
   }
   .daily-game .main-board {
-    width: min(100%, 270px);
+    width: min(100%, 270px, calc(100svh - 450px));
   }
   .daily-game .tile {
     font-size: 22px;
@@ -268,5 +268,33 @@
   }
   .daily-game .tile {
     font-size: 20px;
+  }
+}
+
+@media (max-height: 800px) {
+  .daily-page .service-header {
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+  }
+  .daily-heading > .kongal-avatar {
+    width: 44px;
+    height: 44px;
+  }
+  .daily-heading h2 {
+    font-size: 20px;
+  }
+  .daily-help {
+    margin: 4px 0 8px;
+  }
+  .daily-game .main-board {
+    min-width: 180px;
+    margin-block: 8px;
+  }
+  .daily-game .keyboard {
+    margin: 6px 0;
+  }
+  .daily-save {
+    margin-top: 8px;
+    padding-top: 8px;
   }
 }

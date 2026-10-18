@@ -95,22 +95,26 @@ export function GuestRecords({
     }
   }
   return (
-    <section className="guest-records" aria-label="게스트 기록 연결">
-      <strong>이 브라우저에 게스트 기록이 있어요</strong>
-      <p>내 계정에 연결하면 진행 중인 판과 보상을 이어서 사용할 수 있어요.</p>
-      {data.guestSolo?.conflict && (
-        <p>
-          개인 도전은 양쪽에 기록이 있어 합치지 않아요. 로그아웃 후 게스트 기록을 이어할 수
-          있습니다.
-        </p>
-      )}
-      {!!data.conflicts && <p>같은 방의 계정 기록과 겹치는 {data.conflicts}개 방은 보관합니다.</p>}
-      {pending && (
-        <button className="primary" onClick={() => void link()} disabled={busy}>
-          {busy ? '기록 연결 중…' : '내 계정에 기록 연결'}
-        </button>
-      )}
-      {error && <p role="alert">{error}</p>}
-    </section>
+    <details className="guest-records guest-records-disclosure" aria-label="게스트 기록 연결">
+      <summary>이 브라우저의 게스트 기록 연결</summary>
+      <div className="guest-records-body">
+        <p>내 계정에 연결하면 진행 중인 판과 보상을 이어서 사용할 수 있어요.</p>
+        {data.guestSolo?.conflict && (
+          <p>
+            개인 도전은 양쪽에 기록이 있어 합치지 않아요. 로그아웃 후 게스트 기록을 이어할 수
+            있습니다.
+          </p>
+        )}
+        {!!data.conflicts && (
+          <p>같은 방의 계정 기록과 겹치는 {data.conflicts}개 방은 보관합니다.</p>
+        )}
+        {pending && (
+          <button className="primary" onClick={() => void link()} disabled={busy}>
+            {busy ? '기록 연결 중…' : '내 계정에 기록 연결'}
+          </button>
+        )}
+        {error && <p role="alert">{error}</p>}
+      </div>
+    </details>
   );
 }

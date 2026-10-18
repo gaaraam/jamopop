@@ -1,4 +1,5 @@
 'use client';
+import { useScreenStart } from '@/components/game/hooks/use-screen-start';
 import { CharacterAvatar } from '@/components/game/character-avatar';
 import { EntryCharacter } from '@/components/game/entry-character';
 import { GuestRecords } from '@/components/game/guest-records';
@@ -714,6 +715,17 @@ export default function Home() {
   const winners =
     data?.players.filter((p) => p.status === 'won').sort((a, b) => (a.rank || 0) - (b.rank || 0)) ||
     [];
+  useScreenStart(
+    data
+      ? `room:${data.room.id}`
+      : restoring
+        ? `loading:${room}`
+        : room || entryOpen
+          ? 'entry'
+          : showIntro
+            ? 'intro'
+            : 'lobby',
+  );
   return (
     <>
       {data && (

@@ -1,4 +1,5 @@
 'use client';
+import { useScreenStart } from './hooks/use-screen-start';
 import { CharacterAvatar } from '@/components/game/character-avatar';
 import { ThemeSwitch } from '@/components/theme';
 import { useEffect, useRef, useState } from 'react';
@@ -22,6 +23,7 @@ export function Intro({ onStart, onHelp }: { onStart: () => void; onHelp: () => 
     ended = useRef(0),
     step = guesses.length,
     done = step === 3;
+  useScreenStart(playing ? 'tutorial' : 'welcome');
   const notificationSlot = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     window.dispatchEvent(
@@ -60,7 +62,7 @@ export function Intro({ onStart, onHelp }: { onStart: () => void; onHelp: () => 
     <main
       className={`signature-page kongal-intro first-play ${playing ? 'is-learning refined glass' : ''}`}
     >
-      <h1 className="sr-only">자음모음팝 · 한글 단어 추리 게임</h1>
+      <h1 className="intro-brand">자음모음팝</h1>
       <header className="signature-nav">
         <ThemeSwitch />
         <button onClick={onHelp} aria-label="게임 방법">
