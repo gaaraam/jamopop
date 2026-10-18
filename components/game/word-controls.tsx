@@ -47,6 +47,9 @@ export function WordBoard({
           return (
             <div
               key={`${roundId}-${r}-${c}-${g ? 'done' : active && !composing ? letters[c] || 'empty' : 'empty'}`}
+              data-cursor={
+                (active && c === Math.min(letters.length, width - 1) && !isPending) || undefined
+              }
               data-submitting={pending || undefined}
               data-fx-row={r}
               data-letter={g?.letters[c] || ''}

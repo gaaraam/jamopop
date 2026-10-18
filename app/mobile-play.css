@@ -388,3 +388,44 @@
     height: clamp(36px, 6svh, 44px);
   }
 }
+
+/* The native IME input remains focusable; tiles are the only visible input surface. */
+html:root .tile-input-control.tile-input-control {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+html:root .tile-input-control.tile-input-control input {
+  font-size: 16px;
+}
+.main-board[data-direct-input='true'] {
+  cursor: text;
+}
+.main-board[data-direct-input='true'] [data-cursor='true'] {
+  position: relative;
+  outline: 2px solid var(--ui-focus, #7064b1);
+  outline-offset: -2px;
+}
+.main-board[data-input-focused='true'] [data-cursor='true']::after {
+  content: '';
+  position: absolute;
+  bottom: 14%;
+  left: 35%;
+  width: 30%;
+  height: 2px;
+  background: currentColor;
+  animation: tile-input-caret 1.2s step-end infinite;
+}
+@keyframes tile-input-caret {
+  50% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-board[data-input-focused='true'] [data-cursor='true']::after {
+    animation: none;
+  }
+}
