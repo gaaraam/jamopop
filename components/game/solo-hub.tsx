@@ -4,6 +4,10 @@ import { useEffect, useState } from 'react';
 import { ArrowRight, Play } from 'lucide-react';
 import { ServiceHeader } from './service-header';
 import { CharacterAvatar } from './character-avatar';
+import { StackBoard } from './stack-board';
+import { STACK_STAGES } from '@/lib/stack-stages.mjs';
+import { readStack } from '@/lib/stack-progress.mjs';
+import '@/app/solo/stack/stack.css';
 import { readExit } from '@/lib/exit-progress.mjs';
 import { ExitBoard } from './exit-board';
 import { EXIT_STAGES } from '@/lib/exit-stages.mjs';
@@ -11,6 +15,7 @@ import '@/app/solo/challenges.css';
 export function SoloHub() {
   const [progress, setProgress] = useState({ stage: 1, completed: 0 });
   const [recent, setRecent] = useState('');
+  const [stackCompleted, setStackCompleted] = useState(0);
   useEffect(() => {
     let saved = { stage: 1, best: {} };
     try {
@@ -18,16 +23,25 @@ export function SoloHub() {
     } catch {}
     setProgress({ stage: saved.stage, completed: Object.keys(saved.best).length });
     try {
-      setRecent(localStorage.getItem(RECENT_SOLO_KEY) || '');
+      const recentGame = localStorage.getItem(RECENT_SOLO_KEY) || '';
+      setRecent(['word', 'exit', 'stack'].includes(recentGame) ? recentGame : '');
+      setStackCompleted(readStack(localStorage).completed.length);
     } catch {}
   }, []);
   return (
     <main className="challenge-page glass">
       <ServiceHeader active="solo" />
       {recent && (
-        <a className="challenge-resume" href={recent === 'exit' ? '/solo/exit' : '/solo/word'}>
+        <a
+          className="challenge-resume"
+          href={
+            recent === 'stack' ? '/solo/stack' : recent === 'exit' ? '/solo/exit' : '/solo/word'
+          }
+        >
           <Play size={18} fill="currentColor" />
-          <strong>{recent === 'exit' ? '콩알 탈출' : '단어 복구'}</strong>
+          <strong>
+            {recent === 'stack' ? '자모 쏙쏙' : recent === 'exit' ? '콩알 탈출' : '단어 복구'}
+          </strong>
           <span>이어서 도전</span>
           <ArrowRight size={18} />
         </a>
@@ -89,6 +103,21 @@ export function SoloHub() {
             <div>
               <h2>콩알 탈출</h2>
               <span>{progress.completed} / 30 완료</span>
+            </div>
+            <span className="challenge-play">
+              <ArrowRight />
+            </span>
+          </div>
+        </a>
+        <a className="challenge-choice stack-choice" href="/solo/stack">
+          <div className="challenge-art" aria-hidden="true">
+            <StackBoard cols={STACK_STAGES[0].cols} />
+            <CharacterAvatar avatar="🐻" className="challenge-mascot" />
+          </div>
+          <div className="challenge-choice-label">
+            <div>
+              <h2>자모 쏙쏙</h2>
+              <span>{stackCompleted} / 30 완료</span>
             </div>
             <span className="challenge-play">
               <ArrowRight />
