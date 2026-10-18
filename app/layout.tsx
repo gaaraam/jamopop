@@ -1,3 +1,4 @@
+import { OverlayState } from '@/components/game/overlay-state';
 import { AgeCheck } from '@/components/legal/age-check';
 import { SafetyNotice } from '@/components/safety/settings';
 import './safety.css';
@@ -21,6 +22,7 @@ import './service-header.css';
 import './mini.css';
 import './first-play.css';
 import './play-accessibility.css';
+import './overlay-system.css';
 import { AppearanceProvider } from '@/components/theme';
 import { LegalLinks } from '@/components/legal/document';
 
@@ -61,12 +63,14 @@ export default function RootLayout({
     <html lang="ko" suppressHydrationWarning>
       <body className="antialiased">
         <AppearanceProvider>
-          <Announcement />
-          <SafetyNotice />
-          <AgeCheck />
-          <FriendInvitations />
-          {children}
-          <LegalLinks />
+          <OverlayState>
+            <Announcement />
+            <SafetyNotice />
+            <AgeCheck />
+            <FriendInvitations />
+            {children}
+            <LegalLinks />
+          </OverlayState>
         </AppearanceProvider>
       </body>
     </html>

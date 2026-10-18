@@ -1,4 +1,5 @@
 'use client';
+import { NotificationSlot } from './notification-slot';
 import { Home, ShoppingBag, Building2, ArrowLeft, CalendarDays } from 'lucide-react';
 import { ThemeSwitch } from '@/components/theme';
 import { readActiveRoom } from '@/lib/active-room.mjs';
@@ -25,26 +26,17 @@ export function ServiceHeader({
   const [returnRoom, setReturnRoom] = useState<{ href: string } | null>(null);
   useEffect(() => {
     setReturnRoom(readActiveRoom(sessionStorage));
-    window.dispatchEvent(
-      new CustomEvent('jamopop-header-slot', {
-        detail: document.getElementById('service-notifications'),
-      }),
-    );
-    return () => {
-      window.dispatchEvent(new CustomEvent('jamopop-header-slot', { detail: null }));
-    };
   }, []);
   return (
-    <header className="service-header" data-play-only={playOnly || undefined}>
+    <header
+      className="service-header"
+      data-play-only={(playOnly && active !== 'lobby' && !returnRoom) || undefined}
+    >
       <div className="service-heading">
         {active !== 'lobby' && (
-          <a
-            className={`service-back${returnRoom ? ' room-return' : ''}`}
-            href={returnRoom?.href || '/?lobby=1'}
-            aria-label={returnRoom ? '게임방으로 돌아가기' : '대기실로 돌아가기'}
-          >
+          <a className="service-back" href="/?lobby=1" aria-label="대기실로 돌아가기">
             <ArrowLeft size={16} />
-            <span>{returnRoom ? '게임방' : '대기실'}</span>
+            <span>대기실</span>
           </a>
         )}
         <h1>
@@ -59,6 +51,12 @@ export function ServiceHeader({
       </div>
       <div className="service-header-actions">
         <nav aria-label="주 메뉴">
+          {returnRoom && (
+            <a className="room-return" href={returnRoom.href} aria-label="게임방으로 돌아가기">
+              <ArrowLeft size={17} />
+              <span>게임방 복귀</span>
+            </a>
+          )}
           {links
             .filter((x) => x.id !== active && (!playOnly || ['solo', 'daily'].includes(x.id)))
             .map(({ id, href, name, Icon }) => (
@@ -71,7 +69,7 @@ export function ServiceHeader({
         {children}
         <div className="service-header-tools">
           {tools || <ThemeSwitch />}
-          <div id="service-notifications" />
+          <NotificationSlot />
         </div>
       </div>
     </header>

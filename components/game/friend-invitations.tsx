@@ -1,4 +1,5 @@
 'use client';
+import { useModalOpen } from './overlay-state';
 import { createPortal } from 'react-dom';
 import { CharacterAvatar } from '@/components/game/character-avatar';
 
@@ -17,6 +18,7 @@ type Invite = {
 type Friend = { id: string; name: string; avatar: string; skin?: string | null; sent: boolean };
 type Inbox = { signedIn: boolean; items: Invite[] };
 export function FriendInvitations() {
+  const modal = useModalOpen();
   const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null);
   useEffect(() => {
     const receive = (e: Event) => setHeaderSlot((e as CustomEvent<HTMLElement | null>).detail);
@@ -37,6 +39,9 @@ export function FriendInvitations() {
     pending = useRef(false),
     actionPending = useRef(false),
     generation = useRef(0);
+  useEffect(() => {
+    if (modal) setOpen(false);
+  }, [modal]);
   const close = useCallback(() => {
     setOpen(false);
     trigger.current?.focus();
@@ -159,10 +164,10 @@ export function FriendInvitations() {
       setBusy('');
     }
   }
-  if (!inbox.signedIn) return null;
+  if (!inbox.signedIn || !headerSlot) return null;
   const items = inbox.items.filter((i) => i.expiresAt > Date.now());
   const content = (
-    <div className="friend-notifications">
+    <div className="friend-notifications" hidden={modal} inert={modal}>
       {room && (
         <button
           aria-label="친구 초대"

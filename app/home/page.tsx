@@ -1,4 +1,5 @@
 'use client';
+import { AsyncStatus } from '@/components/ui/async-status';
 import { useEffect, useState, useRef } from 'react';
 import { CharacterAvatar } from '@/components/game/character-avatar';
 import { AccountPanel } from '@/components/game/account-panel';
@@ -49,7 +50,10 @@ export default function Home() {
     [busy, setBusy] = useState(false),
     [error, setError] = useState(''),
     [notice, setNotice] = useState(''),
-    [guest, setGuest] = useState(false);
+    [guest, setGuest] = useState(false),
+    [loading, setLoading] = useState(true);
+  const loadLock = useRef(false),
+    saveLock = useRef(false);
   const [panel, setPanel] = useState<'friends' | 'gifts' | null>(null),
     [effect, setEffect] = useState('pet');
   const [life, setLife] = useState<Life | null>(null),
@@ -121,21 +125,28 @@ export default function Home() {
     setFriend(id);
   }
   async function load() {
+    if (loadLock.current) return;
+    loadLock.current = true;
+    setLoading(true);
     setError('');
     try {
-      const r = await fetch('/api/home');
+      const r = await fetch('/api/home', { signal: AbortSignal.timeout(10000) });
       if (r.status === 401) {
         setGuest(true);
         return;
       }
       const d = (await r.json()) as HomeState & { error?: string };
       if (!r.ok) throw Error(d.error || '처리하지 못했어요.');
+      setGuest(false);
       setData(d);
       setLayout(d.layout);
       setDirty(false);
       setSelected('');
     } catch (e) {
       setError((e as Error).message);
+    } finally {
+      loadLock.current = false;
+      setLoading(false);
     }
   }
   useEffect(() => {
@@ -166,7 +177,8 @@ export default function Home() {
     change([...layout.filter((p) => p.id !== selected), next]);
   }
   async function save() {
-    if (!data || busy) return;
+    if (!data || saveLock.current || loadLock.current) return;
+    saveLock.current = true;
     setBusy(true);
     setError('');
     try {
@@ -185,6 +197,7 @@ export default function Home() {
     } catch (e) {
       setError((e as Error).message);
     } finally {
+      saveLock.current = false;
       setBusy(false);
     }
   }
@@ -204,7 +217,15 @@ export default function Home() {
           <span>{tab === 'house' ? '프로필' : '집으로'}</span>
         </button>
       </ServiceHeader>
-      <div hidden={tab !== 'house'} className="house-game">
+      {tab === 'house' && !data && !guest && (
+        <AsyncStatus
+          label="내 집을 불러오고 있어요"
+          error={error}
+          retrying={loading}
+          onRetry={() => void load()}
+        />
+      )}
+      <div hidden={tab !== 'house' || (!data && !guest)} className="house-game">
         <div className="house-shell">
           <div
             className={`home-scene ${editing ? 'is-editing' : ''}`}

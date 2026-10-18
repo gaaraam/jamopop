@@ -1,4 +1,5 @@
 'use client';
+import { AsyncStatus } from '@/components/ui/async-status';
 import { clearActiveRoom } from '@/lib/active-room.mjs';
 import { CharacterAvatar } from '@/components/game/character-avatar';
 
@@ -38,15 +39,23 @@ export function AccountPanel({
     [data, setData] = useState<any>(null),
     [error, setError] = useState(''),
     [busy, setBusy] = useState(false),
+    [loading, setLoading] = useState(true),
     [name, setName] = useState(''),
     [avatar, setAvatar] = useState('🐱'),
     [returnTo, setReturnTo] = useState('/home'),
     [notice, setNotice] = useState('');
+  const readLock = useRef(false),
+    actionLock = useRef(false);
   async function load(offset = 0, append = false) {
+    if (readLock.current || actionLock.current) return;
+    readLock.current = true;
+    setLoading(true);
     const ticket = ++generation.current;
     setError('');
     try {
-      const r = await fetch(`/api/account?offset=${offset}`);
+      const r = await fetch(`/api/account?offset=${offset}`, {
+        signal: AbortSignal.timeout(10000),
+      });
       const d: any = await r.json();
       if (!r.ok) throw new Error(d.error);
       if (ticket !== generation.current) return;
@@ -63,7 +72,12 @@ export function AccountPanel({
         if (d.profile) onProfile(d.profile.name, d.profile.avatar);
       }
     } catch (e) {
-      setError((e as Error).message);
+      if (ticket === generation.current) setError((e as Error).message);
+    } finally {
+      if (ticket === generation.current) {
+        readLock.current = false;
+        setLoading(false);
+      }
     }
   }
   useEffect(() => {
@@ -71,6 +85,7 @@ export function AccountPanel({
     void load();
     return () => {
       generation.current++;
+      readLock.current = false;
     };
   }, []);
   useEffect(() => {
@@ -87,6 +102,8 @@ export function AccountPanel({
     }
   }, [open]);
   async function save(action: 'profile' | 'link' | 'cosmetics') {
+    if (actionLock.current || readLock.current) return;
+    actionLock.current = true;
     generation.current++;
     setBusy(true);
     setError('');
@@ -112,6 +129,7 @@ export function AccountPanel({
     } catch (e) {
       setError((e as Error).message);
     } finally {
+      actionLock.current = false;
       setBusy(false);
     }
   }
@@ -125,13 +143,21 @@ export function AccountPanel({
   return (
     <section className="home-account profile-page">
       <h2 className="sr-only">내 프로필</h2>
-      {error && (
+      {data && error && (
         <p className="error" role="alert">
-          {error} <button onClick={() => void load()}>다시 불러오기</button>
+          {error}{' '}
+          <button disabled={loading || busy} onClick={() => void load()}>
+            다시 불러오기
+          </button>
         </p>
       )}
-      {!data && !error ? (
-        <p>불러오는 중…</p>
+      {!data ? (
+        <AsyncStatus
+          label="내 프로필을 불러오고 있어요"
+          error={error}
+          retrying={loading}
+          onRetry={() => void load()}
+        />
       ) : data?.signedIn ? (
         <>
           <div className="profile-hero">
