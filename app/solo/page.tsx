@@ -563,6 +563,12 @@ export default function Solo() {
                     return (
                       <span
                         key={`${active.id}-${r}-${c}`}
+                        data-cursor={
+                          (!stopped &&
+                            r === active.guesses.length &&
+                            c === Math.min(letters.length, stage.width - 1)) ||
+                          undefined
+                        }
                         aria-label={`${r + 1}번째 시도 ${c + 1}칸 ${g?.letters[c] || (!stopped && r === active.guesses.length ? letters[c] : '') || '빈칸'} ${g ? judgmentLabel[g.colors[c]] : ''}`}
                         className={`solo-tile tile ${g?.colors[c] || ''} ${!g && r === active.guesses.length ? 'current-row' : ''}`}
                       >

@@ -9,9 +9,8 @@ const code = ts
     compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
   })
   .outputText.replace("'./game'", JSON.stringify(game));
-const { blocksEnter, keyboardJamo, appendKey, inputShape, previewKey } = await import(
-  'data:text/javascript;base64,' + Buffer.from(code).toString('base64')
-);
+const { blocksEnter, keyboardJamo, appendKey, inputShape, previewKey, editTileDraft } =
+  await import('data:text/javascript;base64,' + Buffer.from(code).toString('base64'));
 test('physical keyboard and touch yield identical jamo', () => {
   let physical = '',
     touch = '';
@@ -53,4 +52,13 @@ test('IME commit Enter, Safari 229, repeat, and immediate post-composition are n
   assert(blocksEnter({ repeat: true }, false, 0, 1000));
   assert(blocksEnter({}, false, 950, 1000));
   assert(!blocksEnter({}, false, 900, 1000));
+});
+
+test('tile input replaces selected text and deletes one decomposed jamo', () => {
+  assert.equal(editTileDraft('사과', 'Backspace'), 'ㅅㅏㄱㅗ');
+  assert.equal(editTileDraft('사과', 'ㄴ', 0, 2), 'ㄴ');
+  assert.equal(editTileDraft('사과', 'Backspace', 0, 2), '');
+  assert.equal(editTileDraft('ㄱㅏㄴ', 'ㅁ', 2, 3), 'ㄱㅏㅁ');
+  assert.equal(editTileDraft('', 'Backspace'), '');
+  assert.equal(editTileDraft('ㄱㅏ', 'ㄴ', 0, 0), 'ㄴㄱㅏ');
 });

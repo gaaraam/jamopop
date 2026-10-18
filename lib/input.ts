@@ -47,3 +47,13 @@ export function blocksEnter(
     now - lastCompositionEnd < 80
   );
 }
+
+// Physical keys use the same decomposed-jamo deletion as the on-screen keyboard.
+export function editTileDraft(value: string, key: string, start = value.length, end = start) {
+  const before = value.slice(0, start),
+    after = value.slice(end);
+  if (key === 'Backspace') {
+    return start !== end ? before + after : splitWord(before).slice(0, -1).join('') + after;
+  }
+  return before + key + after;
+}
