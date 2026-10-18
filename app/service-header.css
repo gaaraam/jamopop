@@ -87,7 +87,9 @@
   display: none;
 }
 .service-header .lounge-create {
-  min-height: 40px;
+  min-height: 44px;
+  flex-shrink: 0;
+  white-space: nowrap;
   margin: 0;
   padding: 10px 16px;
 }
@@ -111,13 +113,17 @@
 }
 @media (max-width: 760px) {
   .service-header {
-    gap: 8px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px 8px;
     padding-bottom: 14px;
     margin-bottom: 16px;
-    flex-wrap: wrap;
   }
   .service-heading {
-    gap: 10px;
+    grid-column: 1;
+    grid-row: 1;
+    flex-wrap: wrap;
+    gap: 6px 10px;
   }
   .service-heading h1 {
     font-size: 22px;
@@ -125,17 +131,39 @@
   .service-back span {
     display: none;
   }
+  .service-header nav {
+    grid-column: 1;
+    grid-row: 2;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 0;
+  }
   .service-header nav a {
-    padding: 10px;
+    box-sizing: border-box;
+    flex: 0 0 40px;
+    width: 40px;
+    height: 44px;
+    justify-content: center;
+    padding: 0;
   }
   .service-header nav a span {
     display: none;
   }
   .service-header-actions {
-    gap: 5px;
+    display: contents;
+  }
+  .service-header-actions > :not(nav):not(.service-header-tools) {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+    align-self: center;
   }
   .service-header-tools {
-    padding-left: 4px;
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    padding-left: 0;
+    border-left: 0;
     gap: 4px;
   }
   .service-header .theme-switch {
@@ -148,8 +176,11 @@
     display: none;
   }
   .service-header .lounge-create {
-    padding: 10px;
-    font-size: 12px;
+    height: 44px;
+    padding: 0 12px;
+    gap: 6px;
+    font-size: 14px !important;
+    border-radius: 12px !important;
   }
   .service-header .gold-wallet {
     padding: 8px;
