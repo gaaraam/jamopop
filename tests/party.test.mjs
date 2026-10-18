@@ -69,7 +69,7 @@ test('party integration: items, concurrency, deadlines, titles, hints, spectator
     );
     urls['@/lib/account'] = stub(
       'account',
-      `export const accountId=r=>r.headers.get('user'),isSiteAdmin=r=>r.headers.get('user')==='admin',isAdminAccount=()=>false,accountProgressions=async()=>new Map(),avatarAccess=async()=>['🐱'];export const findMember=(r,room)=>globalThis.__partyStore.one('SELECT * FROM members WHERE id=? AND room_id=?',r.headers.get('user'),room);`,
+      `export const accountId=r=>r.headers.get('user'),isSiteAdmin=r=>r.headers.get('user')==='admin',isAdminAccount=()=>false,accountProgressions=async()=>new Map(),avatarAccess=async()=>['🐱'];export const findMember=(r,room)=>globalThis.__partyStore.one('SELECT * FROM members WHERE room_id=? AND (id=? OR account_id=?)',room,r.headers.get('user'),r.headers.get('user'));`,
     );
     urls['@/lib/cosmetics'] = stub(
       'cosmetics',
@@ -114,6 +114,18 @@ test('party integration: items, concurrency, deadlines, titles, hints, spectator
       db.prepare(
         'INSERT INTO members(id,room_id,token_hash,account_id,name,avatar,last_seen) VALUES(?,?,?,?,?,?,?)',
       ).run(id, room, id, id, id, '🐱', now);
+    db.prepare('INSERT INTO profiles(id,name,avatar,created_at) VALUES(?,?,?,?)').run(
+      'new-member',
+      '저장된 닉네임',
+      '🐱',
+      now,
+    );
+    db.prepare('INSERT INTO profiles(id,name,avatar,created_at) VALUES(?,?,?,?)').run(
+      'other-member',
+      '저장된 닉네임',
+      '🐱',
+      now,
+    );
     const req = (user, body, path = '/api/party') =>
       new Request('https://test' + path, {
         method: body ? 'POST' : 'GET',
@@ -122,6 +134,43 @@ test('party integration: items, concurrency, deadlines, titles, hints, spectator
       });
     const post = (u, b) => api.POST(req(u, b));
     const get = (u) => game.GET(req(u, null, `/api/game?room=${room}&mode=daily`));
+    const autoBody = { action: 'join', room, lobby: true, useProfile: true, includeState: true };
+    const auto = await game.POST(req('new-member', autoBody, '/api/game'));
+    assert.equal(auto.status, 200);
+    const joined = await auto.json();
+    assert.equal(joined.me.name, '저장된 닉네임');
+    assert.equal(
+      db.prepare('SELECT account_id FROM members WHERE id=?').get(joined.me.id).account_id,
+      'new-member',
+    );
+    assert.equal(joined.play.guesses.length, 0);
+    const duplicateName = await game.POST(req('other-member', autoBody, '/api/game'));
+    assert.equal(duplicateName.status, 200);
+    assert.equal((await duplicateName.json()).me.name, '저장된 닉네임·2');
+    const repeat = await game.POST(
+      req('new-member', { ...autoBody, name: '조작한 이름', avatar: '🦁' }, '/api/game'),
+    );
+    assert.equal(repeat.status, 200);
+    assert.equal(
+      (await repeat.json()).me.id,
+      joined.me.id,
+      'saved account auto entry preserves member identity',
+    );
+    db.prepare('UPDATE rooms SET password_hash=? WHERE id=?').run(
+      await (await import(urls['@/lib/room-password'])).hashRoomPassword('test-pass'),
+      room,
+    );
+    const privateEntry = await game.POST(req('fresh-member', autoBody, '/api/game'));
+    assert.equal(privateEntry.status, 403);
+    assert.equal((await privateEntry.json()).needsPassword, true);
+    assert.equal(
+      db.prepare('SELECT COUNT(*) AS n FROM members WHERE account_id=?').get('fresh-member').n,
+      0,
+      'password prompts never insert a member',
+    );
+    db.prepare('UPDATE rooms SET password_hash=NULL WHERE id=?').run(room);
+    // Remove only these synthetic setup members so the existing competition fixture stays unchanged.
+    db.prepare('DELETE FROM members WHERE account_id IN (?,?)').run('new-member', 'other-member');
     const r = db.prepare('SELECT * FROM rounds WHERE id=?').get(rid),
       member = (id) => db.prepare('SELECT * FROM members WHERE id=?').get(id),
       load = (id) =>

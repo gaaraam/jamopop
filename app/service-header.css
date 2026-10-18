@@ -158,3 +158,9 @@
     padding: 9px;
   }
 }
+
+@media (max-width: 760px) {
+  .service-back.room-return span {
+    display: inline;
+  }
+}

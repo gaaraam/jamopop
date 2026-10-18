@@ -1,7 +1,8 @@
 'use client';
 import { Home, ShoppingBag, Building2, ArrowLeft, CalendarDays } from 'lucide-react';
 import { ThemeSwitch } from '@/components/theme';
-import { useEffect, type ReactNode } from 'react';
+import { readActiveRoom } from '@/lib/active-room.mjs';
+import { useEffect, useState, type ReactNode } from 'react';
 const links = [
   { id: 'daily', href: '/daily', name: '오늘의 단어', Icon: CalendarDays },
   { id: 'solo', href: '/solo', name: '개인 도전', Icon: Building2 },
@@ -21,7 +22,9 @@ export function ServiceHeader({
   children?: ReactNode;
   tools?: ReactNode;
 }) {
+  const [returnRoom, setReturnRoom] = useState<{ href: string } | null>(null);
   useEffect(() => {
+    setReturnRoom(readActiveRoom(sessionStorage));
     window.dispatchEvent(
       new CustomEvent('jamopop-header-slot', {
         detail: document.getElementById('service-notifications'),
@@ -35,9 +38,13 @@ export function ServiceHeader({
     <header className="service-header">
       <div className="service-heading">
         {active !== 'lobby' && (
-          <a className="service-back" href="/?lobby=1" aria-label="대기실로 돌아가기">
+          <a
+            className={`service-back${returnRoom ? ' room-return' : ''}`}
+            href={returnRoom?.href || '/?lobby=1'}
+            aria-label={returnRoom ? '게임방으로 돌아가기' : '대기실로 돌아가기'}
+          >
             <ArrowLeft size={16} />
-            <span>대기실</span>
+            <span>{returnRoom ? '게임방' : '대기실'}</span>
           </a>
         )}
         <h1>

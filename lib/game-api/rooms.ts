@@ -19,7 +19,7 @@ import {
   verifyRoomPassword,
 } from '@/lib/room-password';
 import { ROOM_ROUND_MS } from '@/lib/round-timer';
-import { database, one, run } from '@/lib/store';
+import { all, database, one, run } from '@/lib/store';
 import { randomWord } from '@/lib/words';
 export async function handleRoomEntry(
   req: Request,
@@ -39,15 +39,34 @@ export async function handleRoomEntry(
     return reply({ ok: true });
   }
   if (b.action === 'create' || b.action === 'join') {
-    const name = typeof b.name === 'string' ? b.name.trim().slice(0, 16) : '';
+    const profileEntry = b.useProfile === true;
+    const owner = accountId(req);
+    check(!profileEntry || owner, '로그인한 계정으로 다시 입장해 주세요.', 401);
+    const saved = profileEntry
+      ? await one(
+          `SELECT name,avatar FROM (SELECT name,avatar,0 AS priority,0 AS seen FROM profiles WHERE id=? UNION ALL SELECT name,avatar,1 AS priority,last_seen AS seen FROM members WHERE account_id=?) ORDER BY priority,seen DESC LIMIT 1`,
+          owner,
+          owner,
+        )
+      : null;
+    let name = profileEntry
+      ? String(saved?.name || '콩알' + owner!.replace(/[^a-z0-9]/gi, '').slice(-5))
+          .trim()
+          .slice(0, 16)
+      : typeof b.name === 'string'
+        ? b.name.trim().slice(0, 16)
+        : '';
     check(name, '닉네임을 입력해 주세요.');
-    const avatar = avatars.includes(b.avatar) ? b.avatar : avatars[0];
+    let avatar = avatars.includes(profileEntry ? saved?.avatar : b.avatar)
+      ? profileEntry
+        ? saved.avatar
+        : b.avatar
+      : avatars[0];
     let token = cookie(req);
     if (!/^[a-f0-9]{64}$/.test(token))
       token = uuid().replaceAll('-', '') + uuid().replaceAll('-', '');
     const tokenHash = await hash(token),
-      id = uuid(),
-      owner = accountId(req);
+      id = uuid();
     // Start independent reads together; still await the entitlement check before any write.
     const access = avatarAccess(req);
     const roomPromise =
@@ -131,8 +150,13 @@ export async function handleRoomEntry(
     }
     const room = joiningRoom;
     check(room, '방을 찾을 수 없어요.', 404);
-    const existing = await findMember(req, room.id);
+    let existing = await findMember(req, room.id);
+    if (profileEntry && existing) {
+      name = existing.name;
+      avatar = existing.avatar;
+    }
     if (room.password_hash && !existing && !isSiteAdmin(req)) {
+      if (profileEntry && !b.password) return reply({ error: '', needsPassword: true }, 403);
       check(
         await allowRoomPasswordAttempt(
           room.id,
@@ -167,7 +191,16 @@ export async function handleRoomEntry(
     const joinHash = await hash(token);
     check(!existing?.blocked || isSiteAdmin(req), '이 방에서 내보내졌어요.', 403);
     const duplicate = await one('SELECT id FROM members WHERE room_id=? AND name=?', room.id, name);
-    check(!duplicate || duplicate.id === existing?.id, '이미 사용 중인 닉네임이에요.');
+    if (duplicate && duplicate.id !== existing?.id && profileEntry) {
+      const taken = new Set(
+        (await all('SELECT name FROM members WHERE room_id=?', room.id)).map((m) => m.name),
+      );
+      const base = name;
+      for (let n = 2; taken.has(name) && n <= taken.size + 2; n++) {
+        const suffix = '·' + n;
+        name = base.slice(0, 16 - suffix.length) + suffix;
+      }
+    } else check(!duplicate || duplicate.id === existing?.id, '이미 사용 중인 닉네임이에요.');
     if (existing) {
       if (!existing.chat_seen || now - existing.last_seen >= 90000)
         await presenceNotice(existing, now);
@@ -175,7 +208,7 @@ export async function handleRoomEntry(
         await run('UPDATE members SET name=?,avatar=? WHERE id=?', name, avatar, existing.id);
     } else {
       const inserted = await run(
-        'INSERT INTO members(id,room_id,token_hash,name,avatar,last_seen,account_id,last_active) SELECT ?,?,?,?,?,?,?,? WHERE (?=1 OR (SELECT COUNT(*) FROM members WHERE room_id=? AND blocked=0)<40)',
+        'INSERT OR IGNORE INTO members(id,room_id,token_hash,name,avatar,last_seen,account_id,last_active) SELECT ?,?,?,?,?,?,?,? WHERE (?=1 OR (SELECT COUNT(*) FROM members WHERE room_id=? AND blocked=0)<40)',
         id,
         room.id,
         joinHash,
@@ -187,7 +220,11 @@ export async function handleRoomEntry(
         isSiteAdmin(req) ? 1 : 0,
         room.id,
       );
-      check(inserted.meta.changes, '이 방은 최대 40명까지 참여할 수 있어요.');
+      if (!inserted.meta.changes && profileEntry) {
+        const concurrent = await findMember(req, room.id);
+        if (concurrent && (!concurrent.blocked || isSiteAdmin(req))) existing = concurrent;
+      }
+      check(inserted.meta.changes || existing, '이 방은 최대 40명까지 참여할 수 있어요.');
     }
     if (b.spectator === true) {
       const changedRole = await run(

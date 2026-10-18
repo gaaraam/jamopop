@@ -7342,3 +7342,20 @@ html[data-theme='dark'] .room-awake .room-enter:hover {
   outline: 2px solid #9a7b27;
   outline-offset: 3px;
 }
+
+.room-entry-loading {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--ui-ink);
+}
+.room-entry-loading p {
+  margin: 0;
+}
+.room-entry-loading-mark {
+  color: var(--ui-muted);
+  letter-spacing: 6px;
+}
