@@ -533,3 +533,39 @@ html[data-theme='dark'] {
   height: 20px;
   accent-color: var(--ui-accent, #6963aa);
 }
+
+/* Shared async states distinguish waiting from a recoverable failure. */
+.async-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 180px;
+  padding: 24px;
+  color: var(--ui-muted);
+  text-align: center;
+  font-size: 13px;
+}
+.async-status p {
+  margin: 0;
+}
+.async-status[aria-busy='true'] > svg {
+  animation: async-status-spin 1.2s linear infinite;
+}
+.async-status .secondary-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+}
+@keyframes async-status-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .async-status[aria-busy='true'] > svg {
+    animation: none;
+  }
+}

@@ -2,6 +2,8 @@
 import { JudgmentMark, judgmentLabel } from '@/components/game/judgment-mark';
 import { GuestRecords } from '@/components/game/guest-records';
 import { ServiceHeader } from '@/components/game/service-header';
+import { AsyncStatus } from '@/components/ui/async-status';
+import { useScreenStart } from '@/components/game/hooks/use-screen-start';
 import { GameInput } from '@/components/game/mobile-controls';
 import { draftKey, readDraft, writeDraft } from '@/lib/recovery.mjs';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -40,7 +42,8 @@ export default function Solo() {
     [busy, setBusy] = useState(false),
     [now, setNow] = useState(Date.now()),
     [onMap, setOnMap] = useState(true),
-    [connected, setConnected] = useState(true);
+    [connected, setConnected] = useState(true),
+    [loading, setLoading] = useState(true);
   const [inputError, setInputError] = useState('');
   const latestRun = useRef<View['active']>(null),
     textRef = useRef('');
@@ -96,6 +99,7 @@ export default function Solo() {
   const refresh = useCallback(async () => {
     if (lock.current || refreshing.current) return;
     refreshing.current = true;
+    setLoading(true);
     const revision = ++sequence.current;
     try {
       const response = await fetch('/api/solo', { signal: AbortSignal.timeout(10000) });
@@ -110,6 +114,7 @@ export default function Solo() {
       }
     } finally {
       refreshing.current = false;
+      setLoading(false);
     }
   }, [accept]);
   useEffect(() => {
@@ -239,20 +244,24 @@ export default function Solo() {
   const mapFirst = (mapChapter.id - 1) * 3 + 1;
   const mapComplete = [mapFirst, mapFirst + 1, mapFirst + 2].every((n) => data?.best[n]);
   const stars = Object.values(data?.best || {}).reduce((a, b) => a + b, 0);
+  useScreenStart(onMap ? 'map' : `play:${active?.id || ''}`);
   return (
     <main className="solo-page glass" data-playing={!onMap}>
       <ServiceHeader
         active="solo"
         playOnly={
+          !onMap ||
           !data ||
           (!Object.keys(data.best).length && (!data.active || data.active.status === 'playing'))
         }
       />
       {!data ? (
-        <section className="solo-loading">
-          <p>{error || '도전 기록을 불러오는 중…'}</p>
-          <button onClick={() => refresh()}>다시 불러오기</button>
-        </section>
+        <AsyncStatus
+          label="도전을 준비하고 있어요"
+          error={error}
+          retrying={loading}
+          onRetry={() => void refresh()}
+        />
       ) : (
         <>
           <div className="solo-summary" aria-label="개인 도전 기록">
@@ -315,10 +324,31 @@ export default function Solo() {
                   <span>콩알친구들 · 단어 복구 작전</span>
                   <h1>콩알 아파트</h1>
                 </div>
-                <span className="quest-total">
-                  {Object.keys(data.best).length}
-                  <small> / 15 복구</small>
-                </span>
+                <div className="quest-entry-action">
+                  <span className="quest-total">
+                    {Object.keys(data.best).length}
+                    <small> / 15 복구</small>
+                  </span>
+                  <button
+                    className="solo-primary"
+                    disabled={
+                      busy ||
+                      ((!active || active.status !== 'playing') &&
+                        (!recordsChecked || guestSoloPending))
+                    }
+                    onClick={() =>
+                      active?.status === 'playing' ? setOnMap(false) : void startNext()
+                    }
+                  >
+                    {busy
+                      ? '준비 중…'
+                      : active?.status === 'playing'
+                        ? '이어서 도전'
+                        : guestSoloPending
+                          ? '기록 연결 후 시작'
+                          : `${data.unlocked}단계 시작`}
+                  </button>
+                </div>
               </section>
               {stars === 45 && (
                 <section className="quest-ending" role="status">

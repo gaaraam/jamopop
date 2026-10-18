@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CalendarDays, Copy, ArrowRight, Check, Clock3, Trophy, ShieldCheck } from 'lucide-react';
+import { AsyncStatus } from '@/components/ui/async-status';
 import { ServiceHeader } from '@/components/game/service-header';
 import { CharacterAvatar } from '@/components/game/character-avatar';
 import { WordBoard, WordKeyboard } from '@/components/game/word-controls';
@@ -206,10 +207,12 @@ export function DailyGame() {
           </p>
         </details>
         {!data ? (
-          <div role="status">
-            <p>{error || '문제를 불러오는 중…'}</p>
-            <button onClick={() => void refresh()}>다시 연결</button>
-          </div>
+          <AsyncStatus
+            label="오늘의 단어를 준비하고 있어요"
+            error={error}
+            retrying={loading}
+            onRetry={() => void refresh()}
+          />
         ) : (
           <>
             <WordBoard
