@@ -1,0 +1,554 @@
+.toktok-layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 520px);
+  justify-content: center;
+  gap: 32px;
+  align-items: center;
+}
+.toktok-info {
+  min-width: 0;
+}
+.toktok-companion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.toktok-companion .kongal-avatar {
+  width: 100px;
+  height: 100px;
+}
+.toktok-companion span,
+.toktok-goal > span {
+  display: block;
+  font-size: 12px;
+  color: var(--ui-muted);
+  margin-bottom: 6px;
+}
+.toktok-companion strong {
+  font: 700 28px var(--font-game);
+  font-variant-numeric: tabular-nums;
+}
+.toktok-goal > strong {
+  font: 700 23px var(--font-game);
+}
+.toktok-goal [role='progressbar'] {
+  height: 7px;
+  border-radius: 8px;
+  background: var(--ui-line);
+  margin-top: 12px;
+  overflow: hidden;
+}
+.toktok-goal i {
+  display: block;
+  height: 100%;
+  border-radius: 8px;
+  background: #b49aca;
+  transition: width 0.25s;
+}
+.toktok-recipes {
+  display: flex;
+  gap: 8px;
+  margin-top: 24px;
+}
+.toktok-recipes > span {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 7px;
+  font: 700 26px var(--font-game);
+  padding: 10px 0;
+  border-bottom: 2px solid #b9a4d2;
+}
+.toktok-recipes small {
+  font: 500 11px var(--font-body);
+  color: var(--ui-muted);
+}
+.toktok-save-error {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ui-ink);
+}
+.toktok-play {
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--ui-line);
+  background: var(--ui-surface);
+  border-radius: 24px;
+}
+.toktok-hud {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.toktok-hud > div:first-child {
+  flex: 1;
+}
+.toktok-hud span {
+  display: block;
+  font-size: 12px;
+  color: var(--ui-muted);
+  margin-bottom: 5px;
+}
+.toktok-hud strong {
+  font: 700 32px var(--font-game);
+  font-variant-numeric: tabular-nums;
+}
+.toktok-hud strong small {
+  font-size: 14px;
+  color: var(--ui-muted);
+}
+.toktok-sound {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--ui-line);
+  background: var(--ui-surface);
+  color: inherit;
+}
+.toktok-play-area,
+.toktok-board-wrap {
+  position: relative;
+  min-width: 0;
+}
+.toktok-board-wrap {
+  width: 100%;
+  margin: auto;
+}
+.toktok-board {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+  border-radius: 20px;
+  background: #ede7f1;
+  border: 1px solid #dcd3e6;
+  aspect-ratio: 1;
+}
+.toktok-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+  aspect-ratio: 1;
+  min-width: 0;
+  border: 0;
+  border-radius: 14px;
+  padding: 0;
+  color: #3d374f;
+  background: var(--tt-color);
+  box-shadow:
+    inset 0 -5px #00000012,
+    0 2px 3px #382f4310;
+  touch-action: manipulation;
+  user-select: none;
+}
+.toktok-tile b {
+  font: 700 clamp(24px, 3.2vw, 40px) var(--font-game);
+  line-height: 1;
+}
+.toktok-tile small {
+  font: 600 10px var(--font-body);
+  color: #574267;
+  line-height: 1;
+  letter-spacing: 1px;
+}
+.toktok-tile.compound {
+  border: 2px solid #bca3d5;
+  box-shadow:
+    0 0 11px #b899d92b,
+    inset 0 -5px #00000010;
+  background-image: linear-gradient(135deg, #fff8, transparent 60%);
+}
+.toktok-tile.hint {
+  outline: 3px solid #7562a4;
+  outline-offset: -3px;
+  animation: tt-hint 0.8s ease-in-out infinite alternate;
+}
+.tt-c0 {
+  --tt-color: #b7daca;
+}
+.tt-c1 {
+  --tt-color: #cdc0e5;
+}
+.tt-c2 {
+  --tt-color: #edc7a5;
+}
+.tt-c3 {
+  --tt-color: #b9d5ea;
+}
+.tt-c4 {
+  --tt-color: #edcf78;
+}
+.tt-c5 {
+  --tt-color: #a9d4c1;
+}
+.tt-c6 {
+  --tt-color: #efbc91;
+}
+.tt-c7 {
+  --tt-color: #d6b3e1;
+}
+.toktok-tile.popping {
+  animation: tt-pop 0.24s ease-out both;
+}
+.toktok-fx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+.toktok-fx > i {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 8px;
+  height: 11px;
+  background: var(--p);
+  border-radius: 3px;
+  font: 700 16px var(--font-game);
+  color: #705696;
+  animation: tt-particle 0.95s cubic-bezier(0.1, 0.65, 0.25, 1) both;
+  animation-delay: var(--delay);
+}
+.toktok-fx > i:not(:empty) {
+  width: auto;
+  height: auto;
+  background: transparent;
+}
+.toktok-burst {
+  position: absolute;
+  top: 36%;
+  left: -8%;
+  right: -8%;
+  text-align: center;
+  animation: tt-banner 0.95s ease-out both;
+}
+.toktok-burst strong {
+  display: block;
+  font: 700 clamp(23px, 3.6vw, 38px) var(--font-game);
+  color: #795495;
+  -webkit-text-stroke: 4px #fff;
+  paint-order: stroke fill;
+  filter: drop-shadow(0 2px 0 #fff);
+}
+.toktok-burst span {
+  display: inline-block;
+  margin-top: 6px;
+  font: 700 23px var(--font-game);
+  background: #fff;
+  color: #71518d;
+  border-radius: 9px;
+  padding: 4px 10px;
+  box-shadow: 0 4px 12px #31243615;
+}
+.toktok-feedback {
+  min-height: 44px;
+  margin: 0;
+  padding: 12px 0 8px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--ui-muted);
+}
+.toktok-result {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--ui-surface);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--ui-line);
+}
+.toktok-result .kongal-avatar {
+  width: 100px;
+  height: 100px;
+}
+.toktok-result h2 {
+  font: 700 26px var(--font-game);
+  margin: 0;
+}
+.toktok-result > strong {
+  font: 700 34px var(--font-game);
+}
+.toktok-result small {
+  font-size: 15px;
+  margin-left: 5px;
+}
+.toktok-result button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 20px;
+  border: 1px solid var(--ui-line);
+  background: var(--ui-surface);
+  border-radius: 12px;
+  font-size: 13px;
+  color: inherit;
+}
+.toktok-result button.primary {
+  background: #f3d465;
+  color: #514321;
+  border-color: #dec357;
+  font-weight: 700;
+}
+.toktok-choice .challenge-art {
+  background: linear-gradient(145deg, #e4d9ee, #f5e5d5);
+}
+.challenge-art .toktok-board-wrap {
+  width: 225px;
+  transform: rotate(-6deg);
+  pointer-events: none;
+}
+.challenge-art .toktok-board {
+  gap: 5px;
+  padding: 7px;
+}
+.challenge-art .toktok-tile {
+  border-radius: 8px;
+}
+.challenge-art .toktok-tile b {
+  font-size: 22px;
+}
+.challenge-art .toktok-tile small {
+  font-size: 7px;
+}
+html[data-theme='dark'] .toktok-board {
+  background: #302b3c;
+  border-color: #544b65;
+}
+html[data-theme='dark'] .toktok-tile {
+  filter: brightness(0.86);
+}
+html[data-theme='dark'] .toktok-result {
+  background: #242337ed;
+}
+@keyframes tt-pop {
+  45% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(0.25);
+    opacity: 0;
+  }
+}
+@keyframes tt-particle {
+  0% {
+    transform: translate(0, 0) rotate(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  35% {
+    transform: translate(var(--dx), var(--dy)) rotate(var(--r));
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx), calc(var(--dy) + 90px)) rotate(calc(var(--r) + 80deg));
+    opacity: 0;
+  }
+}
+@keyframes tt-banner {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  18% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+@keyframes tt-hint {
+  to {
+    filter: brightness(1.08);
+    transform: translateY(-2px);
+  }
+}
+@media (min-width: 761px) and (max-height: 850px) {
+  .toktok-layout {
+    grid-template-columns: 220px 380px;
+  }
+  .toktok-play {
+    padding: 20px;
+  }
+  .toktok-hud {
+    margin-bottom: 16px;
+  }
+  .toktok-hud strong {
+    font-size: 27px;
+  }
+  .toktok-companion .kongal-avatar {
+    width: 85px;
+    height: 85px;
+  }
+}
+@media (max-width: 760px) {
+  .toktok-page {
+    padding: 12px 12px 80px;
+  }
+  .toktok-page .service-header nav {
+    display: none;
+  }
+  .toktok-page .service-header {
+    min-height: 56px;
+  }
+  .toktok-page .solo-games-back {
+    margin: 12px 0;
+  }
+  .toktok-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 460px;
+    margin: auto;
+  }
+  .toktok-info {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 16px;
+  }
+  .toktok-companion {
+    gap: 8px;
+    margin: 0;
+  }
+  .toktok-companion .kongal-avatar {
+    width: 44px;
+    height: 44px;
+  }
+  .toktok-companion strong {
+    font-size: 18px;
+  }
+  .toktok-companion span,
+  .toktok-goal > span {
+    font-size: 10px;
+    margin-bottom: 3px;
+  }
+  .toktok-goal > strong {
+    font-size: 18px;
+  }
+  .toktok-goal [role='progressbar'] {
+    height: 4px;
+    margin-top: 6px;
+  }
+  .toktok-recipes {
+    display: none;
+  }
+  .toktok-info .exit-help {
+    grid-column: 1/-1;
+    margin: 0;
+    font-size: 11px;
+  }
+  .toktok-save-error {
+    grid-column: 1/-1;
+    margin: 0;
+  }
+  .toktok-play {
+    width: 100%;
+    padding: 16px 12px;
+    border-radius: 20px;
+  }
+  .toktok-hud {
+    margin-bottom: 12px;
+    gap: 12px;
+  }
+  .toktok-hud strong {
+    font-size: 25px;
+  }
+  .toktok-hud span {
+    font-size: 11px;
+  }
+  .toktok-play-area {
+    max-width: min(100%, 44svh);
+    margin: auto;
+  }
+  .toktok-board {
+    gap: 6px;
+    padding: 7px;
+    border-radius: 16px;
+  }
+  .toktok-tile {
+    border-radius: 10px;
+    gap: 3px;
+  }
+  .toktok-tile b {
+    font-size: clamp(22px, 6.5vw, 32px);
+  }
+  .toktok-tile small {
+    font-size: 8px;
+  }
+  .toktok-feedback {
+    min-height: 38px;
+    padding-top: 10px;
+    font-size: 11px;
+  }
+  .toktok-play .exit-tools {
+    gap: 24px;
+    padding-top: 8px;
+  }
+  .toktok-result {
+    gap: 10px;
+  }
+  .toktok-result .kongal-avatar {
+    width: 64px;
+    height: 64px;
+  }
+  .toktok-result h2 {
+    font-size: 23px;
+  }
+  .toktok-result > strong {
+    font-size: 28px;
+  }
+  .challenge-art .toktok-board-wrap {
+    width: 170px;
+  }
+  .challenge-art .toktok-tile b {
+    font-size: 18px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toktok-page *,
+  .toktok-page *::before,
+  .toktok-page *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .toktok-fx {
+    display: none;
+  }
+  .toktok-tile.popping {
+    opacity: 1;
+  }
+}
+.challenge-choices:has(.toktok-choice) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (max-width: 480px) {
+  .challenge-choices:has(.toktok-choice) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
