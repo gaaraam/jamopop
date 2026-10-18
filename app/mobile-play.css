@@ -392,13 +392,20 @@
 /* The native IME input remains focusable; tiles are the only visible input surface. */
 html:root .tile-input-control.tile-input-control {
   position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
+  width: min(100%, 480px);
+  height: 0;
+  overflow: visible;
+  clip-path: none;
+  opacity: 0;
+  pointer-events: none;
   white-space: nowrap;
 }
 html:root .tile-input-control.tile-input-control input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  padding: 0;
   font-size: 16px;
 }
 .main-board[data-direct-input='true'] {

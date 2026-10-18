@@ -2,6 +2,7 @@
 import {
   forwardRef,
   useEffect,
+  useLayoutEffect,
   useState,
   useRef,
   useCallback,
@@ -14,9 +15,10 @@ import { ChevronDown } from 'lucide-react';
 export const GameInput = forwardRef<
   HTMLInputElement,
   InputHTMLAttributes<HTMLInputElement> & { tileWidth: number }
->(function GameInput({ tileWidth, ...props }, ref) {
+>(function GameInput({ tileWidth, value, ...props }, ref) {
   const [touch, setTouch] = useState(false);
   const local = useRef<HTMLInputElement | null>(null);
+  const initialValue = useRef(value);
   const composing = useRef(false);
   const setRef = useCallback(
     (node: HTMLInputElement | null) => {
@@ -26,6 +28,15 @@ export const GameInput = forwardRef<
     },
     [ref],
   );
+  // React must not rewrite the native value while macOS owns an IME marked range.
+  // Screen keys/reset still synchronize external drafts once composition is idle.
+  useLayoutEffect(() => {
+    const input = local.current;
+    const next = String(value ?? '');
+    if (!input || composing.current || input.value === next) return;
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, next);
+    input.setSelectionRange(next.length, next.length);
+  }, [value]);
   // Keep a native input for IME and assistive technology, with the board as its visual surface.
   useEffect(() => {
     const input = local.current;
@@ -106,6 +117,7 @@ export const GameInput = forwardRef<
     <div className="game-input-control tile-input-control" data-touch={touch}>
       <input
         {...props}
+        defaultValue={initialValue.current}
         ref={setRef}
         onChange={(event) => {
           // Let the IME own its provisional text, then cap the committed jamo.
@@ -142,7 +154,7 @@ export const GameInput = forwardRef<
               input,
               value,
             );
-          input.setSelectionRange(value.length, value.length);
+          if (changed) input.setSelectionRange(value.length, value.length);
           props.onCompositionEnd?.(event);
           if (changed) input.dispatchEvent(new Event('input', { bubbles: true }));
         }}

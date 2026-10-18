@@ -73,6 +73,9 @@ test('tile input replaces selected text and deletes one decomposed jamo', () => 
 
 test('committed text and paste cannot exceed the decomposed tile width', () => {
   assert.equal(capTileDraft('사과나무', 5), 'ㅅㅏㄱㅗㅏ');
+  assert.equal(capTileDraft('이름', 5), '이름');
+  assert.equal(capTileDraft('도전', 5), '도전');
+  assert.equal(capTileDraft('사과', 5), '사과');
   assert.equal(capTileDraft('때', 2), 'ㄷㄷ');
   for (const width of [5, 6, 7]) assert.equal(capTileDraft('ㄱ'.repeat(20), width).length, width);
 });

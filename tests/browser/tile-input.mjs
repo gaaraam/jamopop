@@ -251,7 +251,12 @@ try {
       assert.equal(await p.locator('.game-input-control input').inputValue(), 'ㄱ');
       assert(await p.locator('.keyboard').isVisible());
       const hidden = await p.locator('.game-input-control').boundingBox();
-      assert(hidden.width <= 1);
+      assert(hidden.width >= 200);
+      assert.equal(hidden.height, 0);
+      assert.equal(
+        await p.locator('.game-input-control').evaluate((el) => getComputedStyle(el).opacity),
+        '0',
+      );
       const overflow = await p.evaluate(() => ({
         width: innerWidth,
         scroll: document.documentElement.scrollWidth,
@@ -326,6 +331,55 @@ try {
       assert.equal(await i.inputValue(), 'ㅅㅏㄱㅗㅏ');
       await p.close();
     }
+  });
+  await test('native IME commits preserve syllables and do not force the caret', async () => {
+    const p = await page();
+    const d = await room(p);
+    await p.goto(base + '/?r=' + d.roomId);
+    const i = p.getByRole('textbox', { name: '단어 입력', exact: true });
+    await i.waitFor({ state: 'attached' });
+    await i.focus();
+    await i.evaluate((el) => {
+      const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+      el.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+      set.call(el, '이');
+      el.dispatchEvent(
+        new InputEvent('input', {
+          bubbles: true,
+          isComposing: true,
+          inputType: 'insertCompositionText',
+          data: '이',
+        }),
+      );
+      el.setSelectionRange(0, 0);
+      el.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, data: '이' }));
+    });
+    assert.equal(await i.inputValue(), '이');
+    assert.equal(await i.evaluate((el) => el.selectionStart), 0);
+    await i.evaluate((el) => {
+      const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+      el.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+      set.call(el, '이름');
+      el.dispatchEvent(
+        new InputEvent('input', {
+          bubbles: true,
+          isComposing: true,
+          inputType: 'insertCompositionText',
+          data: '름',
+        }),
+      );
+      el.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, data: '름' }));
+    });
+    assert.equal(await i.inputValue(), '이름');
+    assert.deepEqual(
+      await p
+        .locator('.main-board .tile')
+        .evaluateAll((els) => els.slice(0, 5).map((e) => e.textContent)),
+      ['ㅇ', 'ㅣ', 'ㄹ', 'ㅡ', 'ㅁ'],
+    );
+    await p.getByRole('button', { name: '한 칸 지우기', exact: true }).click();
+    assert.equal(await i.inputValue(), 'ㅇㅣㄹㅡ');
+    await p.close();
   });
 } finally {
   console.log(JSON.stringify(results, null, 2));
