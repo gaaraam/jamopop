@@ -402,6 +402,50 @@ test('gold accrual, daily bonus, guest linkage, safe purchases and skin propagat
       'rare-royal-cat',
       'home edits preserve character',
     );
+    // Separate tabs can afford either purchase, never both. A lost response
+    // must be safe to retry without charging again.
+    db.exec(
+      "INSERT INTO profiles(id,name,avatar,created_at) VALUES('C','C','🐱',1); INSERT INTO members(id,room_id,token_hash,name,avatar,last_seen,account_id) VALUES('c','room','ctoken','C','🐱',1,'C');",
+    );
+    for (let i = 0; i < 15; i++) play('won', 'daily', 'c');
+    const opening = (await shopState('C')).balance;
+    assert.equal(opening, 480);
+    const competing = ['sleepy-rabbit', 'honey-bear'];
+    const raced = await Promise.all(
+      competing.map((skin) => POST(request('C', { action: 'buy', skin }))),
+    );
+    assert.deepEqual(
+      raced.map((r) => r.status).sort(),
+      [200, 409],
+      'different purchases cannot overspend across tabs',
+    );
+    const afterRace = await shopState('C');
+    assert.equal(afterRace.balance, 80);
+    assert.equal(afterRace.owned.length, 1);
+    const bought = afterRace.owned[0];
+    const ledger = JSON.stringify(
+      db.prepare("SELECT * FROM skin_purchases WHERE account_id='C'").all(),
+    );
+    // Deliberately discard the retry response, as if its transport was lost.
+    await POST(request('C', { action: 'buy', skin: bought }));
+    const retried = await POST(request('C', { action: 'buy', skin: bought }));
+    assert.equal(retried.status, 200);
+    assert.equal((await retried.json()).balance, 80);
+    assert.equal(
+      JSON.stringify(db.prepare("SELECT * FROM skin_purchases WHERE account_id='C'").all()),
+      ledger,
+      'response loss/retry leaves the purchase ledger unchanged',
+    );
+    const rewardRows = db
+      .prepare("SELECT COUNT(*) n FROM gold_rewards WHERE member_id='c'")
+      .get().n;
+    await Promise.all(Array.from({ length: 8 }, () => shopState('C')));
+    assert.equal(
+      db.prepare("SELECT COUNT(*) n FROM gold_rewards WHERE member_id='c'").get().n,
+      rewardRows,
+      'concurrent reward reads never mint rewards',
+    );
+    assert.equal((await shopState('C')).balance, 80);
   } finally {
     db.close();
     delete globalThis.__shopStore;

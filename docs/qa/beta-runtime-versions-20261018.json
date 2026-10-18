@@ -1,0 +1,20 @@
+{
+  "production": {
+    "createdAt": "2026-10-18T00:48:00.030105Z",
+    "versions": [
+      {
+        "version_id": "b1513a34-8e0f-4e5c-9daf-dec9a4c927d6",
+        "percentage": 100
+      }
+    ]
+  },
+  "qa": {
+    "createdAt": "2026-10-17T18:11:06.635048Z",
+    "versions": [
+      {
+        "version_id": "76518301-1927-434f-bcf3-52a92d9d3ccd",
+        "percentage": 100
+      }
+    ]
+  }
+}
