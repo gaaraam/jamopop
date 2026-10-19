@@ -9,9 +9,10 @@ const mapStorage = () => {
     setItem: (k, v) => values.set(k, String(v)),
     removeItem: (k) => values.delete(k),
     clear: () => values.clear(),
+    keys: () => [...values.keys()],
   };
 };
-test('client sends nothing without consent, batches without cookies, deduplicates refresh, resumes fairly, respects withdrawal and GPC', async () => {
+test('default collection has no browser/session id, batches without cookies, deduplicates refresh, and respects opt-out and privacy signals', async () => {
   const saved = Object.fromEntries(
     ['window', 'localStorage', 'sessionStorage', 'navigator', 'fetch'].map((k) => [
       k,
@@ -50,23 +51,23 @@ test('client sends nothing without consent, batches without cookies, deduplicate
     const client = await import(
       'data:text/javascript;base64,' + Buffer.from(source).toString('base64')
     );
-    client.observeGame('toktok', { key: 'seed-private', steps: 0, status: 'playing' });
-    await client.flushMeasurements();
-    assert.equal(sent.length, 0);
-    client.changeMeasurement(true);
+    assert.equal(client.measurementAllowed(), true); // No consent click.
     client.observeGame('toktok', { key: 'seed-private', steps: 0, status: 'playing' });
     client.observeGame('toktok', { key: 'seed-private', steps: 0, status: 'playing' });
     client.observeGame('toktok', { key: 'seed-private', steps: 1, status: 'won' });
     await new Promise((resolve) => setTimeout(resolve, 0));
     await client.flushMeasurements();
-    const events = sent.flatMap((x) => x.body.events);
     assert.deepEqual(
-      events.map((x) => x.name),
+      sent.flatMap((x) => x.body.events).map((x) => x.name),
       ['view', 'start', 'first_action', 'complete'],
     );
+    assert.equal(sent[0].body.version, 2);
     assert.equal(sent[0].init.credentials, 'omit');
     assert.equal(sent[0].init.keepalive, true);
     assert(!JSON.stringify(sent).includes('seed-private'));
+    assert(!JSON.stringify(sent).includes('visitor'));
+    assert(!JSON.stringify(sent).includes('session'));
+    assert.deepEqual(localStorage.keys(), []);
     client.observeGame('toktok', { key: 'seed-private', steps: 1, status: 'won' });
     await client.flushMeasurements();
     assert.equal(sent.flatMap((x) => x.body.events).length, 4);
@@ -75,13 +76,12 @@ test('client sends nothing without consent, batches without cookies, deduplicate
     await client.flushMeasurements();
     assert.equal(sent.flatMap((x) => x.body.events).filter((x) => x.name === 'retry').length, 1);
     client.changeMeasurement(false);
-    assert.equal(localStorage.getItem('jamopop-metrics-browser-v1'), null);
-    client.observeGame('toktok', { key: 'seed-private', steps: 1, status: 'won' });
     const before = sent.length;
+    client.observeGame('toktok', { key: 'seed-private', steps: 1, status: 'won' });
     await client.flushMeasurements();
     assert.equal(sent.length, before);
-    navigator.globalPrivacyControl = true;
     client.changeMeasurement(true);
+    navigator.globalPrivacyControl = true;
     assert.equal(client.measurementAllowed(), false);
     navigator.globalPrivacyControl = false;
     navigator.doNotTrack = '1';

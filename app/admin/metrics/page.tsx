@@ -26,18 +26,16 @@ type Funnel = {
 };
 type Data = {
   summary: {
-    browsers: number;
-    sessions: number;
-    returningBrowsers: number;
-    events: number;
+    views: number;
+    actions: number;
+    completions: number;
     firstAt: number | null;
     lastAt: number | null;
   };
   funnel: Funnel[];
   daily: {
     day: string;
-    browsers: number;
-    sessions: number;
+    views: number;
     actions: number;
     completions: number;
   }[];
@@ -107,7 +105,7 @@ export default function ProductMetrics() {
       </header>
       <div className="admin-title">
         <h1>플레이 흐름</h1>
-        <span>측정 참여 브라우저 · 최근 7일 보관</span>
+        <span>기본 이용 통계 · 최근 7일 보관</span>
       </div>
       <div className="admin-controls">
         <label>
@@ -128,9 +126,9 @@ export default function ProductMetrics() {
       )}
       <section className="admin-metrics">
         {[
-          ['측정 브라우저', data?.summary.browsers],
-          ['방문 세션', data?.summary.sessions],
-          ['기간 내 다른 날 재방문', data?.summary.returningBrowsers],
+          ['화면 진입', data?.summary.views],
+          ['첫 조작', data?.summary.actions],
+          ['완료', data?.summary.completions],
         ].map(([label, value]) => (
           <article key={String(label)}>
             <span>{label}</span>
@@ -187,7 +185,7 @@ export default function ProductMetrics() {
             <thead>
               <tr>
                 <th>화면</th>
-                <th>방문 세션</th>
+                <th>진입 횟수</th>
               </tr>
             </thead>
             <tbody>
@@ -209,7 +207,7 @@ export default function ProductMetrics() {
           <table>
             <thead>
               <tr>
-                {['한국 날짜', '브라우저', '세션', '첫 조작', '완료'].map((x) => (
+                {['한국 날짜', '화면 진입', '첫 조작', '완료'].map((x) => (
                   <th key={x}>{x}</th>
                 ))}
               </tr>
@@ -218,8 +216,7 @@ export default function ProductMetrics() {
               {data?.daily.map((r) => (
                 <tr key={r.day}>
                   <td>{r.day}</td>
-                  <td>{r.browsers}</td>
-                  <td>{r.sessions}</td>
+                  <td>{r.views}</td>
                   <td>{r.actions}</td>
                   <td>{r.completions}</td>
                 </tr>
@@ -231,18 +228,19 @@ export default function ProductMetrics() {
       <details className="admin-notes" open>
         <summary>집계 기준</summary>
         <p>
-          선택적으로 참여한 표본이며 전체 회원 수나 전체 이용자 수가 아닙니다. 브라우저 식별값은
-          7일마다 바뀌고, 탭의 30분 무활동 뒤 새 세션이 됩니다. 날짜는 한국시간 기준입니다. 재방문은
-          조회 기간 안에 서로 다른 날짜에 나타난 브라우저 수입니다.
+          별도의 참여 클릭 없이 집계합니다. 사람이나 회원을 구분하지 않으므로 실제 이용자 수·방문
+          세션 수·개인별 재방문율이 아닙니다. 판별 임의 번호는 탭 안에서 중복 집계를 막는 용도로만
+          쓰고, 30분 무활동 뒤 새 번호를 사용합니다. 날짜별 수치는 조회 기간 안에서 해당 판의 첫
+          이벤트가 발생한 한국 날짜에 배정합니다.
         </p>
         <p>
           첫 조작은 유효한 첫 이동·타일 선택·서버가 수락한 첫 제출입니다. 입력 중 글자와 사전 오류는
-          수집하지 않습니다. 완료율은 같은 판·세션에서 시작과 첫 조작이 확인된 판 중 완료
+          수집하지 않습니다. 완료율은 같은 측정 판에서 시작과 첫 조작이 확인된 판 중 완료
           비율입니다. 복원된 완료 화면은 새 완료로 세지 않습니다. 관전은 제외합니다.
         </p>
         <p>
           재도전·다음 판은 측정된 플레이 뒤 이어간 행동입니다. 미완료 이탈은 실패로 단정하지 않으며,
-          폴링·조작 원문은 보내지 않습니다. 새로고침·동의 전·통신 단절·차단 도구 때문에 일부
+          폴링·조작 원문은 보내지 않습니다. 새로고침·수집 거부·통신 단절·차단 도구 때문에 일부
           이벤트가 누락될 수 있습니다. 클라이언트 신고 수치로 보상이나 순위를 판정하지 않습니다.
         </p>
         <p>

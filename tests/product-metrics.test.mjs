@@ -12,11 +12,9 @@ import {
   metricScene,
 } from '../lib/product-metrics.mjs';
 import { productMetricsEndpoint } from '../build/product-metrics.mjs';
-const visitor = randomUUID(),
-  session = randomUUID(),
-  run = randomUUID();
+const run = randomUUID();
 const evt = (name, extra = {}) => ({ id: randomUUID(), run, mode: 'toktok', name, ...extra });
-const batch = (events) => ({ version: 1, visitor, session, events });
+const batch = (events) => ({ version: 2, events });
 function fixture() {
   const sql = new DatabaseSync(':memory:');
   sql.exec(readFileSync(new URL('../drizzle/0032_product_metrics.sql', import.meta.url), 'utf8'));
@@ -96,7 +94,7 @@ test('restored saves and undo do not synthesize completions; first move win emit
     [],
   );
 });
-test('real SQL deduplicates retries, keeps cohorts separate, counts return on distinct KST dates and expires only new events', async () => {
+test('real SQL deduplicates runs, excludes orphan completions, and expires only new events', async () => {
   const { sql, db } = fixture(),
     now = Date.UTC(2026, 9, 19, 10);
   const b = validateMetricBatch(
@@ -115,7 +113,7 @@ test('real SQL deduplicates retries, keeps cohorts separate, counts return on di
     db,
     {
       ...b,
-      session: randomUUID(),
+
       events: [{ ...evt('view'), run: randomUUID(), mode: 'lobby', outcome: null }],
     },
     now,
@@ -123,22 +121,26 @@ test('real SQL deduplicates retries, keeps cohorts separate, counts return on di
   await saveMetricBatch(
     db,
     validateMetricBatch({
-      ...batch([evt('complete', { outcome: 'won' })]),
-      visitor: randomUUID(),
-      session: randomUUID(),
+      ...batch([evt('complete', { outcome: 'won', run: randomUUID() })]),
     }),
     now,
   ); // orphan must not inflate funnel
   const report = await readProductMetrics(db, 7, now);
-  assert.equal(report.summary.returningBrowsers, 1);
+  assert.equal(report.summary.actions, 1);
+  assert.equal(report.summary.completions, 1);
   const funnel = report.funnel.find((x) => x.mode === 'toktok');
   assert.equal(funnel.starts, 1);
   assert.equal(funnel.actions, 1);
   assert.equal(funnel.completions, 1);
   assert.equal(funnel.wins, 1);
   assert.equal(funnel.retries, 1);
-  assert(!JSON.stringify(report).includes(visitor));
-  assert(!JSON.stringify(report).includes(session));
+  assert(!JSON.stringify(report).includes(run));
+  const columns = sql
+    .prepare('PRAGMA table_info(product_events)')
+    .all()
+    .map((x) => x.name);
+  assert(!columns.includes('visitor'));
+  assert(!columns.includes('session'));
   assert.equal(report.daily[0].day, '2026-10-19');
   await cleanupProductMetrics(db, now + 8 * 86400000);
   assert.equal(sql.prepare('SELECT count(*) n FROM product_events').get().n, 0);
