@@ -1,4 +1,5 @@
 'use client';
+import { useGameMeasurement } from '@/components/metrics/game';
 import { RECENT_SOLO_KEY } from '@/lib/solo-recent.mjs';
 import { JudgmentMark, judgmentLabel } from '@/components/game/judgment-mark';
 import { GuestRecords } from '@/components/game/guest-records';
@@ -155,6 +156,12 @@ export default function Solo() {
   }, [refresh]);
   const active = data?.active,
     stage = active ? data?.stages[active.stage - 1] : undefined;
+  const newMetricAttempt = useGameMeasurement(
+    'word',
+    active?.id,
+    active?.guesses.length || 0,
+    active?.status || 'playing',
+  );
   const remaining = active?.endsAt ? Math.max(0, Math.ceil((active.endsAt - now) / 1000)) : null;
   const stopped = active?.status !== 'playing' || remaining === 0;
   useEffect(() => {
@@ -188,6 +195,8 @@ export default function Solo() {
         }
         throw Error(d.error);
       }
+      if (body.action === 'start' && active)
+        newMetricAttempt(d.active?.stage === active.stage ? 'retry' : 'next');
       accept(d);
       if (body.action === 'start' || body.action === 'guess') setDraft('');
       if (body.action === 'start') setOnMap(false);

@@ -1,3 +1,5 @@
+import { Suspense } from 'react';
+import { ProductMeasurement } from '@/components/metrics/provider';
 import { OverlayState } from '@/components/game/overlay-state';
 import { AgeCheck } from '@/components/legal/age-check';
 import { SafetyNotice } from '@/components/safety/settings';
@@ -69,6 +71,9 @@ export default function RootLayout({
             <AgeCheck />
             <FriendInvitations />
             {children}
+            <Suspense fallback={null}>
+              <ProductMeasurement />
+            </Suspense>
             <LegalLinks />
           </OverlayState>
         </AppearanceProvider>

@@ -1,4 +1,5 @@
 'use client';
+import { useGameMeasurement } from '@/components/metrics/game';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, Lightbulb, RotateCcw, Undo2 } from 'lucide-react';
 import { ServiceHeader } from '@/components/game/service-header';
@@ -37,6 +38,12 @@ export default function JamoStack() {
   const { cols, tray } = state;
   const won = ready && cols.every((c) => c.length === 0) && tray.length === 0;
   const lost = ready && tray.length === 7;
+  const newMetricAttempt = useGameMeasurement(
+    'stack',
+    ready ? String(stage.id) : null,
+    progress.moves.length,
+    won ? 'won' : lost ? 'lost' : 'playing',
+  );
   const stopWorker = useCallback(() => {
     worker.current?.terminate();
     worker.current = null;
@@ -123,6 +130,7 @@ export default function JamoStack() {
     return () => window.removeEventListener('keydown', key);
   }, [take]);
   function pick(id: number) {
+    newMetricAttempt(id === current.current.stage ? 'retry' : 'next');
     commit({ ...current.current, stage: id, moves: [] });
   }
   function hint() {

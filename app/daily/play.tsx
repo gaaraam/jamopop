@@ -1,4 +1,5 @@
 'use client';
+import { useGameMeasurement } from '@/components/metrics/game';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CalendarDays, Copy, ArrowRight, Check, Clock3, Trophy, ShieldCheck } from 'lucide-react';
 import { AsyncStatus } from '@/components/ui/async-status';
@@ -22,6 +23,7 @@ export function DailyGame() {
   const [shareNote, setShareNote] = useState('');
   const [manualCopy, setManualCopy] = useState(false);
   const [now, setNow] = useState(Date.now());
+  useGameMeasurement('daily', data?.day, data?.guesses.length || 0, data?.status || 'playing');
   const current = useRef<DailyView | null>(null);
   const lock = useRef(false),
     refreshing = useRef(false),

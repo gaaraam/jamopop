@@ -1,3 +1,5 @@
+import {productMetricsEndpoint} from './product-metrics.mjs';
+import {cleanupProductMetrics} from '../lib/product-metrics.mjs';
 import {measureRequest,measuredDatabase,measurePhase} from '../lib/operational-metrics.mjs';
 import {cleanupExpiredTechnical} from '../lib/retention.mjs';
 import {searchPolicy} from '../lib/search-policy.mjs';
@@ -21,6 +23,7 @@ async function serve(request:Request,env:Cloudflare.Env,ctx:ExecutionContext){
  if((env as any).MIGRATION_LOCK!=='open')return migrationResponse(sanitized);
  // Cookie-authenticated writes must originate from this frontend.
  if(!['GET','HEAD','OPTIONS'].includes(sanitized.method)&&sanitized.headers.get('origin')!==url.origin)return Response.json({error:'이 페이지에서 다시 시도해 주세요.'},{status:403});
+ if(url.pathname==='/api/product-metrics')return productMetricsEndpoint(sanitized,env);
  const trusted=await measurePhase('session',()=>authenticatedRequest(sanitized,env));
  const safety=await measurePhase('safety',()=>safetyBefore(trusted,env));if(safety.response)return safety.response;
  const direct=await safetyEndpoint(trusted,env,safety);if(direct)return direct;
@@ -29,7 +32,7 @@ async function serve(request:Request,env:Cloudflare.Env,ctx:ExecutionContext){
  headers.set('Cache-Control','private, no-store');headers.set('Referrer-Policy','strict-origin-when-cross-origin');headers.set('X-Content-Type-Options','nosniff');
  return new Response(response.body,{status:response.status,headers});
 }
-export default {async scheduled(_event:ScheduledController, env:Cloudflare.Env, ctx:ExecutionContext){ctx.waitUntil(cleanupExpiredTechnical(env.DB).then(counts=>{console.log(JSON.stringify({event:'technical_expiry_cleanup',counts}))}));}, async fetch(request:Request,env:Cloudflare.Env,ctx:ExecutionContext){
+export default {async scheduled(_event:ScheduledController, env:Cloudflare.Env, ctx:ExecutionContext){ctx.waitUntil(cleanupProductMetrics(env.DB).catch(()=>console.error('product_metrics_cleanup_failed')));ctx.waitUntil(cleanupExpiredTechnical(env.DB).then(counts=>{console.log(JSON.stringify({event:'technical_expiry_cleanup',counts}))}));}, async fetch(request:Request,env:Cloudflare.Env,ctx:ExecutionContext){
  if((env as any).QA_ONLY==='1' && (!(env as any).QA_ACCESS_TOKEN || request.headers.get('Authorization')!=='Bearer '+(env as any).QA_ACCESS_TOKEN))return new Response('Not found',{status:404});
  const scoped=new Proxy(env,{get(target,key){if(key==='DB')return measuredDatabase(target.DB);return Reflect.get(target,key)}});
  const response=await measureRequest(request,()=>serve(request,scoped,ctx));
