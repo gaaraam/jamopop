@@ -1,4 +1,5 @@
 'use client';
+import { useGameMeasurement } from '@/components/metrics/game';
 import { RECENT_SOLO_KEY } from '@/lib/solo-recent.mjs';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -45,6 +46,12 @@ export default function KongalExit() {
   const stage = EXIT_STAGES.find((s) => s.id === progress.stage)!;
   const pieces = replayExit(stage, progress.moves) as ExitPiece[];
   const won = ready && pieces.length === 0;
+  const newMetricAttempt = useGameMeasurement(
+    'exit',
+    ready ? String(stage.id) : null,
+    progress.moves.length,
+    won ? 'won' : 'playing',
+  );
   const cancelHint = useCallback(() => {
     worker.current?.terminate();
     worker.current = null;
@@ -127,6 +134,7 @@ export default function KongalExit() {
     return () => window.removeEventListener('keydown', key);
   }, [move, selected]);
   function pick(id: number) {
+    newMetricAttempt(id === current.current.stage ? 'retry' : 'next');
     commit({ ...current.current, stage: id, moves: [] });
     setSelected(null);
   }

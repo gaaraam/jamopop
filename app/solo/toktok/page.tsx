@@ -1,4 +1,5 @@
 'use client';
+import { useGameMeasurement } from '@/components/metrics/game';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Lightbulb, RotateCcw, Undo2, Volume2, VolumeX } from 'lucide-react';
 import { ServiceHeader } from '@/components/game/service-header';
@@ -53,6 +54,12 @@ export default function JamoToktok() {
   const done = finishedToktok(game),
     target = targetToktok(game),
     won = game.score >= target;
+  const newMetricAttempt = useGameMeasurement(
+    'toktok',
+    ready ? `${progress.seed}:${progress.round}` : null,
+    game.turn,
+    done ? (won ? 'won' : 'lost') : 'playing',
+  );
   function stopMotion() {
     generation.current++;
     if (timer.current) clearTimeout(timer.current);
@@ -186,6 +193,7 @@ export default function JamoToktok() {
     );
   }
   function restart(advance = false) {
+    newMetricAttempt(advance ? 'next' : 'retry');
     stopMotion();
     const p = current.current;
     commit(nextToktokRound(p, newSeed(), advance));

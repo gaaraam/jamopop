@@ -1,4 +1,5 @@
 'use client';
+import { useSceneMeasurement, useGameMeasurement } from '@/components/metrics/game';
 import { NotificationSlot } from '@/components/game/notification-slot';
 import { useScreenStart } from '@/components/game/hooks/use-screen-start';
 import { CharacterAvatar } from '@/components/game/character-avatar';
@@ -672,6 +673,12 @@ export default function Home() {
     width = data?.round.width || 5,
     remaining = data?.round.endsAt ? Math.max(0, Math.ceil((data.round.endsAt - now) / 1000)) : 0,
     before = data ? Math.max(0, Math.ceil((data.round.startsAt - now) / 1000)) : 0;
+  useGameMeasurement(
+    mode === 'practice' ? 'practice' : 'room',
+    data?.play.status !== 'spectating' ? data?.round.id : null,
+    guesses.length,
+    data?.play.status || 'playing',
+  );
   const inputReady = inputShape(draft, width).valid;
   const previewStatus = composing
     ? 'composing'
@@ -716,6 +723,9 @@ export default function Home() {
   const winners =
     data?.players.filter((p) => p.status === 'won').sort((a, b) => (a.rank || 0) - (b.rank || 0)) ||
     [];
+  useSceneMeasurement(
+    !data && !restoring && !room && !entryOpen ? (showIntro ? 'home' : 'lobby') : null,
+  );
   useScreenStart(
     data
       ? `room:${data.room.id}`

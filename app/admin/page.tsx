@@ -137,6 +137,7 @@ export default function Admin() {
       <header className="admin-nav">
         <a href="/?lobby=1">← 대기실</a>
         <strong>운영 대시보드</strong>
+        <a href="/admin/metrics">제품 지표 ↗</a>
         <a href="/admin/users">사용자 관리 ↗</a>
         <a href="/admin/announcements">전체 공지 ↗</a>
         <a href="/admin/inquiries">문의함 ↗</a>

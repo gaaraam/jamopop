@@ -1,4 +1,5 @@
 'use client';
+import { useGameMeasurement } from '@/components/metrics/game';
 import { NotificationSlot } from '@/components/game/notification-slot';
 import { clearActiveRoom, rememberActiveRoom } from '@/lib/active-room.mjs';
 import { CharacterAvatar } from '@/components/game/character-avatar';
@@ -405,6 +406,18 @@ export default function Speed() {
     press(k);
     input.current?.focus();
   }
+  useGameMeasurement(
+    'speed',
+    round && !data?.me.spectator ? round.id : null,
+    play?.puzzles.reduce((sum: number, p: any) => sum + p.guesses.length, 0) || 0,
+    play?.finished
+      ? play?.puzzles.every((p: any) => p.status === 'won')
+        ? 'won'
+        : 'lost'
+      : ended
+        ? 'timeout'
+        : 'playing',
+  );
   const keyColors: Record<string, Color> = {};
   for (const g of puzzle?.guesses || [])
     g.letters.forEach((l: string, i: number) => {
