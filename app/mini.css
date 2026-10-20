@@ -374,6 +374,10 @@
     font-size: 15px !important;
     font-weight: 400 !important;
   }
+  /* Reveal animations are disabled in worksheet mode: never leave their neutral face on top of a judged cell. */
+  html:root .app.app.app.app .main-board .tile.revealed::after {
+    display: none !important;
+  }
   html:root .app.app.app.app .main-board .tile.active-row {
     background: #f2f8f3 !important;
     box-shadow: inset 0 -2px #338355 !important;
