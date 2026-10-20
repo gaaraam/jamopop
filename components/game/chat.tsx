@@ -55,6 +55,10 @@ export function RoomChat({
     [read, setRead] = useState(0),
     [inquirySent, setInquirySent] = useState(false);
   const acceptedAt = useRef(0);
+  const openNow = useRef(open),
+    acceptInput = useRef(false),
+    pointerClosed = useRef(false);
+  openNow.current = open;
   const root = useRef<HTMLElement>(null);
   const [clock, setClock] = useState(Date.now()),
     [serverOffset, setServerOffset] = useState(0),
@@ -218,16 +222,40 @@ export function RoomChat({
     const timer = setInterval(() => setClock(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
+  const closeChat = useCallback(() => {
+    openNow.current = false;
+    acceptInput.current = false;
+    const value = input.current?.value;
+    if (value !== undefined) {
+      setDraft(value);
+      try {
+        sessionStorage.setItem(draftKey, value);
+      } catch {}
+    }
+    composing.current = false;
+    compositionEnd.current = Date.now();
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && root.current?.contains(active)) active.blur();
+    setEmojiOpen(false);
+    setOpen(false);
+  }, [draftKey]);
   useEffect(() => {
     if (!open) return;
     const outside = (e: PointerEvent) => {
       if ((e.target as Element)?.closest?.('[role=dialog],[role=menu]')) return;
-      if (root.current && !root.current.contains(e.target as Node)) setOpen(false);
+      if (root.current && !root.current.contains(e.target as Node)) {
+        // On touch, this gesture dismisses editing before it can focus a game input.
+        if (
+          window.matchMedia('(pointer: coarse)').matches &&
+          (composing.current || document.activeElement === input.current)
+        )
+          e.preventDefault();
+        closeChat();
+      }
     };
     const escape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && !e.isComposing && !document.querySelector('[role=dialog]')) {
-        setOpen(false);
-        input.current?.blur();
+        closeChat();
       }
     };
     document.addEventListener('pointerdown', outside);
@@ -236,26 +264,11 @@ export function RoomChat({
       document.removeEventListener('pointerdown', outside);
       document.removeEventListener('keydown', escape);
     };
-  }, [open]);
+  }, [open, closeChat]);
   useEffect(() => {
     if (!open || modal || !window.matchMedia('(pointer:coarse)').matches) return;
     const viewport = window.visualViewport;
     if (!viewport) return;
-    const startX = window.scrollX,
-      startY = window.scrollY;
-    const body = document.body,
-      previous = {
-        position: body.style.position,
-        top: body.style.top,
-        left: body.style.left,
-        width: body.style.width,
-      };
-    Object.assign(body.style, {
-      position: 'fixed',
-      top: `-${startY}px`,
-      left: `-${startX}px`,
-      width: '100%',
-    });
     const element = root.current;
     const update = () => {
       const metrics = chatViewport({
@@ -280,8 +293,6 @@ export function RoomChat({
       element?.removeEventListener('focusout', update);
       setKeyboardBottom(0);
       setViewportHeight(0);
-      Object.assign(body.style, previous);
-      window.scrollTo(startX, startY);
     };
   }, [open, modal]);
   const shortcutFocus = useRef(false);
@@ -298,9 +309,7 @@ export function RoomChat({
       e.preventDefault();
       e.stopImmediatePropagation();
       if (open) {
-        setOpen(false);
-        setEmojiOpen(false);
-        input.current?.blur();
+        closeChat();
         const previous = shortcutReturn.current;
         if (previous?.isConnected && !root.current?.contains(previous))
           previous.focus({ preventScroll: true });
@@ -316,7 +325,7 @@ export function RoomChat({
     return () => {
       document.removeEventListener('keydown', toggle, true);
     };
-  }, [open]);
+  }, [open, closeChat]);
   useEffect(() => {
     if (open && shortcutFocus.current) {
       shortcutFocus.current = false;
@@ -386,17 +395,19 @@ export function RoomChat({
       return;
     if (pending.current?.body !== body) pending.current = { body, id: crypto.randomUUID() };
     follow.current = true;
-    input.current?.focus();
     if (await mutate({ action: 'chat_send', body, requestId: pending.current.id })) {
       updateDraft('');
       setEmojiOpen(false);
       pending.current = null;
       if (
+        openNow.current &&
+        !window.matchMedia('(pointer: coarse)').matches &&
+        !!root.current?.contains(document.activeElement) &&
         !document.querySelector(
           '[data-slot="dialog-overlay"], [data-slot="alert-dialog-overlay"], [aria-modal="true"]',
         )
       )
-        input.current?.focus();
+        input.current?.focus({ preventScroll: true });
     }
   }
   const isInquiry = /^@문의(?:\s|$)/.test(draft.trim());
@@ -433,9 +444,22 @@ export function RoomChat({
         }
         aria-expanded={open}
         aria-controls="room-chat-panel"
-        onClick={() => {
-          follow.current = true;
-          setOpen((v) => !v);
+        onPointerDown={(e) => {
+          pointerClosed.current = false;
+          if (!openNow.current || e.button !== 0) return;
+          e.preventDefault();
+          pointerClosed.current = true;
+          closeChat();
+        }}
+        onClick={(e) => {
+          const handled = pointerClosed.current && e.detail > 0;
+          pointerClosed.current = false;
+          if (handled) return;
+          if (openNow.current) closeChat();
+          else {
+            follow.current = true;
+            setOpen(true);
+          }
         }}
       >
         <MessageCircle size={19} />
@@ -608,6 +632,7 @@ export function RoomChat({
                   aria-label="채팅 닉네임"
                   placeholder="닉네임을 입력하세요"
                   onChange={(e) => {
+                    if (!openNow.current || document.activeElement !== e.currentTarget) return;
                     setChatName(e.target.value);
                     try {
                       localStorage.setItem('bw_lobby_chat_name', e.target.value);
@@ -632,7 +657,7 @@ export function RoomChat({
                 disabled={sending}
                 onClick={() => {
                   updateDraft(text);
-                  input.current?.focus();
+                  input.current?.focus({ preventScroll: true });
                 }}
               >
                 {text}
@@ -674,7 +699,7 @@ export function RoomChat({
                   disabled={sending}
                   onClick={() => {
                     updateDraft((draft + emoji).slice(0, 300));
-                    input.current?.focus();
+                    input.current?.focus({ preventScroll: true });
                   }}
                 >
                   {emoji}
@@ -699,11 +724,24 @@ export function RoomChat({
               rows={2}
               readOnly={sending}
               aria-busy={sending}
+              onFocus={() => {
+                acceptInput.current = openNow.current && !modal;
+              }}
+              onBlur={(e) => {
+                acceptInput.current = false;
+                if (composing.current) compositionEnd.current = Date.now();
+                composing.current = false;
+                if (openNow.current && !busy.current) updateDraft(e.currentTarget.value);
+              }}
+              onBeforeInput={(e) => {
+                if (!openNow.current || !acceptInput.current) e.preventDefault();
+              }}
               onChange={(e) => {
-                if (!busy.current) updateDraft(e.target.value);
+                if (openNow.current && acceptInput.current && !busy.current)
+                  updateDraft(e.target.value);
               }}
               onCompositionStart={() => {
-                composing.current = true;
+                if (openNow.current && acceptInput.current) composing.current = true;
               }}
               onCompositionEnd={() => {
                 composing.current = false;

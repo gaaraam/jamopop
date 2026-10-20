@@ -585,3 +585,16 @@ html:root[data-theme='dark'] .game-chat {
     min-height: 44px;
   }
 }
+/* Do not fix/reposition body while iOS dismisses its keyboard. CSS releases the
+   scroll lock with the chat and does not overwrite a modal's inline body styles. */
+@media (pointer: coarse) {
+  body:has(.game-chat[data-open='true']:not([hidden])) {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  .game-chat .chat-messages,
+  .game-chat .chat-compose textarea,
+  .game-chat .chat-emoji-tray {
+    overscroll-behavior: contain;
+  }
+}
