@@ -117,3 +117,9 @@ html[data-theme='dark'] .notice-actions button:not(.primary) {
     margin: 20px 0;
   }
 }
+.global-announcement > a {
+  color: inherit;
+  text-decoration: underline;
+  font-weight: 700;
+  white-space: nowrap;
+}

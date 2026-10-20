@@ -107,6 +107,14 @@ function fixture() {
     insert('drawing_hints', { round_id: 'round', member_id: member, strokes: '[]', updated_at: 1 });
   }
   for (const account of ['target', 'legacy', 'peer']) {
+    insert('service_gold_claims', {
+      subject: account === 'peer' ? 'google-peer' : 'google-target',
+      account_id: account,
+      kind: 'attendance',
+      claim_key: account === 'legacy' ? '2026-10-19' : '2026-10-20',
+      amount: 50,
+      created_at: 1,
+    });
     insert('skin_purchases', { account_id: account, skin_id: 'skin', price: 10, purchased_at: 1 });
     insert('equipped_card_skins', { account_id: account, skin_id: 'skin' });
     insert('kongal_homes', { account_id: account, layout: '[]', updated_at: 1 });
@@ -180,6 +188,13 @@ test('deletion: linked profiles removed, shared room and peer records preserved,
     );
     const result = await executeDeletion(f.db, 'ticket', preview.token, 'operator', 'admin');
     assert(result.completedAt);
+    assert.deepEqual(
+      f.sql
+        .prepare('SELECT account_id FROM service_gold_claims')
+        .all()
+        .map((x) => x.account_id),
+      ['peer'],
+    );
     assert.equal(
       f.sql.prepare("SELECT count(*) n FROM profiles WHERE id IN('target','legacy')").get().n,
       0,

@@ -139,7 +139,8 @@ export default function Admin() {
         <strong>운영 대시보드</strong>
         <a href="/admin/metrics">제품 지표 ↗</a>
         <a href="/admin/users">사용자 관리 ↗</a>
-        <a href="/admin/announcements">전체 공지 ↗</a>
+        <a href="/admin/news">소식·이벤트 ↗</a>
+        <a href="/admin/announcements">실시간 공지 ↗</a>
         <a href="/admin/inquiries">문의함 ↗</a>
         <a href="/admin/reports">신고함 ↗</a>
         <a href="/admin/operations">데이터 보관 ↗</a>

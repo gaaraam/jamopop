@@ -1,6 +1,10 @@
 import { all, one } from './store';
 import { soloRewardIds } from './skins';
-export const BALANCE_SQL = `SELECT COALESCE(SUM(g.amount),0)+30*COUNT(DISTINCT CASE WHEN g.won=1 THEN g.day END)-(SELECT COALESCE(SUM(price),0) FROM skin_purchases WHERE account_id=?) balance FROM gold_rewards g JOIN members m ON m.id=g.member_id WHERE m.account_id=?`;
+export const BALANCE_SQL = `SELECT
+ COALESCE((SELECT SUM(g.amount)+30*COUNT(DISTINCT CASE WHEN g.won=1 THEN g.day END) FROM gold_rewards g JOIN members m ON m.id=g.member_id WHERE m.account_id=owner.id),0)
+ +COALESCE((SELECT SUM(amount) FROM service_gold_claims WHERE account_id=owner.id),0)
+ -COALESCE((SELECT SUM(price) FROM skin_purchases WHERE account_id=owner.id),0) balance
+ FROM (SELECT ? id) owner WHERE owner.id=?`;
 export async function shopState(id: string) {
   const [balance, owned, profile, solo, card, care] = await Promise.all([
     one(BALANCE_SQL, id, id),

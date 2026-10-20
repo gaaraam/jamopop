@@ -31,5 +31,6 @@
   "0029_daily_word.sql": "5adee2b6317dfe8d8315dee44282b96183f4195b7ec8ba7dccec83415da3b1b9",
   "0030_account_deletion.sql": "16c1310dd48352ddbe4b67f9fa13012a007ff889d16b0612eef0b3fc01a8b2b4",
   "0031_request_lookup_indexes.sql": "a3c149745a6942dab834326d9b815b440d0fdf4875fc08716a2be32e430f1449",
-  "0032_product_metrics.sql": "ddaef071c4417b0f3a0eca244d411e95c34f08cd357c10e928a06a655f1e38ad"
+  "0032_product_metrics.sql": "ddaef071c4417b0f3a0eca244d411e95c34f08cd357c10e928a06a655f1e38ad",
+  "0033_news_events.sql": "67df1ac9a57fbd2c1dac5d823172748123ce4496d59aa0f1cd277478b303de9f"
 }
