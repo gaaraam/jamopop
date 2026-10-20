@@ -7,6 +7,7 @@ export function useShopWallet<T>() {
     [busy, setBusy] = useState(false),
     [guest, setGuest] = useState(false),
     [error, setError] = useState('');
+  const refreshQueued = useRef(false);
   const lock = useRef(false),
     version = useRef(0);
   const request = useCallback(async (body?: Record<string, unknown>) => {
@@ -41,6 +42,10 @@ export function useShopWallet<T>() {
         lock.current = false;
         setLoading(false);
         setBusy(false);
+        if (refreshQueued.current) {
+          refreshQueued.current = false;
+          queueMicrotask(() => void request());
+        }
       }
     }
   }, []);
@@ -49,7 +54,19 @@ export function useShopWallet<T>() {
     return () => {
       version.current++;
       lock.current = false;
+      refreshQueued.current = false;
     };
+  }, [request]);
+  useEffect(() => {
+    const refresh = () => {
+      if (lock.current) {
+        refreshQueued.current = true;
+        return;
+      }
+      void request();
+    };
+    window.addEventListener('jamopop-reward-claimed', refresh);
+    return () => window.removeEventListener('jamopop-reward-claimed', refresh);
   }, [request]);
   return { data, loading, busy, guest, error, request };
 }

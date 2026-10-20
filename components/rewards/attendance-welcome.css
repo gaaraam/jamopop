@@ -1,0 +1,239 @@
+html body [data-slot='dialog-content'].attendance-welcome {
+  width: 420px;
+  max-width: calc(100vw - 32px);
+  min-width: 0;
+  box-sizing: border-box;
+  transition-property: transform, opacity;
+  padding: 24px;
+  gap: 16px;
+  text-align: center;
+  overflow: hidden;
+  border-radius: 24px;
+  color: var(--ui-ink);
+}
+.welcome-scene {
+  position: relative;
+  height: 190px;
+  margin: 0 0 8px;
+  isolation: isolate;
+}
+.welcome-scene:before {
+  content: '';
+  position: absolute;
+  inset: 10px 40px 0;
+  border-radius: 50%;
+  background: var(--ui-surface-muted);
+  z-index: -1;
+}
+.welcome-scene > .kongal-avatar {
+  position: absolute;
+  width: 160px;
+  height: 170px;
+  left: calc(50% - 100px);
+  bottom: 0;
+  transform: rotate(-6deg);
+}
+.welcome-gift {
+  position: absolute;
+  left: calc(50% + 12px);
+  bottom: 2px;
+  display: grid;
+  place-items: center;
+  background: var(--ui-accent);
+  color: var(--ui-accent-ink);
+  width: 92px;
+  height: 86px;
+  border-radius: 24px;
+  transform: rotate(8deg);
+  box-shadow: 0 7px 0 #c99a3b20;
+}
+.welcome-star {
+  position: absolute;
+  color: var(--ui-accent-ink);
+}
+.welcome-star svg {
+  width: 22px;
+  height: 22px;
+}
+.welcome-star.s1 {
+  left: calc(50% - 110px);
+  top: 24px;
+  transform: rotate(-15deg);
+}
+.welcome-star.s2 {
+  right: calc(50% - 110px);
+  top: 44px;
+  transform: scale(0.7);
+}
+.welcome-message [data-slot='dialog-title'] {
+  font-size: 25px !important;
+  padding-right: 0;
+  margin: 0 0 10px;
+}
+.welcome-message [data-slot='dialog-description'] {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ui-muted);
+}
+.welcome-gold {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  background: var(--ui-surface-muted);
+  border: 1px solid var(--ui-line);
+  border-radius: 16px;
+}
+.welcome-gold strong {
+  font: 800 40px var(--font-game);
+  line-height: 1;
+}
+.welcome-gold > span {
+  font-size: 20px;
+  font-weight: 700;
+}
+.welcome-primary {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--ui-accent);
+  color: var(--ui-accent-ink);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.welcome-primary:disabled {
+  opacity: 0.6;
+}
+.welcome-later {
+  display: block;
+  color: var(--ui-muted);
+  font-size: 13px;
+  padding: 8px;
+  border: 0;
+  background: transparent;
+  text-decoration: none;
+  min-height: 36px;
+}
+.welcome-error {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ui-ink);
+}
+.welcome-coin {
+  position: absolute;
+  left: 50%;
+  top: 95px;
+  opacity: 0;
+  color: #bd8b17;
+  pointer-events: none;
+}
+.attendance-welcome[data-received] .welcome-coin {
+  animation: welcome-coins 950ms cubic-bezier(0.12, 0.75, 0.2, 1) both;
+}
+.welcome-coin.c0 {
+  --x: -115px;
+  --y: -70px;
+  --r: -25deg;
+}
+.welcome-coin.c1 {
+  --x: -60px;
+  --y: -110px;
+  --r: -12deg;
+  animation-delay: 40ms !important;
+}
+.welcome-coin.c2 {
+  --x: 0px;
+  --y: -130px;
+  --r: 12deg;
+  animation-delay: 80ms !important;
+}
+.welcome-coin.c3 {
+  --x: 70px;
+  --y: -100px;
+  --r: 25deg;
+  animation-delay: 60ms !important;
+}
+.welcome-coin.c4 {
+  --x: 120px;
+  --y: -50px;
+  --r: 38deg;
+  animation-delay: 20ms !important;
+}
+.attendance-welcome[data-received] .welcome-scene > .kongal-avatar {
+  animation: welcome-hop 600ms ease-out;
+}
+.attendance-welcome[data-received] .welcome-gold {
+  animation: welcome-reward 450ms ease-out;
+}
+.attendance-welcome button:focus-visible,
+.attendance-welcome a:focus-visible {
+  outline: 3px solid var(--ui-focus);
+  outline-offset: 3px;
+}
+@keyframes welcome-coins {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.5);
+  }
+  20% {
+    opacity: 1;
+  }
+  65% {
+    opacity: 1;
+    transform: translate(var(--x), var(--y)) rotate(var(--r)) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--x), calc(var(--y) + 40px)) rotate(var(--r)) scale(0.9);
+  }
+}
+@keyframes welcome-hop {
+  0%,
+  100% {
+    transform: rotate(-6deg) translateY(0);
+  }
+  40% {
+    transform: rotate(3deg) translateY(-22px);
+  }
+  70% {
+    transform: rotate(-3deg) translateY(0);
+  }
+}
+@keyframes welcome-reward {
+  0% {
+    transform: scale(0.94);
+  }
+  55% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .attendance-welcome * {
+    animation: none !important;
+  }
+}
+@media (max-height: 640px) {
+  .welcome-scene {
+    height: 125px;
+  }
+  .welcome-scene > .kongal-avatar {
+    height: 125px;
+    width: 120px;
+    left: calc(50% - 80px);
+  }
+  .welcome-gift {
+    width: 70px;
+    height: 65px;
+  }
+  .attendance-welcome {
+    gap: 12px !important;
+  }
+}

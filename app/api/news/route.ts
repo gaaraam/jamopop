@@ -20,6 +20,24 @@ export async function GET(req: Request) {
     const url = new URL(req.url),
       admin = url.searchParams.get('admin') === '1';
     if (admin && !isSiteAdmin(req)) return reply({ error: '관리자만 확인할 수 있어요.' }, 403);
+    if (url.searchParams.get('attendance') === '1') {
+      const owner = await identity(req),
+        day = kstDay(Date.now());
+      if (!owner) return reply({ signedIn: false, received: false, day, gold: ATTENDANCE_GOLD });
+      const claim = await one(
+        "SELECT 1 FROM service_gold_claims WHERE subject=? AND kind='attendance' AND claim_key=?",
+        owner.subject,
+        day,
+      );
+      const digest = await crypto.subtle.digest(
+        'SHA-256',
+        new TextEncoder().encode('attendance:' + owner.subject + ':' + day),
+      );
+      const welcomeKey = Array.from(new Uint8Array(digest), (v) =>
+        v.toString(16).padStart(2, '0'),
+      ).join('');
+      return reply({ signedIn: true, received: !!claim, day, gold: ATTENDANCE_GOLD, welcomeKey });
+    }
     const offset = Number(url.searchParams.get('offset') || 0);
     if (!Number.isSafeInteger(offset) || offset < 0 || offset > 10000)
       return reply({ error: '목록 범위를 확인해 주세요.' }, 400);

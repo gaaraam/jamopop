@@ -85,6 +85,10 @@ test('reward endpoints: authorization, duplicate tabs, profile switching, expiry
       (await POST(req('one', { action: 'attendance' }, '', 'https://elsewhere'))).status,
       403,
     );
+    const welcome = await (await GET(req('one', null, '?attendance=1'))).json();
+    assert.equal(welcome.received, false);
+    assert.match(welcome.welcomeKey, /^[a-f0-9]{64}$/);
+    assert.equal(welcome.items, undefined);
     const claimed = await Promise.all(
       Array.from({ length: 12 }, () =>
         POST(req('one', { action: 'attendance' })).then((r) => r.json()),
@@ -98,6 +102,9 @@ test('reward endpoints: authorization, duplicate tabs, profile switching, expiry
       true,
     );
     assert.equal(db.prepare('SELECT COUNT(*) n FROM service_gold_claims').get().n, 1);
+    const linkedWelcome = await (await GET(req('two', null, '?attendance=1'))).json();
+    assert.equal(linkedWelcome.received, true);
+    assert.equal(linkedWelcome.welcomeKey, welcome.welcomeKey);
     db.exec("UPDATE google_accounts SET game_account_id='one' WHERE subject='subject'");
     now = Date.parse('2026-10-20T15:00:00Z');
     assert.equal((await (await POST(req('one', { action: 'attendance' }))).json()).received, true);
