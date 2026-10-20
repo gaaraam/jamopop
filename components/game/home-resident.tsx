@@ -13,6 +13,8 @@ export function HomeResident({
   visitor = false,
   furniture = [],
   action = 'pet',
+  message = '',
+  gain = 0,
 }: {
   avatar: string;
   skin?: string | null;
@@ -22,6 +24,8 @@ export function HomeResident({
   onPet?: () => void;
   visitor?: boolean;
   action?: string;
+  message?: string;
+  gain?: number;
   furniture?: { id: string; x: number }[];
 }) {
   const props = useRef(furniture);
@@ -78,7 +82,7 @@ export function HomeResident({
       stopped = true;
       clearTimeout(timer);
     };
-  }, [paused, visitor]);
+  }, [paused, visitor, reaction]);
   useEffect(() => {
     if (!reaction) return;
     setMood('happy');
@@ -92,12 +96,17 @@ export function HomeResident({
       style={{ left: `${x}%` }}
       onClick={(e) => {
         e.stopPropagation();
-        setMood('happy');
         onPet?.();
       }}
       aria-label={`${name} 쓰다듬기`}
       disabled={paused || !onPet}
     >
+      {message && (
+        <span key={reaction} className="resident-speech" role="status">
+          {message}
+          {gain > 0 && <b>♥ +{gain}</b>}
+        </span>
+      )}
       {mood === 'happy' && (
         <span className="resident-action-prop" aria-hidden="true">
           {action === 'snack' ? (

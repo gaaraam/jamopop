@@ -123,7 +123,7 @@ export const HOME_SKINS: Skin[] = [
     box: '0 0 240 240',
     source: '/characters/home-nap-rabbit.svg',
     sheetSize: 240,
-    reward: '우리 사이 12',
+    reward: '콩알 친밀도 12',
   },
   {
     id: 'home-snack-cat',
@@ -133,7 +133,7 @@ export const HOME_SKINS: Skin[] = [
     box: '0 0 240 240',
     source: '/characters/home-snack-cat.svg',
     sheetSize: 240,
-    reward: '우리 사이 36',
+    reward: '콩알 친밀도 36',
   },
   {
     id: 'home-star-bear',
@@ -143,7 +143,7 @@ export const HOME_SKINS: Skin[] = [
     box: '0 0 240 240',
     source: '/characters/home-star-bear.svg',
     sheetSize: 240,
-    reward: '우리 사이 72',
+    reward: '콩알 친밀도 72',
   },
 ];
 export const ALL_SKINS = [...SKINS, ...SOLO_SKINS, ...HOME_SKINS];

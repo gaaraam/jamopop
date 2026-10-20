@@ -1536,3 +1536,289 @@
 [data-theme='dark'] .profile-next-reward {
   background: #ffffff10 !important;
 }
+/* Care feedback belongs to the resident; no extra dashboard panels. */
+.bond-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: #9c566b;
+}
+.bond-label b {
+  font-variant-numeric: tabular-nums;
+}
+.bond-meter i {
+  transition: width 0.35s ease;
+}
+.house-shell .home-walker .resident-speech {
+  position: absolute;
+  z-index: 5;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  max-width: 185px;
+  padding: 9px 12px;
+  border: 1px solid #efd8b9;
+  border-radius: 16px 16px 16px 4px;
+  background: #fffaf0;
+  box-shadow: 0 4px 0 #9e775b1a;
+  color: #73543f;
+  font-size: clamp(10px, 1.2vw, 14px);
+  font-weight: 700;
+  pointer-events: none;
+  animation: care-bubble-in 0.2s ease-out;
+}
+.resident-speech b {
+  color: #bd5977;
+  white-space: nowrap;
+}
+.home-next-gift {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px auto 0;
+  padding: 8px 16px 8px 8px;
+  border: 0;
+  border-radius: 18px;
+  background: transparent;
+  color: var(--ink, #343d55);
+  text-align: left;
+  cursor: pointer;
+}
+.home-next-gift:hover {
+  background: #ad879610;
+}
+.home-next-gift .kongal-avatar {
+  width: 56px;
+  height: 56px;
+}
+.home-next-gift > span {
+  display: grid;
+  gap: 5px;
+}
+.home-next-gift strong {
+  font-size: 13px;
+}
+.home-next-gift small {
+  color: #88798b;
+  font-size: 11px;
+}
+.home-next-gift > svg {
+  color: #b27d90;
+  margin-left: 12px;
+}
+.bond-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  color: #b56883;
+}
+.bond-summary strong {
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+}
+.bond-summary span {
+  margin-left: auto;
+  font-size: 12px;
+  color: inherit;
+}
+.house-gifts progress {
+  width: 80%;
+  height: 5px;
+  border: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  accent-color: #bc7b94;
+  background: #e4d7cc;
+}
+.house-gifts progress::-webkit-progress-bar {
+  background: #e4d7cc;
+}
+.house-gifts progress::-webkit-progress-value {
+  background: #bc7b94;
+  border-radius: 8px;
+}
+.house-gifts progress::-moz-progress-bar {
+  background: #bc7b94;
+}
+.house-gifts a:not(.earned) .kongal-avatar {
+  opacity: 0.75;
+}
+.house-drawer > p,
+.house-drawer > div > p {
+  font-size: 11px;
+}
+.home-placement-grid {
+  position: absolute;
+  inset: 48% 0 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 calc(10% - 1px), #fff9 calc(10% - 1px) 10%),
+    repeating-linear-gradient(0deg, transparent 0 calc(25% - 1px), #fff9 calc(25% - 1px) 25%);
+}
+.home-edit-hint {
+  position: absolute;
+  z-index: 151;
+  top: 26%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 14px;
+  background: #fff8e9ed;
+  padding: 8px 12px;
+  margin: 0;
+  font-size: 12px;
+  color: #80654b;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.dock-tool.is-done > span {
+  border-color: #a79b7999;
+}
+.dock-tool:focus-visible,
+.bond-pill:focus-visible,
+.home-next-gift:focus-visible {
+  outline: 3px solid #9d82bc;
+  outline-offset: 4px;
+}
+@keyframes care-bubble-in {
+  from {
+    opacity: 0;
+    translate: 0 5px;
+  }
+  to {
+    opacity: 1;
+    translate: 0;
+  }
+}
+@media (max-width: 760px) {
+  .bond-label {
+    font-size: 10px;
+    gap: 5px;
+  }
+  .bond-pill .bond-meter {
+    display: none;
+  }
+  .resident-plaque {
+    max-width: 40%;
+  }
+  .home-next-gift {
+    margin-top: 12px;
+  }
+  .home-edit-hint {
+    font-size: 10px;
+    top: 29%;
+    padding: 6px 10px;
+  }
+  .house-shell .home-walker .resident-speech {
+    gap: 5px;
+    padding: 7px 9px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .house-shell .home-walker .resident-speech {
+    animation: none;
+  }
+  .bond-meter i {
+    transition: none;
+  }
+}
+[data-theme='dark'] .home-next-gift {
+  color: #eee0d4;
+}
+[data-theme='dark'] .home-next-gift small {
+  color: #c4aebd;
+}
+[data-theme='dark'] .bond-summary {
+  color: #e4a7bc;
+}
+[data-theme='dark'] .house-gifts small {
+  color: #dfc4ae;
+}
+.profile-session {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--ui-line);
+  margin-bottom: 16px;
+  font-size: 12px;
+}
+.profile-session > span {
+  display: grid;
+  gap: 4px;
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.profile-session small {
+  color: var(--ui-muted);
+}
+.profile-session strong {
+  overflow-wrap: anywhere;
+}
+.profile-session a,
+.profile-session button {
+  color: inherit;
+  border: 1px solid var(--ui-line);
+  background: var(--ui-surface-muted);
+  border-radius: 10px;
+  padding: 10px 12px;
+  text-decoration: none;
+  cursor: pointer;
+  font: inherit;
+}
+.profile-session form {
+  margin: 0;
+}
+[data-theme='dark'] .dock-tool > span {
+  color: #715d47;
+}
+[data-theme='dark'] .dock-tool.tool-pet > span {
+  color: #ad536f;
+}
+[data-theme='dark'] .dock-tool.tool-snack > span {
+  color: #936c23;
+}
+[data-theme='dark'] .dock-tool.tool-play > span {
+  color: #627d4e;
+}
+@media (max-width: 760px) {
+  .house-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-bottom: 0;
+  }
+  .house-shell .home-scene {
+    width: 100%;
+  }
+  .house-dock {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    transform: none;
+    align-self: center;
+    flex-shrink: 0;
+  }
+  .house-drawer {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    width: 100%;
+    max-width: 100%;
+    max-height: none;
+    box-sizing: border-box;
+  }
+}
+[data-theme='dark'] .house-drawer header button {
+  color: #eddfd3;
+  background: #ffffff12;
+}

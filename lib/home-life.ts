@@ -19,3 +19,17 @@ export function careProgress(points: number, done: string[] = []) {
 export function residentTarget(random: number) {
   return 20 + Math.max(0, Math.min(1, random)) * 60;
 }
+
+// Progress through the current gift interval; earned gifts never reset the total.
+export function bondProgress(points: number) {
+  const next = CARE_REWARDS.find((reward) => points < reward.points) || null;
+  const previous =
+    [...CARE_REWARDS].reverse().find((reward) => points >= reward.points)?.points || 0;
+  return {
+    next,
+    remaining: next ? next.points - points : 0,
+    percent: next
+      ? Math.max(0, Math.min(100, ((points - previous) / (next.points - previous)) * 100))
+      : 100,
+  };
+}

@@ -63,7 +63,21 @@ test('home care: authenticated ownership, daily cap, friendship privacy, stamps 
         '@/lib/furniture': furniture,
       })
     );
-    const { careDay, residentTarget } = await import(life);
+    const { careDay, residentTarget, bondProgress } = await import(life);
+    for (const [points, remaining, percent] of [
+      [0, 12, 0],
+      [6, 6, 50],
+      [12, 24, 0],
+      [24, 12, 50],
+      [36, 36, 0],
+      [54, 18, 50],
+      [72, 0, 100],
+      [100, 0, 100],
+    ]) {
+      const progress = bondProgress(points);
+      assert.equal(progress.remaining, remaining);
+      assert.equal(progress.percent, percent);
+    }
     assert.equal(careDay(Date.UTC(2026, 9, 17, 14, 59)), '2026-10-17');
     assert.equal(careDay(Date.UTC(2026, 9, 17, 15, 0)), '2026-10-18');
     for (const n of [-1, 0, 0.5, 1, 2])
