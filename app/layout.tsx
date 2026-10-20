@@ -1,4 +1,6 @@
 import { Suspense } from 'react';
+import { AttendanceWelcome } from '@/components/rewards/attendance-welcome';
+import '@/components/rewards/attendance-welcome.css';
 import { ProductMeasurement } from '@/components/metrics/provider';
 import { OverlayState } from '@/components/game/overlay-state';
 import { AgeCheck } from '@/components/legal/age-check';
@@ -70,6 +72,9 @@ export default function RootLayout({
             <SafetyNotice />
             <AgeCheck />
             <FriendInvitations />
+            <Suspense fallback={null}>
+              <AttendanceWelcome />
+            </Suspense>
             {children}
             <Suspense fallback={null}>
               <ProductMeasurement />

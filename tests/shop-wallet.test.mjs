@@ -105,3 +105,28 @@ test('unmounted or replaced wallet ignores late responses and cannot unlock a ne
   await next;
   assert.equal(h.render().data.balance, 7);
 });
+test('reward received during a pending wallet request queues a fresh balance read', async () => {
+  const previousWindow = globalThis.window,
+    listeners = new Map();
+  globalThis.window = {
+    addEventListener: (name, fn) => listeners.set(name, fn),
+    removeEventListener: (name) => listeners.delete(name),
+  };
+  try {
+    const h = await walletHarness();
+    h.render();
+    const dispose = h.effects[0]();
+    const remove = h.effects[1]();
+    listeners.get('jamopop-reward-claimed')();
+    reply(h.pending[0], 200, { balance: 10 });
+    await new Promise((r) => setImmediate(r));
+    assert.equal(h.pending.length, 2);
+    reply(h.pending[1], 200, { balance: 60 });
+    await new Promise((r) => setImmediate(r));
+    assert.equal(h.render().data.balance, 60);
+    dispose();
+    remove();
+  } finally {
+    globalThis.window = previousWindow;
+  }
+});

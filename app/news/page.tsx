@@ -88,10 +88,12 @@ export default function News() {
       if (!document.hidden) void load();
     };
     document.addEventListener('visibilitychange', focus);
+    window.addEventListener('jamopop-reward-claimed', focus);
     return () => {
       generation.current++;
       clearInterval(timer);
       document.removeEventListener('visibilitychange', focus);
+      window.removeEventListener('jamopop-reward-claimed', focus);
     };
   }, []);
   async function claim(action: string, id = '') {
