@@ -1,0 +1,103 @@
+.admin-news-tabs {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 20px 0;
+}
+.admin-news-tabs a {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--ui-line);
+  background: var(--ui-surface);
+  font-size: 14px;
+}
+.admin-news-tabs a[aria-current] {
+  font-weight: 700;
+}
+.admin-news-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(0, 2fr);
+  gap: 24px;
+}
+.admin-news-list-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.admin-news-list-heading h1 {
+  font-size: 22px;
+}
+.admin-news-row {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  width: 100%;
+  text-align: left;
+  padding: 16px;
+  gap: 8px;
+  border: 1px solid var(--ui-line);
+  background: var(--ui-surface);
+  border-radius: 12px;
+  margin: 12px 0;
+  overflow-wrap: anywhere;
+}
+.admin-news-row[aria-pressed='true'] {
+  outline: 2px solid var(--ui-focus);
+}
+.admin-news-row small {
+  color: var(--ui-muted);
+}
+.news-editor {
+  display: grid;
+  gap: 20px;
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+.news-editor label {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+}
+.news-editor input,
+.news-editor select,
+.news-editor textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 12px;
+  border: 1px solid var(--ui-line);
+  border-radius: 12px;
+  background: var(--ui-surface);
+  color: var(--ui-ink);
+  box-sizing: border-box;
+}
+.news-editor textarea {
+  resize: vertical;
+}
+.admin-event-options {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  background: var(--ui-surface-muted);
+  border-radius: 14px;
+}
+.admin-event-options p {
+  font-size: 13px;
+  color: var(--ui-muted);
+  line-height: 1.7;
+}
+.news-admin-preview p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.news-admin-preview {
+  padding: 16px;
+  border: 1px solid var(--ui-line);
+  border-radius: 12px;
+}
+@media (max-width: 800px) {
+  .admin-news-layout {
+    grid-template-columns: 1fr;
+  }
+}

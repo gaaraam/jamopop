@@ -45,6 +45,7 @@ export function LegalLinks() {
         이용약관
       </a>
       <a href="/how-to-play">게임 방법</a>
+      <a href="/news">소식·이벤트</a>
       <a href="/support">문의하기</a>
       <span>운영 이가람 · 최반석</span>
     </nav>

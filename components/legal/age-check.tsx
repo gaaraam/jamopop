@@ -8,7 +8,9 @@ export function AgeCheck() {
   const [open, setOpen] = useState(false);
   const [checked, setChecked] = useState(false);
   const exempt =
-    ['/privacy', '/terms', '/support', '/account-deletion', '/how-to-play'].includes(path) ||
+    ['/privacy', '/terms', '/support', '/account-deletion', '/how-to-play', '/news'].includes(
+      path,
+    ) ||
     path.startsWith('/admin') ||
     path.startsWith('/transfer');
   useEffect(() => {

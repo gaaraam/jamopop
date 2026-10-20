@@ -77,9 +77,12 @@ export default function Notices() {
     <main className="admin-page">
       <header className="admin-nav">
         <a href="/admin">← 운영 대시보드</a>
-        <strong>전체 공지</strong>
+        <strong>실시간 전체 공지</strong>
         <a href="/?lobby=1">대기실 ↗</a>
       </header>
+      <nav className="admin-news-tabs">
+        <a href="/admin/news">공지·업데이트·이벤트 관리 →</a>
+      </nav>
       <section className="admin-panel notice-editor">
         <h1>전체 공지</h1>
         <p>{active ? '게시 중' : '게시된 공지 없음'} · 대기실 / 모든 방 / 개인 도전</p>

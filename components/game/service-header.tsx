@@ -1,10 +1,11 @@
 'use client';
 import { NotificationSlot } from './notification-slot';
-import { Home, ShoppingBag, Building2, ArrowLeft, CalendarDays } from 'lucide-react';
+import { Home, ShoppingBag, Building2, ArrowLeft, CalendarDays, Gift } from 'lucide-react';
 import { ThemeSwitch } from '@/components/theme';
 import { readActiveRoom } from '@/lib/active-room.mjs';
 import { useEffect, useState, type ReactNode } from 'react';
 const links = [
+  { id: 'news', href: '/news', name: '소식·출석', Icon: Gift },
   { id: 'daily', href: '/daily', name: '오늘의 단어', Icon: CalendarDays },
   { id: 'solo', href: '/solo', name: '개인 도전', Icon: Building2 },
   { id: 'shop', href: '/shop', name: '상점', Icon: ShoppingBag },

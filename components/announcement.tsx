@@ -50,7 +50,7 @@ export function Announcement() {
   return (
     <aside className="global-announcement" role="status" aria-label="전체 공지">
       <Megaphone size={19} />
-      <strong>전체 공지</strong>
+      <a href="/news">전체 공지</a>
       <p>{notice.body}</p>
       <button
         aria-label="공지 닫기"
