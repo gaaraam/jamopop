@@ -168,6 +168,25 @@ export function AccountPanel({
             </div>
             <a href="/shop">꾸미기 상점 ↗</a>
           </div>
+          <div className="profile-session" aria-label="현재 로그인 계정">
+            <span>
+              <small>로그인 계정</small>
+              <strong>{data.email}</strong>
+            </span>
+            <a
+              href="/auth/google/start?return_to=%2Fhome%3Ftab%3Dprofile"
+              onClick={() => clearActiveRoom(sessionStorage)}
+            >
+              다른 계정으로 로그인
+            </a>
+            <form
+              action="/auth/logout"
+              method="post"
+              onSubmit={() => clearActiveRoom(sessionStorage)}
+            >
+              <button type="submit">로그아웃</button>
+            </form>
+          </div>
           {notice && <p role="status">{notice}</p>}
           <nav className="profile-sections" aria-label="프로필 메뉴">
             {(
@@ -490,13 +509,6 @@ export function AccountPanel({
             <a href="/support#account-deletion" className="text-btn">
               계정 삭제 요청
             </a>
-            <form
-              action="/auth/logout"
-              method="post"
-              onSubmit={() => clearActiveRoom(sessionStorage)}
-            >
-              <button className="text-btn">로그아웃</button>
-            </form>
           </div>
         </>
       ) : data ? (

@@ -22,7 +22,7 @@ import {
   X,
   Check,
 } from 'lucide-react';
-import { CARE_REWARDS, careDay } from '@/lib/home-life';
+import { CARE_REWARDS, careDay, bondProgress } from '@/lib/home-life';
 type Life = {
   day: string;
   care: { points: number; done: string[]; next: { name: string; points: number } | null };
@@ -60,7 +60,14 @@ export default function Home() {
     [friend, setFriend] = useState(''),
     [lifeError, setLifeError] = useState(''),
     [careBusy, setCareBusy] = useState(false),
-    [reaction, setReaction] = useState(0);
+    [reaction, setReaction] = useState(0),
+    [careMessage, setCareMessage] = useState(''),
+    [careGain, setCareGain] = useState(0);
+  useEffect(() => {
+    if (!careMessage) return;
+    const timer = setTimeout(() => setCareMessage(''), 3200);
+    return () => clearTimeout(timer);
+  }, [careMessage, reaction]);
   const lifeLock = useRef(false),
     lifeVersion = useRef(0);
   async function loadLife(target = '') {
@@ -69,6 +76,7 @@ export default function Home() {
     try {
       const r = await fetch(
         '/api/home/life' + (target ? '?friend=' + encodeURIComponent(target) : ''),
+        { signal: AbortSignal.timeout(10000) },
       );
       if (r.status === 401) return;
       const d = (await r.json()) as Life & { error?: string };
@@ -84,11 +92,24 @@ export default function Home() {
       lifeVersion.current++;
     };
   }, [friend]);
-  async function care(action: string, stamp?: string) {
+  function reactToCare(action: string, gain: number) {
     setEffect(action);
-    if (lifeLock.current || !life) return;
+    setCareGain(gain);
+    setCareMessage(
+      action === 'snack'
+        ? '냠냠, 맛있다!'
+        : action === 'play'
+          ? '한 번 더 놀자!'
+          : action === 'visit'
+            ? '인사 남기고 왔어!'
+            : '헤헤, 좋아!',
+    );
+    setReaction((n) => n + 1);
+  }
+  async function care(action: string, stamp?: string) {
+    if (lifeLock.current || !life || editing) return;
     if (action !== 'visit' && life.day === careDay() && life.care.done.includes(action)) {
-      setReaction((n) => n + 1);
+      reactToCare(action, 0);
       return;
     }
     lifeLock.current = true;
@@ -100,15 +121,16 @@ export default function Home() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, ...(friend ? { friend, stamp } : {}) }),
+        signal: AbortSignal.timeout(10000),
       });
       const d = (await r.json()) as Life & { error?: string };
       if (!r.ok) throw Error(d.error);
       if (version === lifeVersion.current) {
         setLife(d);
-        setReaction((n) => n + 1);
+        reactToCare(action, Math.max(0, d.care.points - life.care.points));
       }
     } catch (e) {
-      setLifeError((e as Error).message);
+      if (version === lifeVersion.current) setLifeError((e as Error).message);
     } finally {
       lifeLock.current = false;
       setCareBusy(false);
@@ -117,6 +139,7 @@ export default function Home() {
   function visit(id: string) {
     if (dirty && !window.confirm('저장하지 않은 배치를 버리고 방문할까요?')) return;
     setPanel(null);
+    setCareMessage('');
     setEditing(false);
     setDirty(false);
     setSelected('');
@@ -150,6 +173,7 @@ export default function Home() {
     }
   }
   useEffect(() => {
+    if (new URLSearchParams(location.search).get('tab') === 'profile') setTab('profile');
     void load();
   }, []);
   useEffect(() => {
@@ -178,6 +202,11 @@ export default function Home() {
   }
   async function save() {
     if (!data || saveLock.current || loadLock.current) return;
+    if (!dirty) {
+      setEditing(false);
+      setSelected('');
+      return;
+    }
     saveLock.current = true;
     setBusy(true);
     setError('');
@@ -186,6 +215,7 @@ export default function Home() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ layout, revision: data.revision }),
+        signal: AbortSignal.timeout(10000),
       });
       const d = (await r.json()) as HomeState & { error?: string };
       if (!r.ok) throw Error(d.error || '처리하지 못했어요.');
@@ -205,6 +235,8 @@ export default function Home() {
   const displayLayout = friend ? visiting?.layout || [] : layout;
   const resident = visiting?.profile || data?.profile;
   const current = layout.find((p) => p.id === selected);
+  const bond = bondProgress(life?.care.points || 0);
+  const todayDone = life?.day === careDay() ? life.care.done : [];
   return (
     <main className="kongal-home">
       <ServiceHeader active="home" title={tab === 'profile' ? '내 프로필' : '내 집'}>
@@ -248,14 +280,17 @@ export default function Home() {
                 <button
                   className="bond-pill"
                   onClick={() => setPanel(panel === 'gifts' ? null : 'gifts')}
-                  aria-label={`친밀도 ${life.care.points}, 보상 보기`}
+                  aria-label={`콩알 친밀도 ${life.care.points}, 보상 보기`}
+                  aria-expanded={panel === 'gifts'}
                 >
                   <Heart size={17} fill="currentColor" />
-                  <b>{life.care.points}</b>
+                  <span className="bond-label">
+                    콩알 친밀도<b>{life.care.points}</b>
+                  </span>
                   <span className="bond-meter">
                     <i
                       style={{
-                        width: `${Math.min(100, (life.care.points / (life.care.next?.points || 72)) * 100)}%`,
+                        width: `${bond.percent}%`,
                       }}
                     />
                   </span>
@@ -264,6 +299,12 @@ export default function Home() {
               )}
             </div>
             <div className="home-floor" />
+            {editing && <div className="home-placement-grid" aria-hidden="true" />}
+            {editing && (
+              <p className="home-edit-hint">
+                {selected ? '바닥을 눌러 옮기기' : '아래에서 가구 선택'}
+              </p>
+            )}
             <div className="home-window">
               <i />
               <i />
@@ -307,6 +348,8 @@ export default function Home() {
               paused={!data || editing || tab !== 'house' || (!!friend && !visiting)}
               reaction={reaction}
               action={effect}
+              message={!friend ? careMessage : ''}
+              gain={careGain}
               onPet={!friend && data ? () => void care('pet') : undefined}
             />
             {visiting && data?.profile && (
@@ -357,14 +400,15 @@ export default function Home() {
                     { id: 'play', name: '놀기', Icon: Sparkles },
                   ].map(({ id, name, Icon }) => (
                     <button
-                      className={`dock-tool tool-${id}`}
+                      className={`dock-tool tool-${id} ${todayDone.includes(id) ? 'is-done' : ''}`}
+                      aria-label={`${name}${todayDone.includes(id) ? ' · 오늘 돌봄 완료' : ' · 친밀도 1'}`}
                       key={id}
                       disabled={careBusy || editing || !life}
                       onClick={() => void care(id)}
                     >
                       <span>
                         <Icon />
-                        {life?.care.done.includes(id) && (
+                        {todayDone.includes(id) && (
                           <i>
                             <Check size={10} />
                           </i>
@@ -387,7 +431,9 @@ export default function Home() {
                     <span>
                       <Armchair />
                     </span>
-                    <strong>{editing ? '저장' : '꾸미기'}</strong>
+                    <strong>
+                      {busy ? '저장 중' : editing ? (dirty ? '저장' : '완료') : '꾸미기'}
+                    </strong>
                   </button>
                 </>
               )}
@@ -407,10 +453,10 @@ export default function Home() {
           {panel && life && (
             <section
               className="house-drawer"
-              aria-label={panel === 'friends' ? '친구 집과 방문 인사' : '친밀도 선물'}
+              aria-label={panel === 'friends' ? '친구 집과 방문 인사' : '콩알 친밀도 선물'}
             >
               <header>
-                <h2>{panel === 'friends' ? '친구들' : '우리 사이의 선물'}</h2>
+                <h2>{panel === 'friends' ? '친구들' : '콩알 친밀도'}</h2>
                 <button aria-label="닫기" onClick={() => setPanel(null)}>
                   <X size={18} />
                 </button>
@@ -463,6 +509,11 @@ export default function Home() {
                 </>
               ) : (
                 <>
+                  <div className="bond-summary">
+                    <Heart size={20} fill="currentColor" />
+                    <strong>{life.care.points}</strong>
+                    <span>{bond.next ? `다음 선물까지 ${bond.remaining}` : '모든 선물 획득!'}</span>
+                  </div>
                   <div className="house-gifts">
                     {CARE_REWARDS.map((r) => (
                       <a
@@ -477,20 +528,50 @@ export default function Home() {
                           skin={r.id}
                         />
                         <strong>{r.name}</strong>
+                        <progress
+                          aria-label={`${r.name} 해금 진행`}
+                          value={Math.min(life.care.points, r.points)}
+                          max={r.points}
+                        />
                         <small>
                           {life.care.points >= r.points
-                            ? '획득 · 장착하러 가기'
+                            ? '획득 · 장착하기'
                             : `${life.care.points} / ${r.points}`}
                         </small>
                       </a>
                     ))}
                   </div>
-                  <p>돌보기 3종과 방문으로 하루 최대 4. 쉬어도 줄지 않아요.</p>
+                  <p>돌봄마다 하루 1, 친구 방문 1. 쉬어도 줄지 않아요.</p>
                 </>
               )}
             </section>
           )}
         </div>
+        {life && !friend && !editing && (
+          <button
+            className="home-next-gift"
+            onClick={() => setPanel(panel === 'gifts' ? null : 'gifts')}
+            aria-expanded={panel === 'gifts'}
+          >
+            <CharacterAvatar
+              avatar={
+                bond.next?.id.includes('rabbit')
+                  ? '🐰'
+                  : bond.next?.id.includes('cat')
+                    ? '🐱'
+                    : '🐻'
+              }
+              skin={bond.next?.id || 'home-star-bear'}
+            />
+            <span>
+              <strong>{bond.next?.name || '친밀도 선물 모두 획득'}</strong>
+              <small>
+                {bond.next ? `친밀도 ${bond.remaining} 더 모으면 해금` : '상점에서 장착하기'}
+              </small>
+            </span>
+            <Gift size={18} />
+          </button>
+        )}
         {lifeError && (
           <p role="alert" className="home-error">
             {lifeError}

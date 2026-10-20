@@ -126,7 +126,7 @@ function SkinShop({ onHome }: { onHome: () => void }) {
               ? '카드 스킨'
               : skin.reward
                 ? skin.id.startsWith('home-')
-                  ? '우리 사이 전용'
+                  ? '콩알 친밀도 보상'
                   : '개인 도전 전용'
                 : '캐릭터 스킨'}
             {equipped ? ' · 장착 중' : ''}
