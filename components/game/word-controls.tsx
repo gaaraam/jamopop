@@ -1,4 +1,6 @@
 'use client';
+import '@/app/word-feel.css';
+import { judgmentTiming } from '@/lib/word-feedback.mjs';
 import { Delete } from 'lucide-react';
 import { KEYS, type Guess, type Color } from '@/lib/game';
 import { JudgmentMark, judgmentLabel } from './judgment-mark';
@@ -27,13 +29,17 @@ export function WordBoard({
   reveal?: { roundId: string; row: number } | null;
   won?: boolean;
 }) {
+  const timing = judgmentTiming(width);
   return (
     <div
-      className={`main-board ${shake ? (shake % 2 ? 'shake-a' : 'shake-b') : ''}`}
+      className="main-board word-feel"
+      data-ready={(!isFinished && !locked && !isPending && letters.length === width) || undefined}
+      data-outcome={isFinished ? (won ? 'won' : 'finished') : undefined}
       style={
         {
           gridTemplateColumns: `repeat(${width},minmax(0,1fr))`,
           '--board-columns': width,
+          '--judgment-end': `${timing.end}ms`,
         } as React.CSSProperties
       }
       aria-label="단어 게임판"
@@ -55,14 +61,14 @@ export function WordBoard({
               data-letter={g?.letters[c] || ''}
               style={
                 {
-                  '--reveal-delay': `${c * 45}ms`,
-                  '--win-delay': `${width * 45 + 270 + c * 45}ms`,
+                  '--reveal-delay': `${c * timing.stagger}ms`,
+                  '--win-delay': `${timing.end + c * 45}ms`,
                 } as React.CSSProperties
               }
-              className={`tile ${g ? g.colors[c] + (reveal?.roundId === roundId && reveal.row === r ? ' revealed' + (won && r === guesses.length - 1 ? ' victory-tile' : '') : '') : active && letters[c] ? `filled ${composing ? '' : 'input-pop'}` : ''} ${active ? 'active-row' : ''} ${pending ? 'submission-pending' : ''}`}
+              className={`tile ${g ? g.colors[c] + (reveal?.roundId === roundId && reveal.row === r ? ' revealed' + (won && r === guesses.length - 1 ? ' victory-tile' : '') : '') : active && letters[c] ? `filled ${composing ? '' : 'input-pop'}` : ''} ${active ? 'active-row' + (shake ? (shake % 2 ? ' shake-a' : ' shake-b') : '') : ''} ${pending ? 'submission-pending' : ''}`}
               aria-label={`${r + 1}번째 시도 ${c + 1}칸 ${g?.letters[c] || (active && letters[c]) || '빈칸'} ${g ? judgmentLabel[g.colors[c]] : ''}`}
             >
-              {g?.letters[c] || (active ? letters[c] : '')}
+              <span className="tile-glyph">{g?.letters[c] || (active ? letters[c] : '')}</span>
               <JudgmentMark color={g?.colors[c]} />
             </div>
           );
