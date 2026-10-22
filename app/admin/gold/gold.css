@@ -1,0 +1,145 @@
+.gold-admin .admin-metrics strong small {
+  font-size: 14px;
+  font-weight: 500;
+}
+.gold-reconcile {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  margin: 16px 0 24px;
+}
+.gold-reconcile b {
+  color: #b44f52;
+}
+.gold-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.gold-section-head h2,
+.gold-breakdowns h2 {
+  font-size: 18px;
+  font-weight: 700;
+}
+.gold-section-head form {
+  display: flex;
+  gap: 8px;
+}
+.gold-flow-totals {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin: 16px 0 24px;
+}
+.gold-flow-totals span {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.gold-flow-totals b {
+  font-size: 22px;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+.gold-chart {
+  max-height: 320px;
+  overflow: auto;
+}
+.gold-bar-row {
+  display: grid;
+  grid-template-columns: 48px 1fr 160px;
+  gap: 12px;
+  align-items: center;
+  margin: 8px 0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.gold-bar-row > span {
+  text-align: right;
+}
+.gold-bars {
+  display: grid;
+  gap: 3px;
+}
+.gold-bars div {
+  height: 8px;
+  border-radius: 3px;
+  background: #d7a84d;
+}
+.gold-bars div + div {
+  background: #758cb7;
+}
+.gold-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+.gold-legend i {
+  width: 10px;
+  height: 10px;
+  background: #d7a84d;
+  border-radius: 3px;
+}
+.gold-legend i + i,
+.gold-legend i:nth-of-type(2) {
+  background: #758cb7;
+}
+.gold-breakdowns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.gold-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.gold-line small {
+  display: block;
+  font-size: 12px;
+  color: var(--muted-foreground);
+  margin-top: 4px;
+}
+.gold-line b {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.gold-notes {
+  font-size: 13px;
+  line-height: 1.8;
+}
+.gold-notes p {
+  margin-top: 12px;
+}
+@media (max-width: 600px) {
+  .gold-admin {
+    padding: 12px;
+  }
+  .gold-breakdowns {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .gold-bar-row {
+    grid-template-columns: 40px 1fr 120px;
+    gap: 6px;
+  }
+  .gold-section-head form {
+    width: 100%;
+  }
+  .gold-section-head input {
+    min-width: 0;
+    flex: 1;
+  }
+  .gold-admin .admin-metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+}
