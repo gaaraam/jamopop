@@ -7,8 +7,60 @@ export type Skin = {
   source?: string;
   sheetSize?: number;
   reward?: string;
+  collection?: string;
 };
 export const SKINS: Skin[] = [
+  {
+    id: 'cozy-melt-cat',
+    name: '녹아버린',
+    avatar: '🐱',
+    price: 3200,
+    box: '0 0 768 768',
+    source: '/characters/cozy-melt-cat.webp',
+    sheetSize: 768,
+    collection: '콩알의 작은 일상',
+  },
+  {
+    id: 'cozy-peach-rabbit',
+    name: '복숭아',
+    avatar: '🐰',
+    price: 2400,
+    box: '0 0 768 768',
+    source: '/characters/cozy-peach-rabbit.webp',
+    sheetSize: 768,
+    collection: '콩알의 작은 일상',
+  },
+  {
+    id: 'cozy-post-bear',
+    name: '우체부',
+    avatar: '🐻',
+    price: 2200,
+    box: '0 0 768 768',
+    source: '/characters/cozy-post-bear.webp',
+    sheetSize: 768,
+    collection: '콩알의 작은 일상',
+  },
+  {
+    id: 'cozy-shell-penguin',
+    name: '소라집',
+    avatar: '🐧',
+    price: 2800,
+    box: '0 0 768 768',
+    source: '/characters/cozy-shell-penguin.webp',
+    sheetSize: 768,
+    collection: '콩알의 작은 일상',
+  },
+  {
+    id: 'cozy-cloud-fox',
+    name: '구름꼬리',
+    avatar: '🦊',
+    price: 3500,
+    box: '0 0 768 768',
+    source: '/characters/cozy-cloud-fox.webp',
+    sheetSize: 768,
+    collection: '콩알의 작은 일상',
+  },
+
   {
     id: 'rare-moon-rabbit',
     name: '달의 정원사',

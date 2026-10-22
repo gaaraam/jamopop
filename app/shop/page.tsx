@@ -8,7 +8,13 @@ import { ALL_SKINS } from '@/lib/skins';
 import { CARD_SKINS } from '@/lib/card-skins';
 const SKINS = [
   ...ALL_SKINS,
-  ...CARD_SKINS.map((s) => ({ ...s, avatar: '🐼', box: '', reward: undefined })),
+  ...CARD_SKINS.map((s) => ({
+    ...s,
+    avatar: '🐼',
+    box: '',
+    reward: undefined,
+    collection: undefined,
+  })),
 ];
 import { CHARACTER_ART } from '@/lib/character-art';
 import { avatarLevel } from '@/lib/cosmetics';
@@ -53,7 +59,8 @@ function SkinShop({ onHome }: { onHome: () => void }) {
     [selected, setSelected] = useState(SKINS[0].id),
     [collection, setCollection] = useState(false),
     [confirm, setConfirm] = useState(false),
-    [notice, setNotice] = useState('');
+    [notice, setNotice] = useState(''),
+    [series, setSeries] = useState(false);
   const catalog = SKINS.filter((s) =>
     category === 'card' ? s.id.startsWith('card-') : !s.id.startsWith('card-'),
   );
@@ -96,6 +103,7 @@ function SkinShop({ onHome }: { onHome: () => void }) {
               setConfirm(false);
               setNotice('');
               setCollection(false);
+              setSeries(false);
             }}
           >
             {c === 'character' ? '캐릭터 스킨' : '카드 스킨'}
@@ -107,9 +115,11 @@ function SkinShop({ onHome }: { onHome: () => void }) {
           <span className="skin-series">
             {isCard
               ? '카드 컬렉션'
-              : skin.id.startsWith('rare-')
-                ? '콩알친구들 · 희귀 컬렉션'
-                : '콩알친구들 · 첫 번째 컬렉션'}
+              : skin.collection
+                ? skin.collection
+                : skin.id.startsWith('rare-')
+                  ? '콩알친구들 · 희귀 컬렉션'
+                  : '콩알친구들 · 첫 번째 컬렉션'}
           </span>
           <div className="skin-stage">
             {isCard ? (
@@ -213,9 +223,18 @@ function SkinShop({ onHome }: { onHome: () => void }) {
               보유 스킨 <span>{data ? ownedCount : '—'}</span>
             </button>
           </nav>
+          {category === 'character' && (
+            <div className="shop-series-filter">
+              <button aria-pressed={series} onClick={() => setSeries((v) => !v)}>
+                콩알의 작은 일상 · 5종
+              </button>
+            </div>
+          )}
           <div className="skin-grid">
             {catalog
-              .filter((s) => !collection || data?.owned.includes(s.id))
+              .filter(
+                (s) => (!collection || data?.owned.includes(s.id)) && (!series || !!s.collection),
+              )
               .map((s) => (
                 <button
                   className={`skin-product ${selected === s.id ? 'selected' : ''} ${s.id.startsWith('rare-') ? 'rare' : ''}`}
@@ -249,9 +268,9 @@ function SkinShop({ onHome }: { onHome: () => void }) {
                 </button>
               ))}
           </div>
-          {data && collection && !ownedCount && (
-            <p className="shop-empty">아직 보유한 스킨이 없어요.</p>
-          )}
+          {!catalog.some(
+            (s) => (!collection || data?.owned.includes(s.id)) && (!series || !!s.collection),
+          ) && <p className="shop-empty">이 목록에 보유한 스킨이 없어요.</p>}
           <details className="gold-guide">
             <summary>골드 모으는 방법</summary>
             <p>

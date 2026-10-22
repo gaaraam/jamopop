@@ -446,6 +446,16 @@ test('gold accrual, daily bonus, guest linkage, safe purchases and skin propagat
       'concurrent reward reads never mint rewards',
     );
     assert.equal((await shopState('C')).balance, 80);
+    db.exec("INSERT INTO service_gold_claims VALUES('skin-test','C','event','skin-test',3200,1)");
+    assert.equal((await POST(request('C', { action: 'buy', skin: 'cozy-melt-cat' }))).status, 200);
+    assert.equal((await shopState('C')).balance, 80);
+    assert.equal((await POST(request('C', { action: 'buy', skin: 'cozy-melt-cat' }))).status, 200);
+    assert.equal((await shopState('C')).balance, 80, 'new skin retry does not charge twice');
+    assert.equal(
+      (await POST(request('C', { action: 'equip', skin: 'cozy-melt-cat' }))).status,
+      200,
+    );
+    assert.equal((await shopState('C')).equipped, 'cozy-melt-cat');
   } finally {
     db.close();
     delete globalThis.__shopStore;
