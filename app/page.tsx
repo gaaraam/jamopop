@@ -34,6 +34,7 @@ import { splitWord, type Color, type GameState, type Player } from '@/lib/game';
 import { blocksEnter, inputShape, previewKey } from '@/lib/input';
 import { checkedFetch, draftKey, readDraft, rememberRoom, writeDraft } from '@/lib/recovery.mjs';
 import { deadlinePassed } from '@/lib/round-timer';
+import { judgmentTiming, playWordCue } from '@/lib/word-feedback.mjs';
 import { mergeSubmission } from '@/lib/submission.mjs';
 import { publishInvitations, publishNotice, publishRoom } from '@/lib/sync-client';
 import {
@@ -438,26 +439,11 @@ export default function Home() {
     try {
       const audio = audioRef.current ?? (audioRef.current = new AudioContext());
       void audio.resume();
-      const osc = audio.createOscillator(),
-        gain = audio.createGain();
-      osc.connect(gain);
-      gain.connect(audio.destination);
-      const start = audio.currentTime,
-        duration = kind === 'type' ? 0.045 : kind === 'win' ? 0.3 : 0.12;
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(kind === 'type' ? 520 : kind === 'win' ? 740 : 420, start);
-      osc.frequency.exponentialRampToValueAtTime(
-        kind === 'win' ? 1100 : kind === 'type' ? 320 : 600,
-        start + duration,
+      playWordCue(
+        audio,
+        kind,
+        kind === 'win' ? judgmentTiming(dataRef.current?.round.width || 5).end / 1000 : 0,
       );
-      gain.gain.setValueAtTime(kind === 'type' ? 0.025 : 0.045, start);
-      gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
-      osc.start();
-      osc.stop(start + duration);
-      osc.onended = () => {
-        osc.disconnect();
-        gain.disconnect();
-      };
     } catch {}
   }
   useEffect(
@@ -480,9 +466,9 @@ export default function Home() {
   useEffect(() => {
     if (data?.play.status === 'won' && lastWon.current !== data.round.id) {
       lastWon.current = data.round.id;
-      ping('win');
+      if (reveal?.roundId === data.round.id) ping('win');
     }
-  }, [data?.play.status, data?.round.id]);
+  }, [data?.play.status, data?.round.id, reveal?.roundId]);
   const act = async (action: string, extra: any = {}) => {
     if (busyRef.current) return;
     busyRef.current = true;

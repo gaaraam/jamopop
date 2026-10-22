@@ -1,0 +1,185 @@
+/* Tactile presentation only. No input lock or network delay belongs to choreography. */
+.main-board.word-feel {
+  position: relative;
+  isolation: isolate;
+}
+.main-board.word-feel .tile {
+  position: relative;
+  box-shadow:
+    inset 0 1px 0 #ffffffb3,
+    0 3px 0 #36486412;
+  transition:
+    border-color 120ms,
+    box-shadow 120ms;
+}
+.main-board.word-feel .tile:not(.filled):not(.green):not(.yellow):not(.gray):not(.active-row) {
+  background: #8996af06;
+  border-color: #8996af20;
+  box-shadow: inset 0 2px 4px #394d7210;
+}
+.main-board.word-feel .tile.active-row {
+  border-color: #9aa5c4;
+  box-shadow:
+    0 3px 0 #7582a329,
+    inset 0 1px 0 #fff9;
+}
+.main-board.word-feel .tile.filled {
+  background: #fffef8;
+  border-color: #8b8caf;
+  box-shadow:
+    0 4px 0 #8b8caf35,
+    inset 0 1px 0 #fff;
+}
+.main-board.word-feel[data-ready] .tile.active-row {
+  border-color: #b5a257;
+  box-shadow:
+    0 4px 0 #b5a25735,
+    inset 0 1px 0 #fff9;
+}
+.main-board.word-feel .tile-glyph {
+  display: block;
+}
+.main-board.word-feel .tile.input-pop {
+  animation: jp-type-seat 180ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+@keyframes jp-type-seat {
+  0% {
+    transform: translateY(2px) scale(0.92);
+  }
+  55% {
+    transform: translateY(-2px) scale(1.045);
+  }
+  100% {
+    transform: none;
+  }
+}
+.main-board.word-feel .tile.green {
+  box-shadow:
+    inset 0 2px 0 #fff5,
+    0 4px 0 #28654f3d;
+}
+.main-board.word-feel .tile.yellow {
+  box-shadow:
+    inset 0 2px 0 #fff7,
+    0 4px 0 #9b793c35;
+}
+.main-board.word-feel .tile.gray {
+  box-shadow:
+    inset 0 1px 0 #fff3,
+    0 2px 0 #5f68701c;
+}
+.main-board.word-feel .tile.revealed::after {
+  inset: -2px;
+  border: 2px solid #a7aec3;
+}
+.main-board.word-feel .tile.revealed.yellow .tile-glyph {
+  animation: jp-near-nudge 230ms calc(var(--reveal-delay) + 280ms) both;
+}
+@keyframes jp-near-nudge {
+  0%,
+  100% {
+    transform: none;
+  }
+  35% {
+    transform: translateX(-3px) rotate(-4deg);
+  }
+  70% {
+    transform: translateX(2px) rotate(2deg);
+  }
+}
+.main-board.word-feel .tile.active-row.shake-a {
+  animation: inputShake 240ms ease-out;
+}
+.main-board.word-feel .tile.active-row.shake-b {
+  animation: inputShakeAgain 240ms ease-out;
+}
+.game-panel .submit:not(:disabled):active {
+  transform: translateY(3px);
+  box-shadow: none;
+}
+.game-panel .primary.submit:not(:disabled) {
+  box-shadow: 0 4px 0 #b49b4b45;
+}
+.game-panel .key {
+  position: relative;
+}
+.game-panel .key:hover:not(:disabled) {
+  transform: none;
+}
+.game-panel .key.key-pressed:not(:disabled),
+.game-panel .key:active:not(:disabled) {
+  transform: translateY(3px) scale(0.96);
+}
+.round-reward[data-outcome='won'] {
+  border-color: #ceb66c80;
+  background: linear-gradient(135deg, #ffedaf22, #f4f0ff55);
+  box-shadow:
+    inset 0 1px 0 #fff9,
+    0 5px 0 #ac986419;
+}
+.reward-medal {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #edcc6a33;
+  color: #9b7826;
+  flex: none;
+}
+.round-reward .reward-heading {
+  animation: jp-reward-settle 360ms cubic-bezier(0.16, 0.8, 0.25, 1) both;
+}
+@keyframes jp-reward-settle {
+  from {
+    transform: translateY(8px) scale(0.97);
+    opacity: 0.45;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+[data-theme='dark'] .main-board.word-feel .tile.filled {
+  background: #303748;
+  color: #f4eee5;
+  box-shadow:
+    0 4px 0 #10141f8c,
+    inset 0 1px 0 #ffffff16;
+}
+[data-theme='dark']
+  .main-board.word-feel
+  .tile:not(.filled):not(.green):not(.yellow):not(.gray):not(.active-row) {
+  background: #141a242b;
+  border-color: #8996af29;
+}
+[data-theme='dark'] .main-board.word-feel .tile.gray {
+  background: #3c4453;
+  border-color: #3c4453;
+  color: #b8c1d0;
+}
+[data-theme='dark'] .round-reward[data-outcome='won'] {
+  background: linear-gradient(135deg, #403b292f, #2b293555);
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-board.word-feel .tile,
+  .main-board.word-feel .tile-glyph,
+  .round-reward .reward-heading {
+    animation: none !important;
+    transition: none;
+  }
+}
+/* Spreadsheet mode stays quiet and keeps its existing judgment fills. */
+@media (max-width: 900px) and (hover: hover) and (pointer: fine) {
+  .app .main-board.word-feel .tile,
+  .app .main-board.word-feel .tile-glyph {
+    animation: none !important;
+    box-shadow: none !important;
+  }
+  .app .main-board.word-feel .tile.revealed::after {
+    display: none !important;
+  }
+  .app .reward-medal {
+    display: none;
+  }
+}

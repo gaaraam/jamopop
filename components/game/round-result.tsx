@@ -1,4 +1,5 @@
 'use client';
+import { Trophy, Flag } from 'lucide-react';
 import { CharacterAvatar } from '@/components/game/character-avatar';
 
 import { useEffect, useState } from 'react';
@@ -75,8 +76,11 @@ export function RoundResult({
     );
   const leveled = result.after && result.before && result.after.level > result.before.level;
   return (
-    <section className="round-reward" aria-label="이번 판 보상">
+    <section className="round-reward" data-outcome={result.status} aria-label="이번 판 보상">
       <div className="reward-heading">
+        <span className="reward-medal" aria-hidden="true">
+          {result.status === 'won' ? <Trophy size={20} /> : <Flag size={20} />}
+        </span>
         <span className="reward-avatar">
           <CharacterAvatar avatar={result.avatar} skin={result.skin} />
         </span>
