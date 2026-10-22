@@ -589,3 +589,25 @@ html .skin-shop .shop-categories button[aria-pressed='true'] {
   align-items: center;
   gap: 7px;
 }
+
+.shop-series-filter {
+  margin: 0 0 16px;
+}
+.shop-series-filter button {
+  background: transparent;
+  color: inherit;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+.shop-series-filter button[aria-pressed='true'] {
+  background: #f8e8ce;
+  border-color: #ddc6a5;
+  color: #6d5031;
+}
+[data-theme='dark'] .shop-series-filter button[aria-pressed='true'] {
+  background: #4b4032;
+  border-color: #8a7455;
+  color: #f6dfbb;
+}
