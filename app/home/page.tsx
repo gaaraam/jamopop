@@ -6,9 +6,15 @@ import { AccountPanel } from '@/components/game/account-panel';
 import { FurnitureArt } from '@/components/game/furniture-art';
 import { DEFAULT_HOME, FURNITURE, type Placement } from '@/lib/furniture';
 import './home.css';
+import './home-world.css';
+import { HomeExplorer } from '@/components/home/home-explorer';
+import { HomeWardrobe } from '@/components/home/home-wardrobe';
+import { HomeNeighborhood } from '@/components/home/home-neighborhood';
 import { ServiceHeader } from '@/components/game/service-header';
 import { HomeResident } from '@/components/game/home-resident';
 import {
+  Shirt,
+  DoorOpen,
   Heart,
   Cookie,
   Sparkles,
@@ -41,6 +47,8 @@ type HomeState = {
   profile: { name: string; avatar: string; skin?: string } | null;
 };
 export default function Home() {
+  const [outside, setOutside] = useState(false);
+  const [wardrobe, setWardrobe] = useState(false);
   const [data, setData] = useState<HomeState | null>(null),
     [layout, setLayout] = useState<Placement[]>(DEFAULT_HOME),
     [tab, setTab] = useState<'house' | 'profile'>('house'),
@@ -138,6 +146,7 @@ export default function Home() {
   }
   function visit(id: string) {
     if (dirty && !window.confirm('저장하지 않은 배치를 버리고 방문할까요?')) return;
+    setOutside(false);
     setPanel(null);
     setCareMessage('');
     setEditing(false);
@@ -239,7 +248,18 @@ export default function Home() {
   const todayDone = life?.day === careDay() ? life.care.done : [];
   return (
     <main className="kongal-home">
-      <ServiceHeader active="home" title={tab === 'profile' ? '내 프로필' : '내 집'}>
+      <ServiceHeader
+        active="home"
+        title={
+          tab === 'profile'
+            ? '내 프로필'
+            : outside
+              ? '이웃 골목'
+              : friend && visiting
+                ? `${visiting.profile.name}의 집`
+                : '내 집'
+        }
+      >
         <button
           className="profile-toggle"
           aria-label={tab === 'house' ? '프로필' : '집으로'}
@@ -257,12 +277,38 @@ export default function Home() {
           onRetry={() => void load()}
         />
       )}
-      <div hidden={tab !== 'house' || (!data && !guest)} className="house-game">
-        <div className="house-shell">
+      {wardrobe && (
+        <HomeWardrobe onClose={() => setWardrobe(false)} onChanged={() => void load()} />
+      )}
+      {outside && !life && (
+        <AsyncStatus
+          label="이웃을 불러오고 있어요"
+          error={lifeError}
+          onRetry={() => void loadLife(friend)}
+        />
+      )}
+      {outside && tab === 'house' && data?.profile && life && (
+        <HomeNeighborhood
+          profile={data.profile}
+          friends={life?.friends || []}
+          onVisit={visit}
+          onHome={() => {
+            setOutside(false);
+            if (friend) visit('');
+          }}
+        />
+      )}
+      <div hidden={tab !== 'house' || outside || (!data && !guest)} className="house-game">
+        <div className="house-shell" hidden={outside}>
           <div
             className={`home-scene ${editing ? 'is-editing' : ''}`}
             role="group"
-            aria-label="콩알이의 방. 가구 선택 후 빈 자리를 눌러 배치"
+            tabIndex={0}
+            aria-label={
+              editing
+                ? '가구 선택 후 빈 자리를 눌러 배치'
+                : '콩알이의 집. 바닥을 누르거나 방향키로 이동'
+            }
             onClick={(e) => {
               if ((e.target as HTMLElement).closest('button')) return;
               const r = e.currentTarget.getBoundingClientRect();
@@ -339,28 +385,31 @@ export default function Home() {
                   </button>
                 );
               })}
-            <HomeResident
-              key={friend || 'self'}
-              furniture={displayLayout}
-              avatar={resident?.avatar || '🐱'}
-              skin={resident?.skin}
-              name={resident?.name || '콩알이'}
-              paused={!data || editing || tab !== 'house' || (!!friend && !visiting)}
-              reaction={reaction}
-              action={effect}
-              message={!friend ? careMessage : ''}
-              gain={careGain}
-              onPet={!friend && data ? () => void care('pet') : undefined}
-            />
-            {visiting && data?.profile && (
+            {visiting && (
               <HomeResident
-                visitor
-                paused={tab !== 'house'}
+                furniture={displayLayout}
+                avatar={resident?.avatar || '🐱'}
+                skin={resident?.skin}
+                name={resident?.name || '콩알이'}
+                paused={editing || outside || tab !== 'house'}
+                reaction={reaction}
+              />
+            )}
+            {data?.profile && (!friend || visiting) && (
+              <HomeExplorer
+                key={friend || 'self'}
+                furniture={displayLayout}
                 avatar={data.profile.avatar}
                 skin={data.profile.skin}
                 name={data.profile.name}
-                reaction={reaction}
-                onPet={() => setReaction((n) => n + 1)}
+                paused={editing || tab !== 'house' || outside || wardrobe || !!panel}
+                message={careMessage}
+                onPet={() => !friend && void care('pet')}
+                onExit={() => {
+                  setPanel(null);
+                  setOutside(true);
+                }}
+                onWardrobe={!friend ? () => setWardrobe(true) : undefined}
               />
             )}
           </div>
@@ -417,6 +466,16 @@ export default function Home() {
                       <strong>{name}</strong>
                     </button>
                   ))}
+                  <button
+                    className="dock-tool"
+                    disabled={editing || busy}
+                    onClick={() => setWardrobe(true)}
+                  >
+                    <span>
+                      <Shirt />
+                    </span>
+                    <strong>옷장</strong>
+                  </button>
                   <em />
                   <button
                     className="dock-tool"
@@ -437,6 +496,19 @@ export default function Home() {
                   </button>
                 </>
               )}
+              <button
+                className="dock-tool"
+                disabled={busy || editing}
+                onClick={() => {
+                  setPanel(null);
+                  setOutside(true);
+                }}
+              >
+                <span>
+                  <DoorOpen />
+                </span>
+                <strong>골목</strong>
+              </button>
               <button
                 className="dock-tool"
                 disabled={busy || editing}

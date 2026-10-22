@@ -1,0 +1,934 @@
+/* A fixed scene is shared by touch and keyboard; saved furniture keeps its coordinates. */
+.home-scene:focus-visible,
+.neighborhood-scene:focus-visible {
+  outline: 3px solid #8c78c8;
+  outline-offset: 5px;
+}
+.home-explorer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.home-explorer button {
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+.world-player {
+  position: absolute;
+  width: 16%;
+  transform: translate(-50%, -88%);
+  background: none;
+  border: 0;
+  padding: 0;
+  isolation: isolate;
+  cursor: pointer;
+  color: #574532;
+}
+.world-player .kongal-avatar {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  display: block;
+}
+.player-facing {
+  display: block;
+  position: relative;
+  transform-origin: 50% 80%;
+}
+.player-shadow {
+  position: absolute;
+  bottom: 12%;
+  left: 22%;
+  width: 56%;
+  height: 12%;
+  border-radius: 50%;
+  background: #74593328;
+  filter: blur(2px);
+}
+.world-player small {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  background: #fff9e8e8;
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+.is-walking .player-facing .kongal-avatar {
+  animation: world-step 0.22s ease-in-out infinite alternate;
+}
+@keyframes world-step {
+  to {
+    transform: translateY(-5px) rotate(3deg);
+  }
+}
+.world-speech {
+  position: absolute;
+  bottom: 105%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fffaf0;
+  border: 2px solid #ecd5a9;
+  border-radius: 16px;
+  padding: 8px 12px;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+}
+.walk-destination {
+  position: absolute;
+  width: 20px;
+  height: 10px;
+  transform: translate(-50%, -50%);
+  border: 2px solid #c68a40;
+  border-radius: 50%;
+  background: #ffeab080;
+  z-index: 4;
+}
+.walk-help {
+  position: absolute;
+  bottom: 9px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: #7b6049;
+  white-space: nowrap;
+  background: #fff8e5b8;
+  border-radius: 12px;
+  padding: 3px 10px;
+  z-index: 110;
+}
+.walk-help kbd {
+  font-family: inherit;
+  margin-left: 8px;
+}
+.world-door {
+  position: absolute;
+  right: 3%;
+  top: 30%;
+  width: 11%;
+  height: 31%;
+  border: 5px solid #e0b37e;
+  border-bottom: 0;
+  border-radius: 40px 40px 0 0;
+  background: #b68059;
+  box-shadow: inset 3px 0 #9b6e4d;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 5px;
+  color: #fff7df;
+  z-index: 45;
+  padding: 8px 0;
+}
+.door-window {
+  position: absolute;
+  top: 12%;
+  width: 60%;
+  height: 37%;
+  border: 4px solid #f0cd91;
+  border-radius: 50% 50% 3px 3px;
+  background: #b6d9dc;
+}
+.world-door b {
+  font-size: 11px;
+}
+.world-closet {
+  position: absolute;
+  left: 58%;
+  top: 25%;
+  width: 17%;
+  height: 34%;
+  border: 4px solid #d9a987;
+  border-radius: 14px 14px 4px 4px;
+  background: linear-gradient(90deg, #eac4a2 48%, #b98765 49%, #ecc8a4 51%);
+  box-shadow: 3px 5px #956b4620;
+  z-index: 44;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 12% 8px 8px;
+  color: #6f4c37;
+}
+.closet-mirror {
+  position: absolute;
+  left: 10%;
+  top: 10%;
+  width: 32%;
+  height: 70%;
+  border: 3px solid #fff0cc;
+  border-radius: 30px;
+  background: linear-gradient(
+    115deg,
+    #c8e5e2 30%,
+    #effcf5 32%,
+    #c8e5e2 48%,
+    #effcf5 50%,
+    #c8e5e2 65%
+  );
+}
+.world-closet svg {
+  position: absolute;
+  right: 12%;
+  top: 25%;
+  width: 24%;
+  height: 30%;
+}
+.world-closet b {
+  font-size: 11px;
+}
+.home-wardrobe[data-slot='dialog-content'] {
+  width: min(780px, calc(100vw - 28px));
+  max-width: 780px;
+  background: #fff9ed;
+  border: 5px solid #e7cba5;
+  border-radius: 26px;
+  color: #554332;
+  padding: 24px;
+  max-height: 90svh;
+  overflow: auto;
+  z-index: 160;
+}
+.home-wardrobe [data-slot='dialog-title'] {
+  font-size: 23px;
+}
+.wardrobe-body {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr;
+  gap: 22px;
+  min-height: 330px;
+}
+.wardrobe-mirror {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  background: linear-gradient(
+    125deg,
+    #e1f0ed 35%,
+    #f8fff9 36%,
+    #e1f0ed 58%,
+    #f8fff9 59%,
+    #e1f0ed 75%
+  );
+  border: 8px solid #dec39a;
+  border-radius: 120px 120px 24px 24px;
+  padding: 15px;
+  box-shadow: inset 0 0 0 3px #fff7e3;
+  gap: 12px;
+}
+.wardrobe-mirror > .kongal-avatar {
+  width: 100%;
+  height: 220px;
+}
+.wardrobe-mirror strong {
+  font-size: 15px;
+  text-align: center;
+}
+.wardrobe-wear {
+  background: #eed172;
+  border: 1px solid #d5b254;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 800;
+  min-height: 44px;
+  width: 100%;
+}
+.wardrobe-wear:disabled {
+  opacity: 0.55;
+}
+.wardrobe-rack {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-content: start;
+  gap: 8px;
+  max-height: 390px;
+  overflow: auto;
+  padding: 3px;
+}
+.wardrobe-rack > button {
+  background: #fffdf7;
+  border: 2px solid #eadbc5;
+  border-radius: 14px;
+  padding: 8px 4px;
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+.wardrobe-rack > button[aria-pressed='true'] {
+  border-color: #9579b7;
+  background: #f0e7f7;
+}
+.wardrobe-rack .kongal-avatar {
+  width: 70px;
+  height: 70px;
+  max-width: 100%;
+}
+.wardrobe-rack span {
+  font-size: 11px;
+  line-height: 1.4;
+}
+.wardrobe-rack small {
+  font-size: 10px;
+  color: #70568c;
+}
+.wardrobe-shop {
+  justify-self: end;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px;
+}
+.wardrobe-empty {
+  grid-column: 1/-1;
+  font-size: 13px;
+  padding: 20px 4px;
+  color: #8a755e;
+}
+.neighborhood-wrap {
+  max-width: 980px;
+  margin: 0 auto;
+}
+.neighborhood-scene {
+  position: relative;
+  aspect-ratio: 1.6;
+  overflow: hidden;
+  border: 5px solid #faf6df;
+  border-radius: 32px;
+  background: linear-gradient(#c7e7eb 0 28%, #b6d893 28% 100%);
+  isolation: isolate;
+}
+.lane-hill {
+  position: absolute;
+  top: 18%;
+  left: -10%;
+  width: 120%;
+  height: 24%;
+  background: #99c987;
+  border-radius: 50% 50% 0 0;
+}
+.lane-cloud {
+  position: absolute;
+  width: 17%;
+  height: 7%;
+  background: #fffff3;
+  border-radius: 50px;
+  top: 8%;
+  opacity: 0.8;
+}
+.cloud-one {
+  left: 12%;
+}
+.cloud-two {
+  right: 10%;
+  top: 14%;
+  width: 12%;
+}
+.lane-path {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 66%;
+  height: 22%;
+  background: #eddbb0;
+  box-shadow:
+    0 4px #a4bd79,
+    0 -4px #a4bd79;
+  background-image: radial-gradient(#c8b98d 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+.lane-sign {
+  position: absolute;
+  top: 4%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 3px solid #ebd5ac;
+  background: #fff5dc;
+  box-shadow: 0 3px #86ad7540;
+  border-radius: 14px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 16px;
+  white-space: nowrap;
+  color: #655340;
+  font-weight: 800;
+  z-index: 2;
+}
+.lane-sign small {
+  font-size: 11px;
+  color: #9b896e;
+}
+.lane-houses {
+  position: absolute;
+  top: 25%;
+  left: 5%;
+  right: 5%;
+  height: 39%;
+  display: flex;
+  gap: 4%;
+  align-items: flex-end;
+  z-index: 60;
+  pointer-events: none;
+}
+.neighbor-house {
+  position: relative;
+  flex: 1;
+  max-width: 23%;
+  height: 100%;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: #584f40;
+  pointer-events: auto;
+}
+.house-roof {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: -4%;
+  right: -4%;
+  height: 40%;
+  background: #b58bab;
+  clip-path: polygon(50% 0, 100% 83%, 96% 100%, 4% 100%, 0 83%);
+  z-index: 2;
+}
+.house-front {
+  display: block;
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  top: 30%;
+  height: 66%;
+  background: #fff0ce;
+  border: 3px solid #dac99e;
+  border-radius: 8px;
+  box-shadow: 0 8px #73956040;
+}
+.house-pane {
+  position: absolute;
+  left: 9%;
+  top: 23%;
+  width: 30%;
+  height: 30%;
+  background:
+    linear-gradient(90deg, transparent 43%, #f9e4ae 45% 55%, transparent 57%),
+    linear-gradient(0deg, #9dcbcd 43%, #f9e4ae 45% 55%, #9dcbcd 57%);
+  border: 3px solid #f9e4ae;
+}
+.house-entry {
+  position: absolute;
+  right: 12%;
+  bottom: 0;
+  width: 30%;
+  height: 55%;
+  background: #b78e6e;
+  border-radius: 20px 20px 0 0;
+  border: 3px solid #ddc49d;
+}
+.house-front .kongal-avatar {
+  position: absolute;
+  width: 53%;
+  height: 65%;
+  left: 0;
+  bottom: 0;
+  filter: drop-shadow(0 2px 1px #0002);
+}
+.neighbor-house b {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  max-width: 120%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: #fff7e6;
+  border-radius: 8px;
+  padding: 4px 9px;
+  font-size: 12px;
+}
+.house-color-0 .house-roof {
+  background: #d99d85;
+}
+.house-color-1 .house-roof {
+  background: #85afac;
+}
+.house-color-2 .house-roof {
+  background: #d1b266;
+}
+.neighbor-house:hover {
+  transform: translateY(-3px);
+}
+.neighbor-empty {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  color: #4d6a45;
+  margin-left: 8%;
+  pointer-events: auto;
+}
+.empty-flower {
+  font-size: 60px;
+  color: #fff4cf;
+}
+.neighbor-empty p {
+  font-weight: 700;
+  font-size: 15px;
+}
+.neighbor-empty a {
+  width: 100%;
+  font-size: 13px;
+  text-align: center;
+}
+.lane-flower {
+  position: absolute;
+  font-size: 24px;
+  color: #fff5b0;
+}
+.flower-one {
+  left: 8%;
+  top: 91%;
+}
+.flower-two {
+  right: 18%;
+  top: 91%;
+  color: #f6c7bf;
+}
+.flower-three {
+  right: 3%;
+  top: 59%;
+}
+.neighborhood-scene .world-door {
+  display: none;
+}
+.neighborhood-scene .home-explorer {
+  z-index: 70;
+}
+.neighborhood-scene .world-player {
+  width: 13%;
+}
+.neighborhood-scene .walk-help {
+  background: #e4efcf;
+  color: #557047;
+}
+.neighborhood-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+  margin: 16px 0;
+}
+.neighborhood-nav button,
+.neighborhood-nav a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 16px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #ddd);
+  font-weight: 700;
+  font-size: 14px;
+}
+.neighborhood-nav > div {
+  display: flex;
+  gap: 8px;
+}
+.neighborhood-nav button:disabled {
+  opacity: 0.4;
+}
+.neighborhood-note {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted-foreground, #87909b);
+  margin-bottom: 24px;
+}
+[data-theme='dark'] .home-wardrobe[data-slot='dialog-content'] {
+  background: #302c32;
+  border-color: #716052;
+  color: #f4e7d6;
+}
+[data-theme='dark'] .wardrobe-mirror {
+  background: #35464a;
+  border-color: #776451;
+}
+[data-theme='dark'] .wardrobe-rack > button {
+  background: #39323c;
+  border-color: #65576a;
+}
+[data-theme='dark'] .wardrobe-rack > button[aria-pressed='true'] {
+  background: #51415e;
+  border-color: #be9ad4;
+}
+[data-theme='dark'] .wardrobe-wear {
+  color: #443826;
+}
+[data-theme='dark'] .neighborhood-scene {
+  filter: brightness(0.8);
+  border-color: #676455;
+}
+@media (max-width: 600px) {
+  .home-wardrobe[data-slot='dialog-content'] {
+    padding: 18px;
+    border-width: 3px;
+  }
+  .wardrobe-body {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    min-height: 0;
+  }
+  .wardrobe-mirror {
+    border-width: 5px;
+    padding: 10px;
+    border-radius: 80px 80px 20px 20px;
+    gap: 6px;
+  }
+  .wardrobe-mirror > .kongal-avatar {
+    height: 145px;
+  }
+  .wardrobe-wear {
+    width: 75%;
+  }
+  .wardrobe-rack {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    max-height: 200px;
+  }
+  .wardrobe-rack .kongal-avatar {
+    height: 52px;
+  }
+  .wardrobe-rack span {
+    font-size: 10px;
+  }
+  .house-shell .house-dock {
+    gap: 3px;
+    padding: 8px 4px;
+  }
+  .house-shell .dock-tool {
+    min-width: 0;
+    flex: 1;
+  }
+  .house-shell .dock-tool strong {
+    font-size: 10px;
+  }
+  .house-shell .dock-tool > span {
+    width: 34px;
+    height: 34px;
+  }
+  .world-closet {
+    border-width: 2px;
+    border-radius: 8px;
+    padding: 0 4px 4px;
+  }
+  .closet-mirror {
+    border-width: 2px;
+  }
+  .world-closet b,
+  .world-door b {
+    font-size: 8px;
+  }
+  .world-door {
+    border-width: 3px;
+    padding-bottom: 4px;
+    gap: 0;
+  }
+  .world-door svg {
+    width: 13px;
+  }
+  .door-window {
+    border-width: 2px;
+  }
+  .world-player {
+    width: 19%;
+  }
+  .world-player small {
+    font-size: 9px;
+    padding: 2px 5px;
+  }
+  .walk-help {
+    font-size: 9px;
+    bottom: 5px;
+  }
+  .walk-help kbd {
+    display: none;
+  }
+  .neighborhood-scene {
+    border-width: 3px;
+    border-radius: 22px;
+    aspect-ratio: 1.2;
+  }
+  .lane-sign {
+    padding: 5px 10px;
+    font-size: 13px;
+  }
+  .lane-houses {
+    gap: 3%;
+    left: 3%;
+    right: 3%;
+    height: 32%;
+    top: 31%;
+  }
+  .house-front {
+    border-width: 2px;
+  }
+  .house-pane {
+    border-width: 2px;
+  }
+  .house-entry {
+    border-width: 2px;
+  }
+  .neighbor-house b {
+    font-size: 9px;
+    padding: 3px 5px;
+  }
+  .neighborhood-nav {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .neighborhood-nav button,
+  .neighborhood-nav a {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+  .neighborhood-note {
+    font-size: 10px;
+  }
+  .neighbor-empty {
+    gap: 5px;
+    margin-left: 6%;
+  }
+  .neighbor-empty p {
+    font-size: 12px;
+  }
+  .empty-flower {
+    font-size: 38px;
+  }
+  .neighborhood-scene .world-player {
+    width: 17%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .is-walking .player-facing .kongal-avatar {
+    animation: none;
+  }
+  .neighbor-house:hover {
+    transform: none;
+  }
+}
+.home-scene .world-player small {
+  display: none;
+}
+.neighbor-house .house-roof {
+  background-image: repeating-linear-gradient(0deg, transparent 0 20%, #ffffff19 21% 23%);
+  filter: drop-shadow(0 4px 0 #69514125);
+}
+.house-front::after {
+  content: '';
+  position: absolute;
+  left: -8%;
+  right: -8%;
+  bottom: -8%;
+  height: 12%;
+  background: #e4d5aa;
+  border-radius: 50%;
+  z-index: -1;
+}
+.house-entry::after {
+  content: '';
+  position: absolute;
+  left: 15%;
+  top: 55%;
+  width: 4px;
+  height: 4px;
+  background: #f5df8f;
+  border-radius: 50%;
+}
+@media (max-width: 600px) {
+  .house-shell .house-dock {
+    width: 100%;
+    max-width: 356px;
+  }
+  .house-shell .dock-tool {
+    min-width: 44px;
+    min-height: 56px;
+  }
+  .house-shell .house-dock em {
+    display: none;
+  }
+}
+[data-theme='dark'] .wardrobe-rack > button {
+  color: #f0e5d5;
+}
+[data-theme='dark'] .wardrobe-rack small {
+  color: #d1b9e4;
+}
+[data-theme='dark'] .wardrobe-empty {
+  color: #c5b8a9;
+}
+[data-theme='dark'] .neighborhood-nav button,
+[data-theme='dark'] .neighborhood-nav a {
+  background: #2c303b;
+  color: #e9e4da;
+  border-color: #484c5a;
+}
+/* Position belongs to a non-interactive anchor, never to a hoverable control. */
+.home-explorer .player-interact,
+.home-explorer .player-interact:hover:not(:disabled),
+.home-explorer .player-interact:active {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  transform: none;
+  transition: none;
+  color: inherit;
+}
+.home-scene .home-walker:hover:not(:disabled) {
+  transform: translate(-50%, -65%);
+}
+.house-shell .home-scene {
+  aspect-ratio: 1.2;
+}
+.house-shell .home-wall {
+  bottom: 65%;
+}
+.house-shell .home-floor {
+  top: 35%;
+}
+.house-shell .home-baseboard {
+  top: 34%;
+}
+.house-shell .home-window {
+  top: 10%;
+  height: 20%;
+  width: 22%;
+}
+.house-shell .home-picture {
+  top: 13%;
+  right: 49%;
+  width: 8%;
+}
+.home-explorer .world-door {
+  top: 10%;
+  height: 25%;
+}
+.home-explorer .world-closet {
+  top: 10%;
+  height: 25%;
+  padding-top: 0;
+}
+.home-explorer .world-player {
+  width: 12%;
+}
+.home-explorer .world-door:hover:not(:disabled),
+.home-explorer .world-closet:hover:not(:disabled) {
+  transform: none;
+  filter: brightness(1.06);
+}
+@media (max-width: 600px) {
+  .house-shell .home-scene {
+    aspect-ratio: 1.05;
+  }
+  .home-explorer .world-player {
+    width: 17%;
+  }
+}
+/* A small walkable square: buildings surround the path instead of forming a carousel. */
+.neighborhood-scene {
+  aspect-ratio: 1.2;
+  background: #b6d893;
+}
+.lane-cloud {
+  display: none;
+}
+.lane-hill {
+  top: -8%;
+  height: 20%;
+  background: #83b878;
+}
+.lane-path {
+  left: 42%;
+  width: 16%;
+  top: 12%;
+  height: 88%;
+  right: auto;
+  box-shadow: none;
+  border-radius: 30px;
+}
+.lane-path::after {
+  content: '';
+  position: absolute;
+  top: 39%;
+  left: -220%;
+  width: 540%;
+  height: 18%;
+  background: #eddbb0;
+  border-radius: 35px;
+}
+.lane-houses {
+  inset: 0;
+  height: auto;
+  display: block;
+  z-index: auto;
+}
+.neighbor-house {
+  position: absolute;
+  width: 25%;
+  max-width: none;
+  height: 29%;
+  left: 12.5%;
+  top: 11%;
+  z-index: 40;
+}
+.neighbor-house:nth-child(2) {
+  left: 62.5%;
+}
+.neighbor-house:nth-child(3) {
+  top: 49%;
+  z-index: 78;
+}
+.neighbor-house:nth-child(4) {
+  left: 62.5%;
+  top: 49%;
+  z-index: 78;
+}
+.neighborhood-scene .home-explorer {
+  z-index: auto;
+}
+.neighborhood-scene .neighbor-house:hover:not(:disabled) {
+  transform: none;
+  filter: brightness(1.06);
+}
+.neighbor-empty {
+  position: absolute;
+  left: 56%;
+  top: 18%;
+  margin: 0;
+  max-width: 36%;
+}
+@media (max-width: 600px) {
+  .neighborhood-scene {
+    aspect-ratio: 1.05;
+  }
+}
+
+@media (min-width: 601px) {
+  .house-shell .home-scene,
+  .neighborhood-scene {
+    width: min(100%, max(480px, calc((100svh - 245px) * 1.2)));
+    margin-inline: auto;
+  }
+  .home-explorer .world-player {
+    width: 14%;
+  }
+}
