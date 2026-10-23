@@ -56,14 +56,9 @@ async function identity(db, subject, admin = 0) {
   const token = random(),
     id = 'google:' + subject,
     now = Date.now();
-  db.prepare('INSERT INTO google_accounts VALUES(?,?,?,?,?,?)').run(
-    subject,
-    id,
-    subject + '@example.test',
-    '이름',
-    now,
-    now,
-  );
+  db.prepare(
+    'INSERT INTO google_accounts(subject,game_account_id,email,name,created_at,last_login_at) VALUES(?,?,?,?,?,?)',
+  ).run(subject, id, subject + '@example.test', '이름', now, now);
   db.prepare('INSERT INTO google_sessions VALUES(?,?,?)').run(
     await hash(token),
     subject,

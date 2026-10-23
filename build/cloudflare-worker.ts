@@ -1,3 +1,4 @@
+import {accessResponse} from './member-access.mjs';
 import {productMetricsEndpoint} from './product-metrics.mjs';
 import {cleanupProductMetrics} from '../lib/product-metrics.mjs';
 import {measureRequest,measuredDatabase,measurePhase} from '../lib/operational-metrics.mjs';
@@ -25,6 +26,7 @@ async function serve(request:Request,env:Cloudflare.Env,ctx:ExecutionContext){
  if(!['GET','HEAD','OPTIONS'].includes(sanitized.method)&&sanitized.headers.get('origin')!==url.origin)return Response.json({error:'이 페이지에서 다시 시도해 주세요.'},{status:403});
  if(url.pathname==='/api/product-metrics')return productMetricsEndpoint(sanitized,env);
  const trusted=await measurePhase('session',()=>authenticatedRequest(sanitized,env));
+ const access=accessResponse(trusted,env);if(access)return access;
  const safety=await measurePhase('safety',()=>safetyBefore(trusted,env));if(safety.response)return safety.response;
  const direct=await safetyEndpoint(trusted,env,safety);if(direct)return direct;
  let response;try{const baseResponse=await measurePhase('handler',()=>handler.fetch(trusted,env,ctx));response=await measurePhase('filter',()=>safetyAfter(trusted,env,baseResponse,safety))}catch{return Response.json({error:'안전 설정을 확인하지 못했어요. 잠시 후 다시 시도해 주세요.'},{status:503})}

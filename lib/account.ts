@@ -115,3 +115,10 @@ export function isSiteAdmin(req: Request) {
     (req.headers.get('x-jamopop-admin') === '1' || isAdminAccount(accountId(req)))
   );
 }
+
+// Header is supplied only by the verified Worker session boundary.
+export function canUseCommunity(req: Request) {
+  return (
+    isSiteAdmin(req) || (!!accountId(req) && req.headers.get('x-jamopop-approval') === 'approved')
+  );
+}

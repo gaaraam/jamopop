@@ -56,7 +56,7 @@ test('retention preview never changes old chats, active cases, game records or b
 test('technical expiry cleanup is bounded, idempotent and preserves valid sessions and audit', async () => {
   const { sql, db } = fixture();
   sql.exec(
-    "INSERT INTO safety_rate VALUES('expired',5,99),('active',5,101);INSERT INTO google_accounts VALUES('subject','account','fake@example.test','name',1,1);INSERT INTO google_sessions VALUES('old','subject',99),('valid','subject',101);INSERT INTO deletion_audit VALUES('case','admin',1,'{}',1)",
+    "INSERT INTO safety_rate VALUES('expired',5,99),('active',5,101);INSERT INTO google_accounts(subject,game_account_id,email,name,created_at,last_login_at) VALUES('subject','account','fake@example.test','name',1,1);INSERT INTO google_sessions VALUES('old','subject',99),('valid','subject',101);INSERT INTO deletion_audit VALUES('case','admin',1,'{}',1)",
   );
   const result = await cleanupExpiredTechnical(db, 100);
   assert.equal(result.google_sessions, 1);

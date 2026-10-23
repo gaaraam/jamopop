@@ -42,14 +42,9 @@ test('admin user directory groups Google profiles, filters guests and protects p
       now = Date.now();
     assert.equal((await req('', false)).status, 403);
     assert.equal((await req('?kind=invalid')).status, 400);
-    db.prepare('INSERT INTO google_accounts VALUES(?,?,?,?,?,?)').run(
-      'secret-subject',
-      'google-game',
-      'private@test.invalid',
-      '구글',
-      now,
-      now,
-    );
+    db.prepare(
+      'INSERT INTO google_accounts(subject,game_account_id,email,name,created_at,last_login_at) VALUES(?,?,?,?,?,?)',
+    ).run('secret-subject', 'google-game', 'private@test.invalid', '구글', now, now);
     for (const [id, name] of [
       ['google-game', '구글'],
       ['legacy-game', '이전닉'],

@@ -138,6 +138,7 @@ export default function Admin() {
         <a href="/?lobby=1">← 대기실</a>
         <strong>운영 대시보드</strong>
         <a href="/admin/metrics">제품 지표 ↗</a>
+        <a href="/admin/approvals">가입 승인 ↗</a>
         <a href="/admin/users">사용자 관리 ↗</a>
         <a href="/admin/gold">골드 현황 ↗</a>
         <a href="/admin/news">소식·이벤트 ↗</a>

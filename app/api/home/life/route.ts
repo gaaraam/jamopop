@@ -1,4 +1,4 @@
-import { accountId } from '@/lib/account';
+import { accountId, canUseCommunity } from '@/lib/account';
 import { one, all, run, database } from '@/lib/store';
 import { careDay, careProgress, CARE_ACTIONS } from '@/lib/home-life';
 import { DEFAULT_HOME } from '@/lib/furniture';
@@ -18,6 +18,8 @@ export async function GET(req: Request) {
     const id = accountId(req);
     if (!id) return reply({ error: '로그인 후 이용해 주세요.' }, 401);
     const link = new URL(req.url).searchParams.get('friend');
+    const community = canUseCommunity(req);
+    if (link && !community) return reply({ error: '관리자 승인 후 방문할 수 있어요.' }, 403);
     const f = link ? await friend(id, link) : null;
     if (link && !f) return reply({ error: '친구의 집만 방문할 수 있어요.' }, 403);
     const target = f?.target || id,
@@ -52,8 +54,8 @@ export async function GET(req: Request) {
         Number(total?.points || 0),
         today.map((x) => x.action),
       ),
-      friends,
-      visits,
+      friends: community ? friends : [],
+      visits: community ? visits : [],
       visiting: f
         ? {
             layout: home ? JSON.parse(home.layout) : DEFAULT_HOME,
@@ -73,6 +75,8 @@ export async function POST(req: Request) {
     if (req.headers.get('origin') !== new URL(req.url).origin)
       return reply({ error: '현재 페이지에서 다시 시도해 주세요.' }, 403);
     const b = (await req.json()) as { action: string; friend?: string; stamp?: string };
+    if ((b.friend || b.action === 'visit') && !canUseCommunity(req))
+      return reply({ error: '관리자 승인 후 방문할 수 있어요.' }, 403);
     const day = careDay(),
       now = Date.now();
     if (!CARE_ACTIONS.includes(b.action as (typeof CARE_ACTIONS)[number]))

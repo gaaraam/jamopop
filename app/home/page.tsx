@@ -9,6 +9,7 @@ import './home.css';
 import './home-world.css';
 import { HomeExplorer } from '@/components/home/home-explorer';
 import { HomeWardrobe } from '@/components/home/home-wardrobe';
+import { useCommunityAccess } from '@/components/community-access';
 import { HomeNeighborhood } from '@/components/home/home-neighborhood';
 import { ServiceHeader } from '@/components/game/service-header';
 import { HomeResident } from '@/components/game/home-resident';
@@ -47,6 +48,7 @@ type HomeState = {
   profile: { name: string; avatar: string; skin?: string } | null;
 };
 export default function Home() {
+  const community = useCommunityAccess();
   const [outside, setOutside] = useState(false);
   const [wardrobe, setWardrobe] = useState(false);
   const [data, setData] = useState<HomeState | null>(null),
@@ -407,7 +409,7 @@ export default function Home() {
                 onPet={() => !friend && void care('pet')}
                 onExit={() => {
                   setPanel(null);
-                  setOutside(true);
+                  if (community) setOutside(true);
                 }}
                 onWardrobe={!friend ? () => setWardrobe(true) : undefined}
               />
@@ -498,10 +500,11 @@ export default function Home() {
               )}
               <button
                 className="dock-tool"
-                disabled={busy || editing}
+                disabled={busy || editing || !community}
+                title={!community ? '관리자 승인 후 이용할 수 있어요' : undefined}
                 onClick={() => {
                   setPanel(null);
-                  setOutside(true);
+                  if (community) setOutside(true);
                 }}
               >
                 <span>
@@ -511,9 +514,10 @@ export default function Home() {
               </button>
               <button
                 className="dock-tool"
-                disabled={busy || editing}
+                disabled={busy || editing || !community}
+                title={!community ? '관리자 승인 후 이용할 수 있어요' : undefined}
                 aria-expanded={panel === 'friends'}
-                onClick={() => setPanel(panel === 'friends' ? null : 'friends')}
+                onClick={() => community && setPanel(panel === 'friends' ? null : 'friends')}
               >
                 <span>
                   <Users />
