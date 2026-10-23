@@ -77,7 +77,7 @@ test('reward endpoints: authorization, duplicate tabs, profile switching, expiry
         ...(body ? { body: JSON.stringify(body) } : {}),
       });
     db.exec(
-      "INSERT INTO google_accounts VALUES('subject','one','test@example.test','테스트',1,1); INSERT INTO profiles(id,name,avatar,created_at) VALUES('one','테스트','🐱',1)",
+      "INSERT INTO google_accounts(subject,game_account_id,email,name,created_at,last_login_at) VALUES('subject','one','test@example.test','테스트',1,1); INSERT INTO profiles(id,name,avatar,created_at) VALUES('one','테스트','🐱',1)",
     );
     assert.equal((await GET(req(null, null, '?admin=1'))).status, 403);
     assert.equal((await POST(req(null, { action: 'attendance' }))).status, 401);
@@ -142,7 +142,7 @@ test('reward endpoints: authorization, duplicate tabs, profile switching, expiry
       false,
     );
     db.exec(
-      "INSERT INTO google_accounts VALUES('subject-b','three','b@example.test','테스트2',1,1)",
+      "INSERT INTO google_accounts(subject,game_account_id,email,name,created_at,last_login_at) VALUES('subject-b','three','b@example.test','테스트2',1,1)",
     );
     assert.equal((await POST(req('three', { action: 'claim', id: created.id }))).status, 409);
     assert.equal(

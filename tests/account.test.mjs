@@ -136,6 +136,7 @@ test('account ownership, safe claims, privacy, pagination and preservation', asy
       new Request('https://test.local/api/account', {
         method: body ? 'POST' : 'GET',
         headers: {
+          'x-jamopop-approval': 'approved',
           ...(id ? { 'oai-authenticated-user-id': id } : {}),
           ...(token ? { cookie: `bw_session=${token}` } : {}),
           ...(body ? { 'content-type': 'application/json', origin: 'https://test.local' } : {}),
@@ -147,6 +148,12 @@ test('account ownership, safe claims, privacy, pagination and preservation', asy
       401,
     );
     assert.equal((await GET(req(null))).status, 200);
+    const pendingReq = req('A');
+    pendingReq.headers.set('x-jamopop-approval', 'pending');
+    const privateView = await (await GET(pendingReq)).json();
+    assert.deepEqual(privateView.rooms, []);
+    assert.deepEqual(privateView.records, []);
+
     assert.equal((await (await GET(req(null))).json()).signedIn, false);
     assert.equal((await findMember(req(null), room)).id, 'guest');
     assert.equal(
@@ -260,7 +267,11 @@ test('account ownership, safe claims, privacy, pagination and preservation', asy
     );
     const cross = new Request('https://test.local/api/account', {
       method: 'POST',
-      headers: { origin: 'https://evil.local', 'oai-authenticated-user-id': 'A' },
+      headers: {
+        'x-jamopop-approval': 'approved',
+        origin: 'https://evil.local',
+        'oai-authenticated-user-id': 'A',
+      },
       body: JSON.stringify({ action: 'profile', name: 'x', avatar: '🐱' }),
     });
     assert.equal((await POST(cross)).status, 403);
@@ -342,6 +353,7 @@ test('account ownership, safe claims, privacy, pagination and preservation', asy
       new Request('https://test.local/api/game' + query, {
         method: body ? 'POST' : 'GET',
         headers: {
+          'x-jamopop-approval': 'approved',
           ...(id ? { 'oai-authenticated-user-id': id } : {}),
           ...(token ? { cookie: `bw_session=${token}` } : {}),
           ...(body ? { 'content-type': 'application/json', origin: 'https://test.local' } : {}),
@@ -526,7 +538,10 @@ test('account ownership, safe claims, privacy, pagination and preservation', asy
     const page2 = await (
       await GET(
         new Request('https://test.local/api/account?offset=20', {
-          headers: { 'oai-authenticated-user-id': 'A' },
+          headers: {
+            'x-jamopop-approval': 'approved',
+            'oai-authenticated-user-id': 'A',
+          },
         }),
       )
     ).json();

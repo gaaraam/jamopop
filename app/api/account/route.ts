@@ -9,6 +9,7 @@ import {
   accountProgressions,
   avatarAccess,
   isSiteAdmin,
+  canUseCommunity,
 } from '@/lib/account';
 const reply = (data: any, status = 200) =>
   Response.json(data, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -90,13 +91,13 @@ export async function GET(req: Request) {
       pending: pending.n,
       conflicts: conflicts.n,
       stats,
-      rooms,
-      records: rows.slice(0, 20).map((r) => ({
+      rooms: canUseCommunity(req) ? rooms : [],
+      records: (canUseCommunity(req) ? rows : []).slice(0, 20).map((r) => ({
         ...r,
         guesses: JSON.parse(r.guesses),
         status: r.status === 'playing' && r.phase === 'interrupted' ? 'interrupted' : r.status,
       })),
-      nextOffset: rows.length > 20 ? offset + 20 : null,
+      nextOffset: canUseCommunity(req) && rows.length > 20 ? offset + 20 : null,
     });
   } catch (e) {
     console.error('account read failed');

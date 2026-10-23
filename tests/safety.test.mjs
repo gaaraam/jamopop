@@ -517,7 +517,9 @@ test('real Worker boundary authenticates before safety, preserves POST bodies an
   const now = Date.now(),
     token = 'e'.repeat(64);
   f.db
-    .prepare('INSERT INTO google_accounts VALUES(?,?,?,?,?,?)')
+    .prepare(
+      'INSERT INTO google_accounts(subject,game_account_id,email,name,created_at,last_login_at) VALUES(?,?,?,?,?,?)',
+    )
     .run('google-test', 'alice', 'local@example.test', '테스트', now, now);
   f.db
     .prepare('INSERT INTO google_sessions VALUES(?,?,?)')
@@ -545,7 +547,8 @@ test('real Worker boundary authenticates before safety, preserves POST bodies an
     f.env,
     {},
   );
-  assert.equal(spoofed.status, 401);
+  assert.equal(spoofed.status, 403);
+  f.db.exec("UPDATE google_accounts SET approval_status='approved'");
   const headers = { cookie: '__Host-jamopop_session=' + token };
   const body = { action: 'guess', word: '기차', expected: 0 };
   const posted = await worker.fetch(req(null, body, '/api/game', headers), f.env, {});

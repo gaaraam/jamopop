@@ -44,7 +44,10 @@ test('home care: authenticated ownership, daily cap, friendship privacy, stamps 
       return pathToFileURL(p).href;
     };
     const store = save('store', 'export const {one,all,run,database}=globalThis.__homeStore;'),
-      account = save('account', "export const accountId=r=>r.headers.get('test-user');");
+      account = save(
+        'account',
+        "export const accountId=r=>r.headers.get('test-user');export const canUseCommunity=r=>r.headers.get('test-access')!=='pending';",
+      );
     const compile = (file, name, maps = {}) => {
       let s = ts.transpileModule(readFileSync(file, 'utf8'), {
         compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
@@ -96,6 +99,15 @@ test('home care: authenticated ownership, daily cap, friendship privacy, stamps 
         ...(body ? { body: JSON.stringify(body) } : {}),
       });
     assert.equal((await GET(req(null))).status, 401);
+    const pending = req('A');
+    pending.headers.set('test-access', 'pending');
+    const ownOnly = await (await GET(pending)).json();
+    assert.deepEqual(ownOnly.friends, []);
+    assert.deepEqual(ownOnly.visits, []);
+    const visit = req('A', null, '?friend=ab');
+    visit.headers.set('test-access', 'pending');
+    assert.equal((await GET(visit)).status, 403);
+
     assert.equal((await POST(req('A', { action: 'pet' }, '', 'https://bad.test'))).status, 403);
     assert.equal((await POST(req('A', { action: 'invalid' }))).status, 400);
     await Promise.all(Array.from({ length: 12 }, () => POST(req('A', { action: 'pet' }))));

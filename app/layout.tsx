@@ -1,3 +1,6 @@
+import { headers } from 'next/headers';
+import { CommunityAccess } from '@/components/community-access';
+import { canUseCommunity } from '@/lib/account';
 import { Suspense } from 'react';
 import { AttendanceWelcome } from '@/components/rewards/attendance-welcome';
 import '@/components/rewards/attendance-welcome.css';
@@ -58,30 +61,33 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const allowed = canUseCommunity(new Request('https://app.local', { headers: await headers() }));
   return (
     <html lang="ko" suppressHydrationWarning>
       <body className="antialiased">
-        <AppearanceProvider>
-          <OverlayState>
-            <Announcement />
-            <SafetyNotice />
-            <AgeCheck />
-            <FriendInvitations />
-            <Suspense fallback={null}>
-              <AttendanceWelcome />
-            </Suspense>
-            {children}
-            <Suspense fallback={null}>
-              <ProductMeasurement />
-            </Suspense>
-            <LegalLinks />
-          </OverlayState>
-        </AppearanceProvider>
+        <CommunityAccess allowed={allowed}>
+          <AppearanceProvider>
+            <OverlayState>
+              <Announcement />
+              {allowed && <SafetyNotice />}
+              <AgeCheck />
+              {allowed && <FriendInvitations />}
+              <Suspense fallback={null}>
+                <AttendanceWelcome />
+              </Suspense>
+              {children}
+              <Suspense fallback={null}>
+                <ProductMeasurement />
+              </Suspense>
+              <LegalLinks />
+            </OverlayState>
+          </AppearanceProvider>
+        </CommunityAccess>
       </body>
     </html>
   );
