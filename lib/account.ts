@@ -116,9 +116,7 @@ export function isSiteAdmin(req: Request) {
   );
 }
 
-// Header is supplied only by the verified Worker session boundary.
+// Any verified signed-in member may use community features; guests stay on personal play.
 export function canUseCommunity(req: Request) {
-  return (
-    isSiteAdmin(req) || (!!accountId(req) && req.headers.get('x-jamopop-approval') === 'approved')
-  );
+  return !!accountId(req);
 }

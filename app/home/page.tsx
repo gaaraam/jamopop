@@ -501,7 +501,7 @@ export default function Home() {
               <button
                 className="dock-tool"
                 disabled={busy || editing || !community}
-                title={!community ? '관리자 승인 후 이용할 수 있어요' : undefined}
+                title={!community ? '로그인 후 이용할 수 있어요' : undefined}
                 onClick={() => {
                   setPanel(null);
                   if (community) setOutside(true);
@@ -515,7 +515,7 @@ export default function Home() {
               <button
                 className="dock-tool"
                 disabled={busy || editing || !community}
-                title={!community ? '관리자 승인 후 이용할 수 있어요' : undefined}
+                title={!community ? '로그인 후 이용할 수 있어요' : undefined}
                 aria-expanded={panel === 'friends'}
                 onClick={() => community && setPanel(panel === 'friends' ? null : 'friends')}
               >
