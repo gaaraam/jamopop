@@ -548,7 +548,6 @@ test('real Worker boundary authenticates before safety, preserves POST bodies an
     {},
   );
   assert.equal(spoofed.status, 403);
-  f.db.exec("UPDATE google_accounts SET approval_status='approved'");
   const headers = { cookie: '__Host-jamopop_session=' + token };
   const body = { action: 'guess', word: '기차', expected: 0 };
   const posted = await worker.fetch(req(null, body, '/api/game', headers), f.env, {});

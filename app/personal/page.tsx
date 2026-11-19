@@ -29,34 +29,19 @@ export default function Personal() {
       <ServiceHeader active="personal" title="자음모음팝" playOnly />
       <section className="personal-welcome">
         <CharacterAvatar avatar="🐱" />
-        <h2>
-          {status === 'guest'
-            ? '혼자서도 한 판'
-            : status === 'pending'
-              ? '가입 승인 대기 중'
-              : status === 'rejected'
-                ? '가입이 승인되지 않았어요'
-                : '접속 확인 중'}
-        </h2>
+        <h2>{status === 'guest' ? '혼자서도 한 판' : '접속 확인 중'}</h2>
         <p>
-          {status === 'guest'
-            ? '방과 회원 기능은 가입 후 관리자 승인이 필요해요.'
-            : status === 'pending'
-              ? '승인 전에도 개인 게임은 계속 즐길 수 있어요.'
-              : status === 'rejected'
-                ? '개인 게임은 이용할 수 있어요. 문의가 있다면 문의하기를 이용해 주세요.'
-                : ''}
+          {status === 'guest' ? '방과 회원 기능은 Google 로그인 후 바로 이용할 수 있어요.' : ''}
         </p>
         {error && <p role="alert">{error}</p>}
         <div>
           {status === 'guest' ? (
-            <a className="primary" href="/auth/google/start?return_to=%2Fpersonal">
+            <a className="primary" href="/auth/google/start?return_to=%2F%3Flobby%3D1">
               Google로 가입·로그인
             </a>
           ) : (
-            <button onClick={refresh}>승인 상태 확인</button>
+            <button onClick={refresh}>다시 확인</button>
           )}
-          {status === 'rejected' && <a href="/support">문의하기</a>}
         </div>
       </section>
       <div className="personal-games">
