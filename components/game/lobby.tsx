@@ -422,6 +422,7 @@ export function Lobby({
                     <b>{r.memberCount}</b>
                     <span>/ 40</span>
                   </span>
+                  {archived && <a href="/solo">개인 도전</a>}
                   <button
                     className="room-enter"
                     aria-label={`${r.name} ${signedIn === false ? '게스트로 입장' : '입장'}`}

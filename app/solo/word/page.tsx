@@ -694,6 +694,9 @@ export default function Solo() {
                   )}
                   <div>
                     <button
+                      className={
+                        active.status !== 'won' || stage.id === 15 ? 'solo-primary' : undefined
+                      }
                       disabled={busy}
                       onClick={() =>
                         act({ action: 'start', stage: stage.id, previousId: active.id })
