@@ -199,7 +199,8 @@ export function Companions({
           <small className="companions-empty">
             {tab === 'friends'
               ? '최근 함께한 사람에게 친구를 요청해 보세요.'
-              : '함께 플레이한 사람이 여기에 표시됩니다.'}
+              : '함께 플레이한 사람이 여기에 표시됩니다.'}{' '}
+            <a href="/daily">오늘의 단어 풀기</a>
           </small>
         )}
       </section>

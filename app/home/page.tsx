@@ -553,7 +553,9 @@ export default function Home() {
                         </button>
                       ))
                     ) : (
-                      <p>게임방에서 친구를 맺고 놀러 가요.</p>
+                      <p>
+                        게임방에서 친구를 맺고 놀러 가요. <a href="/?lobby=1">대기실로 가기</a>
+                      </p>
                     )}
                   </div>
                   <h3>다녀간 친구</h3>

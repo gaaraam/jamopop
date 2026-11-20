@@ -933,6 +933,12 @@ export default function Home() {
                 {entryError && (
                   <p className="error" role="alert">
                     {entryError}
+                    {(room || invite) && (
+                      <>
+                        {' '}
+                        · <a href="/daily">오늘의 단어 풀기</a>
+                      </>
+                    )}
                   </p>
                 )}
                 <button className="primary" disabled={busy || restoring} type="submit">
@@ -1382,7 +1388,11 @@ export default function Home() {
               )}{' '}
               {isFinished ? (
                 <button
-                  className="secondary-btn submit"
+                  className={
+                    mode === 'practice' || !data.room.isHost
+                      ? 'primary submit'
+                      : 'secondary-btn submit'
+                  }
                   disabled={busy}
                   onClick={() => changeMode('practice', true)}
                 >
