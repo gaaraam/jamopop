@@ -22,15 +22,17 @@
 
 ## 현재 비용·보관 기준
 
-Cloudflare 대시보드에서 Workers **Free / Current plan**을 확인했다. 무료 한도는 Worker CPU 10ms/요청, 요청 100,000/일, D1 읽기 5,000,000행/일·쓰기 100,000행/일이다. QA와 운영이 같은 계정에 있으므로 QA도 이 예산을 소모한다. 24시간 D1 집계는 UTC 당일 한도와 다르며 이를 같은 값으로 비교하지 않는다.
+2026-11-20 계정 소유자가 Cloudflare 대시보드 Billing → Subscriptions에서 **Workers Paid·R2 Paid**를 확인했다. 두 구독의 다음 갱신일은 2026-12-16이다. 계정의 월 포함량은 Workers 요청 **1,000만 건**, CPU **3,000만 ms**, D1 읽기 **250억 행**·쓰기 **5,000만 행**이다. 운영·QA와 같은 계정의 다른 프로젝트가 이 포함량을 공유한다. [Workers 가격](https://developers.cloudflare.com/workers/platform/pricing/), [D1 가격](https://developers.cloudflare.com/d1/platform/pricing/)
 
-Workers Logs는 Free **3일**, D1 Time Travel은 Free **7일**이다. 앱의 수동 백업 **30일** 정책과 구분한다. 앱 코드가 제공자 보관 기간을 바꿨다고 안내하지 않는다. 민감 원문 없는 10% 표본 로그, 기존 서버 오류 알림·테스트 메일 수신, 지연 검사 CLI를 유지한다. 실제 지연·비용 자동 수신은 후속 검증이다.
+2026-10-18 당시 Workers Free 기준은 CPU 10ms/요청, 요청 100,000건/일, D1 읽기 5,000,000행/일·쓰기 100,000행/일이었다. 당시 운영 절차는 일일 한도 70%에서 유입 확대·부하 시험을 멈추고 90%에서 유입 축소·점검을 검토하는 방식이었다.
+
+2026-11-20 Workers Paid 기준으로 Workers Logs 보관 기간은 **7일**, D1 Time Travel 복구 가능 기간은 **30일**이다. 2026-10-18 당시 Free 기준은 각각 3일·7일이었다. 앱의 수동 백업 **30일** 정책과 구분한다. 앱 코드가 제공자 보관 기간을 바꿨다고 안내하지 않는다. 민감 원문 없는 10% 표본 로그, 기존 서버 오류 알림·테스트 메일 수신, 지연 검사 CLI를 유지한다. 실제 지연·비용 자동 수신은 후속 검증이다.
 
 공식 기준: [Workers Logs](https://developers.cloudflare.com/workers/observability/logs/workers-logs/#pricing), [D1 복구 기간](https://developers.cloudflare.com/d1/reference/time-travel/#notes), [D1 한도](https://developers.cloudflare.com/d1/platform/limits/), [Workers 한도](https://developers.cloudflare.com/workers/platform/limits/).
 
 ## 관찰과 중단 기준
 
-운영 시작·종료 시 Cloudflare의 오류·요청량·D1 당일 읽기/쓰기를 확인한다. 무료 한도의 70%면 신규 유입 확대와 원격 부하 시험을 중단하고, 90%면 새 방 유입을 줄이고 점검 공지/일시 점검을 판단한다. 이 비율은 운영 절차이며 자동 차단 기능은 아니다. 자동 결제나 유료 전환은 하지 않는다.
+운영 시작·종료 시 오류를 점검하고 계정의 이번 청구월 누적 요청·CPU·D1 읽기/쓰기를 각 월 포함량과 비교한다. Billing의 Billable usage도 확인한다. 월말 예상 사용량이 포함량을 넘거나 예상 밖의 과금이 보이면 신규 유입 확대와 원격 부하 시험을 보류하고, 프로젝트별 사용량과 예상 비용을 확인한 뒤 운영자가 재개 여부를 결정한다. Spend limits 설정과 예산 경보 수신 검증은 [#83](https://github.com/gaaraam/jamopop/issues/83)에서 추적한다.
 
 20개 이상 표본에서 5xx >1%, p95 >1500ms, 429 >5%면 기존 `scripts/check-operations.mjs`로 확인한다. 단발 실패를 성공 재시험으로 지우지 않는다. 반복 오류·진행 유실·재화 중복이면 홍보를 멈추고 `docs/operational-readiness.md`의 점검/롤백 절차를 사용한다. 운영 DB 복원을 즉흥적으로 실행하지 않는다.
 

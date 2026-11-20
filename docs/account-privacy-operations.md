@@ -83,7 +83,7 @@ PR #42의 0030은 2026-10-18 운영 백업 후 적용했고 기존 49개 테이�
 
 코드는 openid/email/profile만 요청하며 mail/Drive 접근을 요청하지 않는다. Google 콘솔의 Audience 공개 상태, Branding의 서비스명/문의/개인정보처리방침, 웹 클라이언트 반환 주소 https://play.jamopop.workers.dev/auth/google/callback 를 콘솔에서 확인해야 한다. 코드 테스트만으로 콘솔 설정 완료라고 판단하지 않는다.
 
-공식 참고: [Google 공개 운영 상태](https://developers.google.com/identity/protocols/oauth2/production-readiness/overview), [D1 Time Travel](https://developers.cloudflare.com/d1/reference/time-travel/). 무료 요금제의 D1 복구 가능 기간은 수동 백업 30일 정책과 다르다. 제공자 로그와 Time Travel의 기간을 앱 코드가 변경한다고 안내하지 않는다. 수동 백업 파일 만료는 scripts/backup-inventory.mjs로 경로·건수만 비공개 확인하고 실제 파일 삭제는 운영자가 수행한다.
+공식 참고: [Google 공개 운영 상태](https://developers.google.com/identity/protocols/oauth2/production-readiness/overview), [D1 Time Travel](https://developers.cloudflare.com/d1/reference/time-travel/). D1 복구 가능 기간은 2026-10-18 당시 Free 기준 7일이었고, 2026-11-20 현재 Workers Paid 기준 30일이다. 앱의 수동 백업 30일 정책은 별도로 운영한다. 제공자 로그와 Time Travel의 기간을 앱 코드가 변경한다고 안내하지 않는다. 수동 백업 파일 만료는 scripts/backup-inventory.mjs로 경로·건수만 비공개 확인하고 실제 파일 삭제는 운영자가 수행한다.
 
 ### Google 콘솔 실제 확인 (2026-10-18)
 
