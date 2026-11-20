@@ -10,6 +10,8 @@ AsyncLocalStorage로 동시 요청의 집계를 분리한다. `first/raw`는 결
 
 관측 설정: `head_sampling_rate: 0.1`, 자동 invocation 로그 끔. 집계 로그는 표본이며 청구서·전체 요청량을 대신하지 않는다. 전체 요청량·CPU·DB 비용은 Cloudflare의 Worker/D1 지표로 확인한다. 게임·계정·개인 도전·오늘의 단어·운영 API의 기존 예외 로그에서 원본 Error 객체를 제거해 D1 오류에 포함될 수 있는 SQL·바인딩 값을 출력하지 않는다. 프레임워크·제공자 자체 예외 로그는 별도 운영 점검 범위다.
 
+2026-11-20 현재 Workers Paid·R2 Paid를 사용한다. 부하 시험 전에는 QA를 포함한 계정 전체의 월 포함량 대비 사용량과 Billable usage를 [베타 운영 기준](beta-readiness.md)에 따라 확인한다.
+
 ## 경보 기준
 
 `node scripts/check-operations.mjs /비공개/metrics.jsonl`
