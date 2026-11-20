@@ -158,7 +158,7 @@ export default function Users() {
             <option value="unlinked">미연결</option>
           </select>
           <select
-            aria-label="최근 활동"
+            aria-label="가입 및 활동 기간"
             value={active}
             onChange={(e) => {
               setActive(e.target.value);
@@ -166,6 +166,7 @@ export default function Users() {
             }}
           >
             <option value="">전체 기간</option>
+            <option value="joined-day">24시간 내 가입</option>
             <option value="day">24시간 내 활동</option>
             <option value="week">7일 내 활동</option>
           </select>

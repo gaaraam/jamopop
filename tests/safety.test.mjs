@@ -379,6 +379,29 @@ test('moderation is atomic, expires, supports appeal and preserves the game/acco
   assert.equal(f.db.prepare('SELECT COUNT(*) n FROM members').get().n, 5);
   assert.equal(f.db.prepare('SELECT COUNT(*) n FROM chat_messages').get().n, 2);
 });
+test('first-day create quota expires at 24 hours and exempts admins', async (t) => {
+  const f = fixture();
+  t.after(f.close);
+  const create = async (age, admin = false) =>
+    (
+      await safetyBefore(
+        req('alice', { action: 'create' }, '/api/game', {
+          'x-jamopop-joined-at': String(Date.now() - age),
+          'x-jamopop-admin': admin ? '1' : '0',
+        }),
+        f.env,
+      )
+    ).response;
+  assert.equal(await create(1000), undefined);
+  assert.equal(await create(1000), undefined);
+  const denied = await create(1000);
+  assert.equal(denied.status, 429);
+  assert.match((await denied.json()).error, /가입 첫날/);
+  assert.ok(Number(denied.headers.get('Retry-After')) > 0);
+  assert.equal(await create(86400000), undefined);
+  assert.equal(await create(1000, true), undefined);
+});
+
 test('atomic action limits combine identity and generous IP budgets; GET polling does not spend quota', async (t) => {
   const f = fixture();
   t.after(f.close);

@@ -63,6 +63,12 @@ test('every signed-in member uses community features without admin approval', as
 });
 test('spoofed identity headers are stripped before access is decided', () => {
   assert.equal(
+    stripUntrustedIdentity(req('/', { 'x-jamopop-joined-at': '1' })).headers.get(
+      'x-jamopop-joined-at',
+    ),
+    null,
+  );
+  assert.equal(
     memberAccess(
       stripUntrustedIdentity(
         req('/', { 'oai-authenticated-user-id': 'admin', 'x-jamopop-admin': '1' }),
@@ -99,6 +105,7 @@ test('sessions of accounts left pending or rejected by the old approval flow sti
   for (const status of ['pending', 'rejected']) {
     db.prepare('UPDATE google_accounts SET approval_status=? WHERE subject=?').run(status, 'new');
     const trusted = await authenticatedRequest(r, env);
+    assert.equal(trusted.headers.get('x-jamopop-joined-at'), '2');
     assert.equal(memberAccess(trusted), 'member');
     assert.equal(accessResponse(trusted, {}), null);
   }

@@ -39,8 +39,9 @@ async function rateLimits(env, keys, ms, now=Date.now()){
  const expires=(Math.floor(now/ms)+1)*ms;
  const sql=`INSERT INTO safety_rate(key,hits,expires_at) VALUES ${keys.map(()=>'(?,1,?)').join(',')} ON CONFLICT(key) DO UPDATE SET hits=CASE WHEN safety_rate.expires_at<=? THEN 1 ELSE safety_rate.hits+1 END,expires_at=excluded.expires_at WHERE safety_rate.expires_at<=? OR safety_rate.hits<CASE safety_rate.key ${keys.map(()=>'WHEN ? THEN ?').join(' ')} ELSE 0 END RETURNING key`;
  const result=await env.DB.prepare(sql).bind(...keys.flatMap(([key])=>[key,expires]),now,now,...keys.flatMap(([key,limit])=>[key,limit])).all();
- return {allowed:result.results.length===keys.length,retryAfter:Math.max(1,Math.ceil((expires-now)/1000))};
+ return {allowed:result.results.length===keys.length,charged:new Set(result.results.map(row=>row.key)),retryAfter:Math.max(1,Math.ceil((expires-now)/1000))};
 }
+const firstDayLimits={create:2,chat:10,friend:3,invite:3,draw:4};
 function quota(path,b){
  if(path==='/auth/google/start')return ['login',10,300000,100];
  if(path==='/api/safety')return b.action==='report'?['report',5,3600000,100]:['safety',30,60000,300];
@@ -73,8 +74,15 @@ export async function safetyBefore(req,env){
    // Cloudflare supplies this header at its edge. Never persist the raw address.
    const ip=req.headers.get('CF-Connecting-IP');
    const fingerprint=ip?await hash(new Date().toISOString().slice(0,10)+':'+ip):null;
-   const keys=[...(fingerprint?[[`ip:${fingerprint}`,policy[3]]]:[]),...(actor.subject?[[actor.subject,policy[1]]]:[])];
-   const q=await rateLimits(env,keys.map(([key,limit])=>[policy[0]+':'+key,limit]),policy[2]);if(!q.allowed)return {response:json({error:'요청이 많아요. 잠시 후 다시 시도해 주세요.',retryAfter:q.retryAfter},429,{'Retry-After':String(q.retryAfter)})};
+   const [name,actorLimit,windowMs,ipLimit]=policy;
+   const age=Date.now()-Number(req.headers.get('x-jamopop-joined-at'));
+   const firstDay=actor.account&&!actor.admin&&age>=0&&age<86400000&&Object.hasOwn(firstDayLimits,name);
+   const keys=[];
+   if(fingerprint)keys.push([name+':ip:'+fingerprint,ipLimit]);
+   const actorKey=(firstDay?'new-':'')+name+':'+actor.subject;
+   if(actor.subject)keys.push([actorKey,firstDay?firstDayLimits[name]:actorLimit]);
+   const q=await rateLimits(env,keys,windowMs);
+   if(!q.allowed)return {response:json({error:firstDay&&!q.charged.has(actorKey)?'가입 첫날에는 이용 횟수가 조금 제한돼요. 잠시 후 다시 시도해 주세요.':'요청이 많아요. 잠시 후 다시 시도해 주세요.',retryAfter:q.retryAfter},429,{'Retry-After':String(q.retryAfter)})};
    // Expired counters are bounded by the daily technical-expiry Cron. Never make
    // every player write contend on a global cleanup scan. Quotas remain atomic.
   }

@@ -27,7 +27,7 @@ export async function GET(req: Request) {
     if (
       !['', 'google', 'guest', 'legacy'].includes(kind) ||
       !['', 'linked', 'unlinked'].includes(link) ||
-      !['', 'day', 'week'].includes(active) ||
+      !['', 'day', 'week', 'joined-day'].includes(active) ||
       !Number.isSafeInteger(offset) ||
       offset < 0 ||
       offset > 100000
@@ -157,7 +157,10 @@ export async function GET(req: Request) {
         (x) =>
           (!kind || x.kind === kind) &&
           (!link || (link === 'linked') === x.linked) &&
-          (!active || x.lastAt > Date.now() - (active === 'day' ? 1 : 7) * 86400000) &&
+          (!active ||
+            (active === 'joined-day'
+              ? x.kind === 'google' && (x.createdAt ?? 0) > Date.now() - 86400000
+              : x.lastAt > Date.now() - (active === 'day' ? 1 : 7) * 86400000)) &&
           (!q ||
             x.name.toLowerCase().includes(q.toLowerCase()) ||
             x.userKey.includes(q) ||
